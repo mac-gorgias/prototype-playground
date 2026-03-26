@@ -1,0 +1,2686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gorgias — Get Started</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ── Axiom Design Tokens ── */
+  :root {
+    /* Colors — Core */
+    --ax-color-accent-primary: #7e55f6;
+    --ax-color-accent-default: #683fcf;
+    --ax-color-accent-surface: #f1ecff;
+    --ax-color-accent-border: #c4b7ff;
+    --ax-color-accent-hover: #dad0ff;
+    --ax-color-black: #1e242e;
+    --ax-color-white: #ffffff;
+    --ax-color-grey-50: #fafafa;
+    --ax-color-grey-100: #ebecef;
+    --ax-color-grey-200: #d5d7dd;
+    --ax-color-grey-300: #c7cad1;
+    --ax-color-grey-400: #b3b8c1;
+    --ax-color-grey-500: #6e7686;
+    --ax-color-grey-600: #5c6370;
+    --ax-color-grey-700: #4c525d;
+    --ax-color-grey-750: #393e46;
+
+    /* Colors — Semantic Content */
+    --ax-color-content-default: #1e242e;
+    --ax-color-content-secondary: #5c6370;
+    --ax-color-content-tertiary: #6e7686;
+
+    /* Colors — Success */
+    --ax-color-green-50: #e9fbf5;
+    --ax-color-green-100: #bbf2e1;
+    --ax-color-green-500: #32c898;
+    --ax-color-green-600: #21c38f;
+    --ax-color-green-800: #147656;
+
+    /* Colors — Error / Destructive */
+    --ax-color-red-50: #ffecef;
+    --ax-color-red-500: #ff425d;
+    --ax-color-red-700: #d90b28;
+
+    /* Colors — Additional palette */
+    --ax-color-blue-100: #d8e9fd;
+    --ax-color-blue-900: #073c85;
+    --ax-color-yellow-100: #fdf1cd;
+    --ax-color-yellow-800: #887334;
+    --ax-color-fuchsia-50: #fee1f9;
+    --ax-color-fuchsia-800: #92247f;
+
+    /* Colors — Borders */
+    --ax-color-border-default: #00000014;
+    --ax-color-border-secondary: #000a298f;
+    --ax-color-border-card: #e8e3e1;
+
+    /* Colors — Interaction */
+    --ax-color-hover: #1b233208;
+    --ax-color-pressed: #222c3f12;
+    --ax-color-focus: #7e55f6;
+
+    /* Typography */
+    --ax-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --ax-font-size-body: 14px;
+    --ax-line-height-body: 1.55;
+    --ax-font-size-caption: 12px;
+    --ax-line-height-caption: 16px;
+    --ax-font-size-heading: 15px;
+    --ax-font-weight-regular: 400;
+    --ax-font-weight-medium: 500;
+    --ax-font-weight-semibold: 600;
+
+    /* Spacing */
+    --ax-space-xxxxs: 2px;
+    --ax-space-xxxs: 4px;
+    --ax-space-xxs: 6px;
+    --ax-space-xs: 8px;
+    --ax-space-sm: 12px;
+    --ax-space-md: 16px;
+    --ax-space-lg: 24px;
+    --ax-space-xl: 32px;
+    --ax-space-xxl: 48px;
+
+    /* Border Radius */
+    --ax-radius-xs: 4px;
+    --ax-radius-sm: 6px;
+    --ax-radius-md: 8px;
+    --ax-radius-lg: 10px;
+    --ax-radius-xl: 14px;
+    --ax-radius-xxl: 16px;
+    --ax-radius-card: 22px;
+    --ax-radius-full: 9999px;
+
+    /* Shadows */
+    --ax-shadow-component: 0 2px 3px rgba(0, 0, 0, 0.05);
+    --ax-shadow-container: 0 10px 18px 2px rgba(0, 0, 0, 0.04);
+    --ax-shadow-elevated: 0 4px 24px rgba(0, 0, 0, 0.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    font-family: var(--ax-font-family);
+    display: flex;
+    background: var(--ax-color-grey-50);
+    color: var(--ax-color-content-default);
+  }
+
+  /* ── Main chat area ── */
+  .main {
+    flex: 1;
+    height: 100%;
+    background:
+      radial-gradient(circle, var(--ax-color-grey-200) 1px, transparent 1px);
+    background-size: 20px 20px;
+    background-color: var(--ax-color-grey-50);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 0;
+    position: relative;
+  }
+
+  /* ── Chat header ── */
+  .chat-header {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--ax-space-lg);
+    padding: var(--ax-space-xl) var(--ax-space-lg);
+    background: rgba(250, 250, 250, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--ax-color-border-default);
+    z-index: 10;
+  }
+
+  .chat-header .icon-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--ax-radius-md);
+    background: linear-gradient(135deg, var(--ax-color-accent-default), var(--ax-color-accent-primary));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .chat-header .icon-circle svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: var(--ax-color-white);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .chat-header-title {
+    font-size: var(--ax-font-size-heading);
+    font-weight: var(--ax-font-weight-semibold);
+    color: var(--ax-color-content-default);
+  }
+
+  .chat-container {
+    flex: 1 1 0;
+    max-width: 720px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 40px var(--ax-space-xl) 0;
+    overflow-y: auto;
+  }
+
+  .messages {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ax-space-lg);
+    padding-bottom: var(--ax-space-lg);
+  }
+
+  /* User message */
+  .msg-user {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .msg-user .bubble {
+    background: var(--ax-color-grey-100);
+    color: var(--ax-color-content-default);
+    padding: var(--ax-space-sm) 18px;
+    border-radius: 18px 18px var(--ax-radius-xs) 18px;
+    font-size: var(--ax-font-size-body);
+    line-height: var(--ax-line-height-body);
+    max-width: 80%;
+  }
+
+  /* Assistant message — no avatar */
+  .msg-assistant {
+    display: flex;
+    align-items: flex-start;
+  }
+
+  .msg-assistant .bubble {
+    color: var(--ax-color-content-default);
+    font-size: var(--ax-font-size-body);
+    line-height: var(--ax-line-height-body);
+    max-width: 80%;
+    padding: var(--ax-space-xxs) var(--ax-space-sm) 10px;
+    border-radius: var(--ax-radius-xl);
+    position: relative;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    background: rgba(250, 250, 250, 0.82);
+  }
+
+  /* ── Control Panel — wrapper > card > header + body ── */
+  .control-panel-wrapper {
+    padding: 0 var(--ax-space-lg) 20px;
+    max-width: 720px;
+    width: 100%;
+    margin: 0 auto;
+    flex-shrink: 0;
+  }
+
+  .control-panel-outer {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: var(--ax-radius-card);
+    padding: var(--ax-space-xxs);
+  }
+
+  .control-panel-card {
+    border-radius: var(--ax-radius-xxl);
+    border: 0.75px solid var(--ax-color-border-card);
+    box-shadow: var(--ax-shadow-container);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Floating Progress Card ── */
+  .floating-progress-card {
+    position: absolute;
+    top: 80px;
+    right: var(--ax-space-lg);
+    width: 200px;
+    background: var(--ax-color-white);
+    border: 1px solid var(--ax-color-border-default);
+    border-radius: var(--ax-radius-lg);
+    box-shadow: var(--ax-shadow-container);
+    z-index: 15;
+    overflow: hidden;
+  }
+
+  .floating-progress-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--ax-space-sm) var(--ax-space-md);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .floating-progress-header:hover {
+    background: var(--ax-color-hover);
+  }
+
+  .floating-progress-title {
+    font-size: var(--ax-font-size-caption);
+    font-weight: var(--ax-font-weight-semibold);
+    color: var(--ax-color-content-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .floating-progress-chevron {
+    width: 16px;
+    height: 16px;
+    color: var(--ax-color-content-tertiary);
+    transition: transform 0.25s ease;
+    flex-shrink: 0;
+  }
+
+  .floating-progress-card.collapsed .floating-progress-chevron {
+    transform: rotate(-90deg);
+  }
+
+  .floating-progress-body {
+    padding: 0 var(--ax-space-md) var(--ax-space-sm);
+    display: flex;
+    flex-direction: column;
+    gap: var(--ax-space-xxxxs);
+    max-height: 200px;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.25s ease;
+    opacity: 1;
+  }
+
+  .floating-progress-card.collapsed .floating-progress-body {
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    opacity: 0;
+  }
+
+  /* Individual step row */
+  .fp-step {
+    display: flex;
+    align-items: center;
+    gap: var(--ax-space-xs);
+    padding: var(--ax-space-xxxs) 0;
+  }
+
+  /* Checkmark circle — default (upcoming) state */
+  .fp-step-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: var(--ax-radius-full);
+    border: 1.5px solid var(--ax-color-grey-300);
+    background: var(--ax-color-white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+  }
+
+  .fp-step-icon svg {
+    width: 12px;
+    height: 12px;
+    stroke: var(--ax-color-white);
+    stroke-width: 2.5;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  /* Active state */
+  .fp-step.active .fp-step-icon {
+    border-color: var(--ax-color-accent-primary);
+    background: var(--ax-color-accent-surface);
+  }
+
+  /* Completed state */
+  .fp-step.completed .fp-step-icon {
+    border-color: var(--ax-color-accent-primary);
+    background: var(--ax-color-accent-primary);
+  }
+
+  .fp-step.completed .fp-step-icon svg {
+    opacity: 1;
+  }
+
+  /* Step label text */
+  .fp-step-label {
+    font-size: var(--ax-font-size-body);
+    font-weight: var(--ax-font-weight-medium);
+    color: var(--ax-color-content-default);
+    transition: color 0.3s ease;
+  }
+
+  .fp-step.active .fp-step-label {
+    color: var(--ax-color-accent-primary);
+    font-weight: var(--ax-font-weight-semibold);
+  }
+
+  .fp-step.completed .fp-step-label {
+    color: var(--ax-color-content-tertiary);
+    text-decoration: line-through;
+  }
+
+  .fp-step.upcoming .fp-step-label {
+    color: var(--ax-color-content-tertiary);
+  }
+
+  /* ── Card body (white section) ── */
+  .control-panel-body {
+    background: var(--ax-color-white);
+    padding: var(--ax-space-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--ax-space-xs);
+  }
+
+  /* ── Text input field ── */
+  .input-field-wrapper {
+    border: 1px solid var(--ax-color-grey-100);
+    border-radius: var(--ax-radius-md);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .text-input {
+    width: 100%;
+    padding: 10px var(--ax-space-sm);
+    border: none;
+    font-size: var(--ax-font-size-body);
+    font-family: inherit;
+    color: var(--ax-color-content-default);
+    background: var(--ax-color-white);
+    outline: none;
+    resize: none;
+    overflow-y: auto;
+    line-height: 1.45;
+    min-height: 40px;
+    max-height: 200px;
+  }
+
+  .text-input::placeholder { color: var(--ax-color-content-secondary); }
+
+  .input-field-separator {
+    height: 1px;
+    background: var(--ax-color-grey-100);
+  }
+
+  .input-field-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--ax-space-xxxs);
+    padding: var(--ax-space-xxs) var(--ax-space-xs);
+    background: var(--ax-color-white);
+  }
+
+  .input-action-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--ax-radius-sm);
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .15s;
+    color: var(--ax-color-grey-400);
+  }
+
+  .input-action-btn:hover {
+    background: var(--ax-color-grey-100);
+    color: var(--ax-color-content-secondary);
+  }
+
+  .input-action-btn svg {
+    width: 18px;
+    height: 18px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .send-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--ax-radius-sm);
+    border: none;
+    background: transparent;
+    cursor: default;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .15s, color .15s;
+    pointer-events: none;
+    color: var(--ax-color-grey-200);
+  }
+
+  .send-btn.active {
+    background: var(--ax-color-black);
+    cursor: pointer;
+    pointer-events: auto;
+    color: var(--ax-color-white);
+  }
+
+  .send-btn svg {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .input-field-wrapper.hidden {
+    display: none;
+  }
+
+  /* ── Action bar (bottom of card) ── */
+  .action-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .action-bar.hidden {
+    display: none;
+  }
+
+  .action-bar-left {
+    display: flex;
+    align-items: center;
+    gap: var(--ax-space-xs);
+  }
+
+  .action-bar-right {
+    display: flex;
+    align-items: center;
+    gap: var(--ax-space-xs);
+  }
+
+  .btn-skip-outlined {
+    height: 32px;
+    padding: 0 var(--ax-space-sm);
+    border-radius: var(--ax-radius-md);
+    border: 0.5px solid var(--ax-color-grey-400);
+    background: rgba(255,255,255,0.01);
+    box-shadow: var(--ax-shadow-component);
+    font-family: inherit;
+    font-size: var(--ax-font-size-body);
+    font-weight: var(--ax-font-weight-semibold);
+    color: var(--ax-color-content-default);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color .15s, background .15s;
+  }
+
+  .btn-skip-outlined:hover {
+    border-color: var(--ax-color-grey-500);
+    background: var(--ax-color-grey-50);
+  }
+
+  .btn-skip-text {
+    height: 32px;
+    padding: 0 var(--ax-space-xs);
+    border-radius: var(--ax-radius-md);
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: var(--ax-font-size-body);
+    font-weight: var(--ax-font-weight-semibold);
+    color: var(--ax-color-content-default);
+    cursor: pointer;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    transition: background .15s;
+  }
+
+  .btn-skip-text:hover {
+    background: var(--ax-color-grey-100);
+  }
+
+  .btn-continue {
+    height: 32px;
+    padding: 0 var(--ax-space-sm);
+    border-radius: var(--ax-radius-md);
+    border: none;
+    background: var(--ax-color-black);
+    box-shadow: var(--ax-shadow-component);
+    font-family: inherit;
+    font-size: var(--ax-font-size-body);
+    font-weight: var(--ax-font-weight-semibold);
+    color: var(--ax-color-white);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background .15s;
+  }
+
+  .btn-continue:hover {
+    background: var(--ax-color-grey-750);
+  }
+
+  /* ── Selection cards (inside card body) ── */
+  .selection-card {
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity .35s ease, transform .35s ease;
+    pointer-events: none;
+    display: none;
+  }
+
+  .selection-card.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+    display: block;
+  }
+
+  .selection-card.hiding {
+    opacity: 0;
+    transform: translateY(12px);
+    pointer-events: none;
+  }
+
+  .selection-label {
+    font-size: var(--ax-font-size-body);
+    font-weight: var(--ax-font-weight-semibold);
+    color: var(--ax-color-content-default);
+    margin-bottom: var(--ax-space-sm);
+  }
+
+  .selection-options {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ax-space-xxs);
+  }
+
+  .option-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--ax-space-sm);
+    padding: 11px var(--ax-space-sm);
+    border: 1px solid var(--ax-color-grey-100);
+    border-radius: var(--ax-radius-md);
+    background: var(--ax-color-grey-50);
+    font-size: var(--ax-font-size-body);
+    color: var(--ax-color-content-default);
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+    text-align: left;
+    font-family: inherit;
+    width: 100%;
+  }
+
+  .option-btn:hover {
+    border-color: var(--ax-color-accent-border);
+    background: var(--ax-color-accent-surface);
+  }
+
+  .option-radio {
+    width: 18px;
+    height: 18px;
+    border-radius: var(--ax-radius-full);
+    border: 2px solid var(--ax-color-grey-200);
+    flex-shrink: 0;
+    transition: border-color .15s, background .15s, box-shadow .15s;
+  }
+
+  .option-btn:hover .option-radio {
+    border-color: var(--ax-color-accent-primary);
+  }
+
+  .option-other {
+    display: flex;
+    align-items: center;
+    gap: var(--ax-space-sm);
+    padding: 11px var(--ax-space-sm);
+    border: 1px solid var(--ax-color-grey-100);
+    border-radius: var(--ax-radius-md);
+    background: var(--ax-color-grey-50);
+    transition: border-color .15s;
+  }
+
+  .option-other input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: var(--ax-font-size-body);
+    font-family: inherit;
+    color: var(--ax-color-content-default);
+    background: transparent;
+  }
+
+  .option-other input::placeholder { color: var(--ax-color-grey-400); }
+
+  /* ── Inline cards ── */
+  .inline-card {
+    border: 1px solid var(--ax-color-border-default);
+    border-radius: var(--ax-radius-lg);
+    padding: var(--ax-space-sm) var(--ax-space-md);
+    margin: var(--ax-space-xxs) 0;
+    background: var(--ax-color-white);
+    position: relative;
+    transition: border-color .15s, box-shadow .15s;
+    cursor: default;
+  }
+
+  .inline-card:hover {
+    border-color: var(--ax-color-accent-border);
+    box-shadow: 0 1px 6px rgba(126, 85, 246, 0.08);
+  }
+
+  .inline-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 3px;
+    gap: var(--ax-space-xs);
+  }
+
+  .inline-card-title {
+    font-size: 13px;
+    font-weight: var(--ax-font-weight-semibold);
+    color: var(--ax-color-content-default);
+    margin-bottom: 3px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .inline-card-remove {
+    width: 20px;
+    height: 20px;
+    border-radius: var(--ax-radius-xs);
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--ax-color-grey-200);
+    transition: color .15s, background .15s;
+    padding: 0;
+  }
+
+  .inline-card-remove:hover {
+    color: var(--ax-color-red-700);
+    background: var(--ax-color-red-50);
+  }
+
+  .inline-card-remove svg {
+    width: 14px;
+    height: 14px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .inline-card.removed {
+    opacity: 0;
+    transform: scale(0.95);
+    max-height: 0;
+    margin: 0;
+    padding: 0;
+    border: none;
+    overflow: hidden;
+    transition: opacity .25s ease, transform .25s ease, max-height .3s ease .1s, margin .3s ease .1s, padding .3s ease .1s;
+  }
+
+  /* Add source link in control panel */
+  .add-source-link {
+    display: none;
+    align-items: center;
+    gap: var(--ax-space-xxs);
+    font-size: 13px;
+    font-weight: var(--ax-font-weight-medium);
+    color: var(--ax-color-accent-primary);
+    cursor: pointer;
+    padding: var(--ax-space-xxxs) 0;
+    transition: color .15s;
+    border: none;
+    background: none;
+    font-family: inherit;
+  }
+
+  .add-source-link:hover {
+    color: var(--ax-color-accent-default);
+  }
+
+  .add-source-link.visible {
+    display: flex;
+  }
+
+  .add-source-link svg {
+    width: 14px;
+    height: 14px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .inline-card-desc {
+    font-size: 12.5px;
+    color: var(--ax-color-content-secondary);
+    line-height: 1.45;
+  }
+
+  .inline-card-url {
+    font-size: 11px;
+    color: var(--ax-color-content-tertiary);
+    margin-top: var(--ax-space-xxxs);
+  }
+
+  /* Source badges */
+  .source-badge {
+    font-size: 10px;
+    font-weight: var(--ax-font-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    padding: var(--ax-space-xxxxs) var(--ax-space-xs);
+    border-radius: var(--ax-radius-xs);
+    flex-shrink: 0;
+  }
+
+  .source-badge.policy { background: var(--ax-color-accent-surface); color: var(--ax-color-accent-default); }
+  .source-badge.faq { background: var(--ax-color-blue-100); color: var(--ax-color-blue-900); }
+  .source-badge.catalog { background: var(--ax-color-yellow-100); color: var(--ax-color-yellow-800); }
+  .source-badge.brand { background: var(--ax-color-fuchsia-50); color: var(--ax-color-fuchsia-800); }
+
+  /* Recommended badge */
+  .recommended-badge {
+    font-size: 10px;
+    font-weight: var(--ax-font-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    padding: var(--ax-space-xxxxs) var(--ax-space-xs);
+    border-radius: var(--ax-radius-xs);
+    background: var(--ax-color-green-50);
+    color: var(--ax-color-green-800);
+    border: 1px solid var(--ax-color-green-100);
+    flex-shrink: 0;
+  }
+
+  /* Preview-only badge */
+  .preview-badge {
+    font-size: 10px;
+    font-weight: var(--ax-font-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    padding: var(--ax-space-xxxxs) var(--ax-space-xs);
+    border-radius: var(--ax-radius-xs);
+    background: var(--ax-color-grey-100);
+    color: var(--ax-color-content-secondary);
+    flex-shrink: 0;
+  }
+
+  /* ── Inline links in assistant messages ── */
+  .msg-assistant .bubble a {
+    color: var(--ax-color-accent-primary);
+    text-decoration: none;
+    font-weight: var(--ax-font-weight-medium);
+    border-bottom: 1px solid rgba(126, 85, 246, 0.25);
+    transition: border-color .15s;
+  }
+
+  .msg-assistant .bubble a:hover {
+    border-bottom-color: var(--ax-color-accent-primary);
+  }
+
+  /* ── Connection Card ── */
+  .connection-card-inner {
+    display: flex;
+    align-items: center;
+    gap: var(--ax-space-sm);
+  }
+
+  .connection-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--ax-radius-lg);
+    background: var(--ax-color-green-50);
+    border: 1px solid var(--ax-color-green-100);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .connection-icon svg { width: 22px; height: 22px; }
+
+  .connection-title {
+    font-size: var(--ax-font-size-body);
+    font-weight: var(--ax-font-weight-semibold);
+    color: var(--ax-color-content-default);
+    margin-bottom: var(--ax-space-xxxxs);
+  }
+
+  .connection-desc {
+    font-size: 12.5px;
+    color: var(--ax-color-content-secondary);
+    line-height: 1.45;
+  }
+
+  .connection-info { flex: 1; min-width: 0; }
+
+  .connection-btn {
+    padding: 9px 18px;
+    border-radius: var(--ax-radius-lg);
+    border: none;
+    background: var(--ax-color-green-800);
+    color: var(--ax-color-white);
+    font-size: 13px;
+    font-weight: var(--ax-font-weight-semibold);
+    cursor: pointer;
+    font-family: inherit;
+    white-space: nowrap;
+    transition: background .15s, opacity .15s;
+    flex-shrink: 0;
+  }
+
+  .connection-btn:hover { background: #0eaa77; }
+
+  .connection-btn.loading {
+    pointer-events: none;
+    opacity: 0.7;
+  }
+
+  .connection-success {
+    display: flex;
+    align-items: center;
+    gap: var(--ax-space-sm);
+  }
+
+  .connection-success-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--ax-radius-lg);
+    background: var(--ax-color-green-50);
+    border: 1px solid var(--ax-color-green-100);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .connection-success-icon svg {
+    width: 20px;
+    height: 20px;
+    stroke: var(--ax-color-green-500);
+    fill: none;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* ── Channel Cards ── */
+  .channel-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--ax-radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .channel-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .channel-icon.email { background: var(--ax-color-blue-100); }
+  .channel-icon.email svg { stroke: var(--ax-color-blue-900); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .channel-icon.chat { background: var(--ax-color-accent-surface); }
+  .channel-icon.chat svg { stroke: var(--ax-color-accent-default); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .channel-icon.social { background: var(--ax-color-fuchsia-50); }
+  .channel-icon.social svg { stroke: var(--ax-color-fuchsia-800); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  .channel-card-inner {
+    display: flex;
+    align-items: center;
+    gap: var(--ax-space-sm);
+  }
+
+  .channel-card-info { flex: 1; min-width: 0; }
+
+  .channel-card-title {
+    font-size: 13px;
+    font-weight: var(--ax-font-weight-semibold);
+    color: var(--ax-color-content-default);
+    margin-bottom: var(--ax-space-xxxxs);
+  }
+
+  .channel-card-desc {
+    font-size: var(--ax-font-size-caption);
+    color: var(--ax-color-content-secondary);
+    line-height: 1.4;
+  }
+
+  /* ── Preview Panel (right side) ── */
+  .preview-panel {
+    width: 0;
+    min-width: 0;
+    background: var(--ax-color-white);
+    border-left: 1px solid var(--ax-color-border-default);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: width .4s cubic-bezier(0.4, 0, 0.2, 1), min-width .4s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
+  }
+
+  .preview-panel.open {
+    width: 380px;
+    min-width: 380px;
+  }
+
+  .preview-panel-header {
+    padding: 18px 20px var(--ax-space-sm);
+    border-bottom: 1px solid var(--ax-color-border-default);
+    flex-shrink: 0;
+  }
+
+  .preview-panel-title {
+    font-size: var(--ax-font-size-heading);
+    font-weight: var(--ax-font-weight-semibold);
+    color: var(--ax-color-content-default);
+    margin-bottom: var(--ax-space-sm);
+  }
+
+  .flow-select {
+    width: 100%;
+    padding: var(--ax-space-xs) 28px var(--ax-space-xs) var(--ax-space-sm);
+    border: 1px solid var(--ax-color-border-default);
+    border-radius: var(--ax-radius-md);
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--ax-color-content-default);
+    background: var(--ax-color-grey-50);
+    outline: none;
+    cursor: pointer;
+    transition: border-color .15s;
+  }
+
+  .flow-select:focus { border-color: var(--ax-color-accent-border); }
+
+  .preview-panel-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px 20px;
+  }
+
+  .preview-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 200px;
+  }
+
+  .preview-spinner {
+    width: 28px;
+    height: 28px;
+    border: 3px solid var(--ax-color-grey-200);
+    border-top-color: var(--ax-color-accent-primary);
+    border-radius: var(--ax-radius-full);
+    animation: spin .7s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .preview-panel-body .preview-content {
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity .35s ease, transform .35s ease;
+  }
+
+  .preview-panel-body .preview-content.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ── Chat Simulation Widget ── */
+  .chat-sim {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ax-space-md);
+  }
+
+  .chat-sim-label {
+    font-size: 11px;
+    font-weight: var(--ax-font-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--ax-color-content-tertiary);
+    margin-bottom: var(--ax-space-xxs);
+  }
+
+  .chat-sim-bubble {
+    padding: var(--ax-space-sm) var(--ax-space-md);
+    border-radius: var(--ax-radius-xl);
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: var(--ax-color-content-default);
+  }
+
+  .chat-sim-bubble.customer {
+    background: var(--ax-color-grey-100);
+    border-radius: var(--ax-radius-xl) var(--ax-radius-xl) var(--ax-radius-xl) var(--ax-radius-xs);
+  }
+
+  .chat-sim-bubble.agent {
+    background: var(--ax-color-accent-surface);
+    border: 1px solid var(--ax-color-accent-hover);
+    border-radius: var(--ax-radius-xl) var(--ax-radius-xl) var(--ax-radius-xs) var(--ax-radius-xl);
+  }
+
+  /* ── Tone Attribution ── */
+  .tone-attribution {
+    margin-top: 20px;
+    padding-top: var(--ax-space-md);
+    border-top: 1px solid var(--ax-color-border-default);
+    display: flex;
+    align-items: center;
+    gap: var(--ax-space-xs);
+    flex-wrap: wrap;
+  }
+
+  .tone-badge {
+    padding: var(--ax-space-xxxs) 10px;
+    border-radius: var(--ax-radius-sm);
+    background: var(--ax-color-accent-surface);
+    color: var(--ax-color-accent-primary);
+    font-size: var(--ax-font-size-caption);
+    font-weight: var(--ax-font-weight-semibold);
+    white-space: nowrap;
+  }
+
+  .tone-source {
+    font-size: 11.5px;
+    color: var(--ax-color-content-tertiary);
+  }
+
+  /* ── Tone Selection ── */
+  .tone-option-desc {
+    font-size: var(--ax-font-size-caption);
+    color: var(--ax-color-content-tertiary);
+    font-weight: var(--ax-font-weight-regular);
+    margin-top: var(--ax-space-xxxxs);
+  }
+
+  .tone-option.active-tone {
+    border-color: var(--ax-color-accent-border);
+    background: var(--ax-color-accent-surface);
+  }
+
+  .tone-option.active-tone .option-radio {
+    border-color: var(--ax-color-accent-primary);
+    background: var(--ax-color-accent-primary);
+    box-shadow: inset 0 0 0 3px var(--ax-color-white);
+  }
+
+  .confirm-tone-btn {
+    margin-top: var(--ax-space-sm);
+    width: 100%;
+    padding: 11px;
+    border-radius: var(--ax-radius-lg);
+    border: none;
+    background: var(--ax-color-accent-primary);
+    color: var(--ax-color-white);
+    font-size: var(--ax-font-size-body);
+    font-weight: var(--ax-font-weight-semibold);
+    cursor: pointer;
+    font-family: inherit;
+    transition: background .15s;
+  }
+
+  .confirm-tone-btn:hover { background: var(--ax-color-accent-default); }
+
+  /* ── Completion Summary ── */
+  .completion-summary {
+    background: var(--ax-color-grey-50);
+    border: 1px solid var(--ax-color-border-default);
+    border-radius: var(--ax-radius-lg);
+    padding: var(--ax-space-md) 18px;
+    margin: 10px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .completion-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .completion-check {
+    width: 20px;
+    height: 20px;
+    border-radius: var(--ax-radius-full);
+    background: var(--ax-color-green-500);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .completion-check svg {
+    width: 12px;
+    height: 12px;
+    stroke: var(--ax-color-white);
+    fill: none;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .completion-check.skipped {
+    background: var(--ax-color-grey-200);
+  }
+
+  .completion-check.skipped svg {
+    stroke: var(--ax-color-content-tertiary);
+    stroke-width: 2;
+  }
+
+  .completion-text {
+    font-size: 13.5px;
+    color: var(--ax-color-content-default);
+    line-height: 1.4;
+  }
+
+  .completion-text strong {
+    font-weight: var(--ax-font-weight-semibold);
+    color: var(--ax-color-content-default);
+  }
+
+  .completion-text .skipped-label {
+    color: var(--ax-color-content-tertiary);
+    font-style: italic;
+  }
+
+  /* ── Side Navigation ── */
+  .side-nav {
+    width: 240px;
+    min-width: 240px;
+    height: 100%;
+    background: var(--ax-color-white);
+    border-right: 1px solid var(--ax-color-border-default);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    transition: width .25s cubic-bezier(0.4, 0, 0.2, 1),
+                min-width .25s cubic-bezier(0.4, 0, 0.2, 1),
+                padding .25s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity .2s ease;
+    overflow: hidden;
+    z-index: 20;
+  }
+
+  .side-nav.collapsed {
+    width: 0;
+    min-width: 0;
+    border-right: none;
+  }
+
+  .side-nav.collapsed .side-nav-inner {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .side-nav-inner {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 240px;
+    min-width: 240px;
+    opacity: 1;
+    transition: opacity .15s ease;
+  }
+
+  /* ── Nav header ── */
+  .side-nav-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--ax-space-sm) var(--ax-space-sm) var(--ax-space-sm) var(--ax-space-md);
+    flex-shrink: 0;
+  }
+
+  .side-nav-home {
+    display: flex;
+    align-items: center;
+    gap: var(--ax-space-xs);
+    cursor: pointer;
+    padding: var(--ax-space-xxxs) var(--ax-space-xxs);
+    border-radius: var(--ax-radius-sm);
+    transition: background .15s;
+    border: none;
+    background: none;
+    font-family: inherit;
+    color: var(--ax-color-content-default);
+  }
+
+  .side-nav-home:hover {
+    background: var(--ax-color-hover);
+  }
+
+  .side-nav-home-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--ax-radius-md);
+    border: 1.5px solid var(--ax-color-grey-200);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .side-nav-home-icon svg {
+    width: 16px;
+    height: 16px;
+    stroke: var(--ax-color-content-default);
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .side-nav-home-label {
+    font-size: var(--ax-font-size-body);
+    font-weight: var(--ax-font-weight-semibold);
+    color: var(--ax-color-content-default);
+  }
+
+  .side-nav-home-chevron {
+    width: 16px;
+    height: 16px;
+    stroke: var(--ax-color-grey-400);
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex-shrink: 0;
+  }
+
+  .side-nav-header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--ax-space-xxxxs);
+  }
+
+  .side-nav-icon-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--ax-radius-sm);
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .15s;
+    color: var(--ax-color-content-tertiary);
+  }
+
+  .side-nav-icon-btn:hover {
+    background: var(--ax-color-hover);
+    color: var(--ax-color-content-secondary);
+  }
+
+  .side-nav-icon-btn svg {
+    width: 18px;
+    height: 18px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* ── Nav body (scrollable) ── */
+  .side-nav-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--ax-space-xxxs) var(--ax-space-xs);
+  }
+
+  .side-nav-item {
+    display: flex;
+    align-items: center;
+    gap: var(--ax-space-xs);
+    padding: 10px var(--ax-space-sm);
+    border-radius: var(--ax-radius-md);
+    font-size: var(--ax-font-size-body);
+    font-weight: var(--ax-font-weight-medium);
+    color: var(--ax-color-content-secondary);
+    cursor: pointer;
+    transition: background .15s, color .15s;
+    border: none;
+    background: none;
+    font-family: inherit;
+    width: 100%;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .side-nav-item:hover {
+    background: var(--ax-color-hover);
+    color: var(--ax-color-content-default);
+  }
+
+  .side-nav-item.active {
+    background: var(--ax-color-accent-surface);
+    color: var(--ax-color-accent-default);
+    font-weight: var(--ax-font-weight-medium);
+  }
+
+  .side-nav-item-icon {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .side-nav-item-icon svg {
+    width: 18px;
+    height: 18px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* ── Nav footer ── */
+  .side-nav-footer {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--ax-space-sm) var(--ax-space-md);
+    border-top: 1px solid var(--ax-color-border-default);
+  }
+
+  .side-nav-user {
+    display: flex;
+    align-items: center;
+    gap: var(--ax-space-xs);
+    cursor: pointer;
+    border: none;
+    background: none;
+    padding: var(--ax-space-xxxs);
+    border-radius: var(--ax-radius-sm);
+    transition: background .15s;
+  }
+
+  .side-nav-user:hover {
+    background: var(--ax-color-hover);
+  }
+
+  .side-nav-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--ax-radius-full);
+    background: var(--ax-color-grey-100);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--ax-font-size-caption);
+    font-weight: var(--ax-font-weight-semibold);
+    color: var(--ax-color-content-secondary);
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .side-nav-avatar-status {
+    position: absolute;
+    bottom: -1px;
+    right: -1px;
+    width: 10px;
+    height: 10px;
+    border-radius: var(--ax-radius-full);
+    background: var(--ax-color-green-500);
+    border: 2px solid var(--ax-color-white);
+  }
+
+  .side-nav-footer-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--ax-space-xxxxs);
+  }
+
+  /* ── Expand button (shown when nav is collapsed) ── */
+  .side-nav-expand-btn {
+    position: fixed;
+    top: var(--ax-space-sm);
+    left: var(--ax-space-sm);
+    width: 32px;
+    height: 32px;
+    border-radius: var(--ax-radius-md);
+    border: 1px solid var(--ax-color-border-default);
+    background: var(--ax-color-white);
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--ax-shadow-component);
+    transition: background .15s, box-shadow .15s;
+    z-index: 25;
+    color: var(--ax-color-content-secondary);
+  }
+
+  .side-nav-expand-btn:hover {
+    background: var(--ax-color-grey-50);
+    box-shadow: var(--ax-shadow-elevated);
+  }
+
+  .side-nav-expand-btn.visible {
+    display: flex;
+  }
+
+  .side-nav-expand-btn svg {
+    width: 18px;
+    height: 18px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+</style>
+</head>
+<body>
+
+  <!-- Expand button (visible when nav is collapsed) -->
+  <button class="side-nav-expand-btn" id="sideNavExpandBtn" title="Show sidebar">
+    <svg viewBox="0 0 24 24"><path d="M21 3H3v18h18V3z"/><path d="M9 3v18"/><path d="M14 9l3 3-3 3"/></svg>
+  </button>
+
+  <!-- Side Navigation -->
+  <nav class="side-nav" id="sideNav">
+    <div class="side-nav-inner">
+      <!-- Header -->
+      <div class="side-nav-header">
+        <button class="side-nav-home">
+          <div class="side-nav-home-icon">
+            <svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>
+          </div>
+          <span class="side-nav-home-label">Home</span>
+          <svg class="side-nav-home-chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="side-nav-header-actions">
+          <button class="side-nav-icon-btn" title="Search">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          </button>
+          <button class="side-nav-icon-btn" id="sideNavCollapseBtn" title="Hide sidebar">
+            <svg viewBox="0 0 24 24"><path d="M21 3H3v18h18V3z"/><path d="M9 3v18"/><path d="M16 15l-3-3 3-3"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Body -->
+      <div class="side-nav-body">
+        <button class="side-nav-item active">
+          <span class="side-nav-item-icon">
+            <svg viewBox="0 0 24 24"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 00-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 012-3.95A12.88 12.88 0 0122 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 01-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
+          </span>
+          Getting started
+        </button>
+      </div>
+
+      <!-- Footer -->
+      <div class="side-nav-footer">
+        <button class="side-nav-user">
+          <div class="side-nav-avatar">
+            JN
+            <div class="side-nav-avatar-status"></div>
+          </div>
+        </button>
+        <div class="side-nav-footer-actions">
+          <button class="side-nav-icon-btn" title="Settings">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+          </button>
+          <button class="side-nav-icon-btn" title="Notifications">
+            <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main chat -->
+  <main class="main">
+    <!-- Floating Progress Card -->
+    <div class="floating-progress-card" id="floatingProgressCard">
+      <div class="floating-progress-header" id="floatingProgressToggle">
+        <span class="floating-progress-title">Progress</span>
+        <svg class="floating-progress-chevron" viewBox="0 0 16 16" fill="none">
+          <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="floating-progress-body" id="floatingProgressBody">
+        <div class="fp-step active" data-step="1">
+          <div class="fp-step-icon">
+            <svg viewBox="0 0 12 12"><polyline points="2.5 6 5 8.5 9.5 3.5"/></svg>
+          </div>
+          <span class="fp-step-label">Welcome</span>
+        </div>
+        <div class="fp-step upcoming" data-step="2">
+          <div class="fp-step-icon">
+            <svg viewBox="0 0 12 12"><polyline points="2.5 6 5 8.5 9.5 3.5"/></svg>
+          </div>
+          <span class="fp-step-label">Knowledge</span>
+        </div>
+        <div class="fp-step upcoming" data-step="3">
+          <div class="fp-step-icon">
+            <svg viewBox="0 0 12 12"><polyline points="2.5 6 5 8.5 9.5 3.5"/></svg>
+          </div>
+          <span class="fp-step-label">Configure</span>
+        </div>
+        <div class="fp-step upcoming" data-step="4">
+          <div class="fp-step-icon">
+            <svg viewBox="0 0 12 12"><polyline points="2.5 6 5 8.5 9.5 3.5"/></svg>
+          </div>
+          <span class="fp-step-label">Complete</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-header">
+      <div class="icon-circle">
+        <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      </div>
+      <span class="chat-header-title">Gorgias</span>
+    </div>
+    <div class="chat-container" id="chatContainer">
+      <div class="messages" id="messages">
+        <!-- Assistant message 1 (typed on load) -->
+        <div class="msg-assistant" id="assistantMsg1" style="opacity:0;">
+          <div class="bubble"><span id="typedText1"></span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Control Panel -->
+    <div class="control-panel-wrapper">
+      <div class="control-panel-outer">
+        <div class="control-panel-card">
+
+          <!-- Card body -->
+          <div class="control-panel-body" id="controlPanelBody">
+            <!-- Text input field -->
+            <div class="input-field-wrapper" id="textInputWrapper">
+              <textarea class="text-input" id="mainTextInput" placeholder="Ask a question..." rows="1"></textarea>
+              <div class="input-field-separator"></div>
+              <div class="input-field-actions">
+                <button class="input-action-btn" title="Attach file">
+                  <svg viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+                </button>
+                <button class="input-action-btn" title="Voice input">
+                  <svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M19 10v1a7 7 0 01-14 0v-1"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+                </button>
+                <button class="send-btn" id="mainSendBtn">
+                  <svg viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Add source link (shown during knowledge step) -->
+            <button class="add-source-link" id="addSourceLink">
+              <svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+              Add a knowledge source
+            </button>
+
+      <!-- Selection card: Goal -->
+      <div class="selection-card" id="selectionCard1">
+        <div class="selection-label">What would you like to set up?</div>
+        <div class="selection-options">
+          <button class="option-btn" id="optAIAgent">
+            <div class="option-radio"></div>
+            Set up AI Agent to handle customer questions
+          </button>
+          <button class="option-btn" id="optHelpDesk">
+            <div class="option-radio"></div>
+            Set up my Help Desk for my support team
+          </button>
+          <div class="option-other">
+            <div class="option-radio"></div>
+            <input type="text" placeholder="Something else..." />
+          </div>
+        </div>
+      </div>
+
+      <!-- Connection card: Shopify -->
+      <div class="selection-card" id="connectionCard">
+        <div class="connection-card-inner" id="connectionInner">
+          <div class="connection-icon">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M15.5 3.5l.9 3.6-2.4.7c-.1-.6-.4-1.2-.8-1.6-.5-.5-1.1-.7-1.7-.7h-.3l-.5-.8c-.7-.4-1.5-.5-2.3-.3-2.1.6-3.2 3-3.5 4.4l-2.5.7L2 7.2 7.5 1l.3.1c1 .3 1.7 1 2.1 1.8.5-.5 1.2-.8 2-.9 1.2-.2 2.4.2 3.2 1.1l.4.4z" fill="#95BF47"/><path d="M16.4 7.1l-.1.1c0-.1-.1-.3-.1-.4l-1-1.2c-.3-.3-.6-.5-1-.6l.5 2.5 1.7-.4zm-4.6-3.3c-.1 0-.2 0-.3.1.7.3 1.2.9 1.5 1.6l1.8-.5c-.3-1-.9-1.3-1.5-1.3-.5 0-1 .1-1.5.1z" fill="#5E8E3E"/><path d="M12.8 8.5L11.6 12c0 0-1.3-.6-1.3-.6-.1 2.5-.5 5-1.6 6.8l-.2.3c-.1.1-.2.2-.3.2 0 0-.1 0-.1 0-.7-.1-1-1.1-1-1.1C5.8 14.4 8.1 8 8.1 8l2.1-.6c0 0 .1.4.1.6.1.4.2.6.2.6l2.3-.6v.5z" fill="#5E8E3E"/><path d="M16.3 7.2s-3.7 1.1-5 1.5c0 0 1.2 8.1 1.2 8.5 0 .3.2.5.4.5.3 0 .8-.5.8-.5s2.5-2.9 2.9-7.8l-.1-.1-.2-2.1z" fill="#95BF47"/><path d="M14.5 22l4.5-1s-1.6-10.6-1.6-10.7h-.1l-1.7.5c-.4 4.8-2.9 7.8-2.9 7.8s-.5.5-.8.5c-.1 0-.2 0-.3-.1L14.5 22z" fill="#5E8E3E"/></svg>
+          </div>
+          <div class="connection-info">
+            <div class="connection-title">Connect your Shopify store</div>
+            <div class="connection-desc">We'll import your products, orders, and customer data to power your AI Agent.</div>
+          </div>
+          <button class="connection-btn" id="connectShopifyBtn">Connect Shopify</button>
+        </div>
+        <div class="connection-success" id="connectionSuccess" style="display:none;">
+          <div class="connection-success-icon">
+            <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+          </div>
+          <div class="connection-info">
+            <div class="connection-title">stevemadden.com connected</div>
+            <div class="connection-desc">Syncing products, orders, and customer data...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Selection card: Knowledge sources -->
+      <div class="selection-card" id="selectionCardKnowledge">
+        <div class="selection-label">Do these knowledge sources look good?</div>
+        <div class="selection-options">
+          <button class="option-btn" id="optConfirmKnowledge">
+            <div class="option-radio"></div>
+            Looks good, let's continue
+          </button>
+          <button class="option-btn" id="optSkipKnowledge">
+            <div class="option-radio"></div>
+            Skip this for now
+          </button>
+        </div>
+      </div>
+
+      <!-- Selection card: Guidance preview -->
+      <div class="selection-card" id="selectionCardGuidance">
+        <div class="selection-label">Want to review the guidance rules we've prepared?</div>
+        <div class="selection-options">
+          <button class="option-btn" id="optGuidanceContinue">
+            <div class="option-radio"></div>
+            Got it, let's continue
+          </button>
+          <button class="option-btn" id="optGuidanceSkip">
+            <div class="option-radio"></div>
+            Skip for now
+          </button>
+        </div>
+      </div>
+
+      <!-- Selection card: Chat preview feedback -->
+      <div class="selection-card" id="selectionCardPreview">
+        <div class="selection-label">How does the AI Agent look?</div>
+        <div class="selection-options">
+          <button class="option-btn" id="optLooksGreat">
+            <div class="option-radio"></div>
+            Looks great, let's continue
+          </button>
+          <button class="option-btn" id="optAdjustTone">
+            <div class="option-radio"></div>
+            I'd like to adjust the tone
+          </button>
+          <div class="option-other">
+            <div class="option-radio"></div>
+            <input type="text" placeholder="I have some feedback..." />
+          </div>
+        </div>
+      </div>
+
+      <!-- Selection card: Tone of voice -->
+      <div class="selection-card" id="selectionCardTone">
+        <div class="selection-label">Choose your AI Agent's tone of voice</div>
+        <div class="selection-options">
+          <button class="option-btn tone-option active-tone" id="optToneProfessional" data-tone="professional">
+            <div class="option-radio" style="border-color:#7e55f6;background:#7e55f6;box-shadow:inset 0 0 0 3px #fff;"></div>
+            <div>
+              <strong>Professional & Friendly</strong>
+              <div class="tone-option-desc">Warm but polished. Detected from your website.</div>
+            </div>
+          </button>
+          <button class="option-btn tone-option" id="optToneCasual" data-tone="casual">
+            <div class="option-radio"></div>
+            <div>
+              <strong>Casual & Conversational</strong>
+              <div class="tone-option-desc">Relaxed and approachable, like texting a friend.</div>
+            </div>
+          </button>
+          <button class="option-btn tone-option" id="optTonePlayful" data-tone="playful">
+            <div class="option-radio"></div>
+            <div>
+              <strong>Playful & Energetic</strong>
+              <div class="tone-option-desc">Fun and upbeat with personality.</div>
+            </div>
+          </button>
+        </div>
+        <button class="confirm-tone-btn" id="confirmToneBtn">Confirm tone</button>
+      </div>
+
+      <!-- Selection card: Channels -->
+      <div class="selection-card" id="selectionCardChannels">
+        <div class="selection-label">Would you like to connect any channels now?</div>
+        <div class="selection-options">
+          <button class="option-btn" id="optConnectChannels">
+            <div class="option-radio"></div>
+            I'll connect channels later from my dashboard
+          </button>
+          <div class="option-other">
+            <div class="option-radio"></div>
+            <input type="text" placeholder="Something else..." />
+          </div>
+        </div>
+      </div>
+
+      <!-- Selection card: Next steps -->
+      <div class="selection-card" id="selectionCardNextSteps">
+        <div class="selection-label">What would you like to do next?</div>
+        <div class="selection-options">
+          <button class="option-btn" id="optTurnOnGuidance">
+            <div class="option-radio"></div>
+            Turn on guidance rules in-product
+          </button>
+          <button class="option-btn" id="optSetupHelpdesk">
+            <div class="option-radio"></div>
+            Set up my Help Desk
+          </button>
+          <button class="option-btn" id="optInviteTeam">
+            <div class="option-radio"></div>
+            Invite teammates
+          </button>
+          <div class="option-other">
+            <div class="option-radio"></div>
+            <input type="text" placeholder="Something else..." />
+          </div>
+        </div>
+      </div>
+
+            <!-- Action bar -->
+            <div class="action-bar" id="actionBar">
+              <div class="action-bar-left">
+                <button class="btn-skip-outlined" id="btnSkipLeft">Skip for now</button>
+              </div>
+              <div class="action-bar-right">
+                <button class="btn-skip-text" id="btnSkipRight">Skip for now</button>
+                <button class="btn-continue" id="btnContinue">Continue to Knowledge</button>
+              </div>
+            </div>
+
+          </div><!-- /control-panel-body -->
+        </div><!-- /control-panel-card -->
+      </div><!-- /control-panel-outer -->
+    </div><!-- /control-panel-wrapper -->
+  </main>
+
+  <!-- Preview Panel (right side) -->
+  <aside class="preview-panel" id="previewPanel">
+    <div class="preview-panel-header">
+      <div class="preview-panel-title">AI Agent Preview</div>
+      <select class="flow-select" id="conversationSelect">
+        <option value="wismo">Where is my order?</option>
+        <option value="returns">How do I return an item?</option>
+        <option value="recommendation">Product recommendation</option>
+      </select>
+    </div>
+    <div class="preview-panel-body">
+      <div class="preview-loading" id="previewLoading" style="display:none;">
+        <div class="preview-spinner"></div>
+      </div>
+      <div class="preview-content" id="previewContent">
+        <div class="chat-sim">
+          <div class="chat-sim-customer">
+            <div class="chat-sim-label">Customer</div>
+            <div class="chat-sim-bubble customer" id="simCustomerMsg"></div>
+          </div>
+          <div class="chat-sim-agent">
+            <div class="chat-sim-label">AI Agent</div>
+            <div class="chat-sim-bubble agent" id="simAgentMsg"></div>
+          </div>
+        </div>
+        <div class="tone-attribution" id="toneAttribution">
+          <div class="tone-badge" id="toneBadge">Professional & Friendly</div>
+          <div class="tone-source">Tone derived from stevemadden.com</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+<script>
+  // ─── DOM ───
+  const chatContainer = document.getElementById('chatContainer');
+  const messagesEl = document.getElementById('messages');
+  const textInputWrapper = document.getElementById('textInputWrapper');
+  const mainTextInput = document.getElementById('mainTextInput');
+  const mainSendBtn = document.getElementById('mainSendBtn');
+  const actionBar = document.getElementById('actionBar');
+  const btnSkipLeft = document.getElementById('btnSkipLeft');
+  const btnSkipRight = document.getElementById('btnSkipRight');
+  const btnContinue = document.getElementById('btnContinue');
+
+  // ─── Typing speed (20% faster: 18ms → 14ms) ───
+  const TYPE_SPEED = 14;
+
+  // ─── Data ───
+
+  const KNOWLEDGE_SOURCES = [
+    { id: 'ks1', title: 'Return & Exchange Policy', description: 'Covers 30-day return window, exchange process, and refund timelines for all orders.', sourceUrl: 'stevemadden.com/pages/returns', type: 'policy', badge: 'Policy' },
+    { id: 'ks2', title: 'Shipping Information', description: 'Standard, express, and international shipping options with estimated delivery times and costs.', sourceUrl: 'stevemadden.com/pages/shipping', type: 'faq', badge: 'FAQ' },
+    { id: 'ks3', title: 'Product Catalog', description: 'Full product inventory including descriptions, pricing, availability, and sizing information.', sourceUrl: 'stevemadden.com/collections/all', type: 'catalog', badge: 'Catalog' },
+    { id: 'ks4', title: 'About Steve Madden', description: 'Brand story, mission, and values — used to inform AI agent personality and brand voice.', sourceUrl: 'stevemadden.com/pages/about', type: 'brand', badge: 'Brand' }
+  ];
+
+  const SAMPLE_CONVERSATIONS = [
+    {
+      id: 'wismo',
+      customerMessage: "Hi, I placed an order 3 days ago and I still haven't received any shipping update. Can you help me find out where my order is?",
+      agentResponse: {
+        professional: "Hi there! I'd be happy to help you track your order. I pulled up your most recent order #SM-48291, placed on February 28th. It shipped yesterday via UPS and is currently in transit. Here's your tracking link: ups.com/track/1Z999... You should receive it by Thursday, March 6th. Let me know if there's anything else I can help with!",
+        casual: "Hey! No worries, let me check on that real quick. Found it — order #SM-48291 shipped out yesterday! It's on its way via UPS and should land at your door by Thursday. Here's the tracking link so you can follow along: ups.com/track/1Z999... Anything else you need?",
+        playful: "Oh no, the waiting game is the worst! Let me play detective for you. Found your order #SM-48291 — great news, it shipped yesterday and is making its way to you via UPS! Expected arrival: Thursday, March 6th. Here's your tracking link to stalk your package: ups.com/track/1Z999... Need anything else?"
+      }
+    },
+    {
+      id: 'returns',
+      customerMessage: "I received my order but the shoes don't fit. How do I start a return?",
+      agentResponse: {
+        professional: "I'm sorry to hear the fit wasn't right! Steve Madden offers free returns within 30 days of delivery. I've generated a prepaid return label for order #SM-47832 — you'll find it in your email shortly. Simply pack the shoes in their original box, attach the label, and drop it off at any UPS location. Your refund will be processed within 3-5 business days after we receive the return. Would you prefer a refund or an exchange for a different size?",
+        casual: "Bummer about the fit! No stress though — returns are super easy. You've got 30 days and shipping is on us. I just sent a prepaid return label to your email for order #SM-47832. Box 'em up, slap the label on, and drop it at any UPS spot. Refund hits in 3-5 days after we get them back. Want a refund or swap for a different size?",
+        playful: "Ugh, the wrong fit is the worst! But don't worry — we've got you covered. I just zapped a free return label to your inbox for order #SM-47832. Pop those shoes back in the box, stick on the label, and hand it off to UPS. Your refund will show up in 3-5 days once we get them back. Or want to swap for a different size instead?"
+      }
+    },
+    {
+      id: 'recommendation',
+      customerMessage: "I'm looking for comfortable heels I can wear to work. Any suggestions?",
+      agentResponse: {
+        professional: "Great question! Based on what's popular right now, I'd recommend: The Illery block heel ($99) — a versatile 3-inch block heel with cushioned insole, available in black, nude, and navy. The Randi kitten heel ($89) — a sleek 2-inch pointed toe perfect for all-day wear. And the Faye platform pump ($109) — the platform makes the 4-inch heel feel more like 3. Would you like me to help you narrow it down?",
+        casual: "Ooh, work-comfy heels — I've got some great picks! The Illery ($99) is a 3-inch block heel with a cushioned insole that's basically a cloud for your feet. The Randi ($89) is a cute kitten heel that won't kill you after 8 hours. And the Faye ($109) has a platform that makes the heel way more manageable. Want me to help you pick the perfect one?",
+        playful: "Work heels that won't make you want to cry by 3pm? Say no more! The Illery ($99) — a gorgeous block heel with a cushy insole, because your feet deserve nice things. The Randi ($89) — kitten heel vibes, all-day comfort, zero regrets. And the Faye ($109) — that sneaky platform makes a 4-inch heel feel like a 3. Which one is calling your name?"
+      }
+    }
+  ];
+
+  const TONE_OPTIONS = [
+    { id: 'professional', label: 'Professional & Friendly' },
+    { id: 'casual', label: 'Casual & Conversational' },
+    { id: 'playful', label: 'Playful & Energetic' }
+  ];
+
+  const GUIDANCE_TEMPLATES = [
+    { id: 'g1', title: 'Order Tracking (WISMO)', description: 'When a customer asks where their order is, look up the order status, provide the tracking number, and share the estimated delivery date. If the order is delayed, proactively offer solutions.', recommended: true },
+    { id: 'g2', title: 'Returns & Exchanges', description: 'When a customer wants to return or exchange an item, verify the order is within the 30-day return window, generate a prepaid return label, and explain the refund timeline.', recommended: false },
+    { id: 'g3', title: 'Product Recommendations', description: 'When a customer asks for product suggestions, use their browsing history, past purchases, and stated preferences to recommend relevant products from the catalog.', recommended: false }
+  ];
+
+  // ─── State ───
+  let currentTone = 'professional';
+  let currentConversation = 'wismo';
+  let selectedToneLabel = 'Professional & Friendly';
+  let knowledgeConfirmed = false;
+  let guidanceViewed = false;
+  let toneConfigured = false;
+  let channelsConnected = false;
+
+  // ─── Core Utilities ───
+
+  function typeText(element, text, speed, onDone) {
+    if (text.includes('<')) {
+      element.innerHTML = text;
+      const fullHTML = element.innerHTML;
+      const tmp = document.createElement('div');
+      tmp.innerHTML = text;
+      const plainText = tmp.textContent;
+      let htmlIdx = 0;
+      let charIdx = 0;
+      element.innerHTML = '';
+
+      function nextChar() {
+        if (charIdx < plainText.length) {
+          while (htmlIdx < fullHTML.length) {
+            if (fullHTML[htmlIdx] === '<') {
+              const closeIdx = fullHTML.indexOf('>', htmlIdx);
+              htmlIdx = closeIdx + 1;
+            } else {
+              htmlIdx++;
+              charIdx++;
+              break;
+            }
+          }
+          element.innerHTML = fullHTML.substring(0, htmlIdx);
+          chatContainer.scrollTop = chatContainer.scrollHeight;
+          setTimeout(nextChar, speed);
+        } else {
+          element.innerHTML = fullHTML;
+          chatContainer.scrollTop = chatContainer.scrollHeight;
+          if (onDone) onDone();
+        }
+      }
+      nextChar();
+    } else {
+      let i = 0;
+      function next() {
+        if (i < text.length) {
+          element.textContent += text.charAt(i);
+          i++;
+          chatContainer.scrollTop = chatContainer.scrollHeight;
+          setTimeout(next, speed);
+        } else if (onDone) {
+          onDone();
+        }
+      }
+      next();
+    }
+  }
+
+  function addUserMessage(text) {
+    const div = document.createElement('div');
+    div.className = 'msg-user';
+    div.innerHTML = '<div class="bubble">' + text + '</div>';
+    div.style.opacity = '0';
+    messagesEl.appendChild(div);
+    requestAnimationFrame(() => {
+      div.style.transition = 'opacity .3s ease';
+      div.style.opacity = '1';
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    });
+    return div;
+  }
+
+  function addAssistantMessage(text, speed, onDone) {
+    const div = document.createElement('div');
+    div.className = 'msg-assistant';
+    div.style.opacity = '0';
+    div.innerHTML = '<div class="bubble"><span class="typed-span"></span></div>';
+    messagesEl.appendChild(div);
+
+    requestAnimationFrame(() => {
+      div.style.transition = 'opacity .3s ease';
+      div.style.opacity = '1';
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+
+      const span = div.querySelector('.typed-span');
+      typeText(span, text, speed, () => {
+        if (onDone) onDone();
+      });
+    });
+  }
+
+  function showTextInput() {
+    textInputWrapper.classList.remove('hidden');
+    mainTextInput.value = '';
+    mainTextInput.style.height = 'auto';
+    mainSendBtn.classList.remove('active');
+    // Show the action bar with current step context
+    showActionBarForCurrentStep();
+  }
+
+  function hideTextInput() {
+    textInputWrapper.classList.add('hidden');
+  }
+
+  // Track which major step we're in for action bar labels
+  let currentMajorStep = 1; // 1=Welcome, 2=Knowledge, 3=Configure, 4=Complete
+
+  function showActionBarForCurrentStep() {
+    const stepConfig = {
+      1: { continueLabel: 'Continue to Knowledge', showSkipLeft: false, showSkipRight: false },
+      2: { continueLabel: 'Continue to Configure', showSkipLeft: true, showSkipRight: true },
+      3: { continueLabel: 'Continue to Complete', showSkipLeft: true, showSkipRight: true },
+      4: { continueLabel: 'Finish setup', showSkipLeft: false, showSkipRight: false }
+    };
+    const cfg = stepConfig[currentMajorStep] || stepConfig[1];
+    updateActionBar({
+      continueLabel: cfg.continueLabel,
+      onContinue: () => handleContinue(),
+      skipLabel: 'Skip for now',
+      onSkip: () => handleSkip(),
+      showSkipLeft: cfg.showSkipLeft,
+      showSkipRight: cfg.showSkipRight,
+      show: true
+    });
+  }
+
+  function handleContinue() {
+    if (currentMajorStep === 1) {
+      // Trigger AI Agent selection
+      document.getElementById('optAIAgent').click();
+    } else if (currentMajorStep === 2) {
+      advanceStep(3);
+      currentMajorStep = 3;
+      hideActionBar();
+      hideAddSourceLink();
+      startStep3_ChatPreview();
+    } else if (currentMajorStep === 3) {
+      advanceStep(4);
+      currentMajorStep = 4;
+      hideActionBar();
+      closePreviewPanel();
+      setTimeout(() => startStep4_Complete(), 500);
+    }
+  }
+
+  function handleSkip() {
+    handleContinue(); // Skip = advance to next major step
+  }
+
+  function hideSelectionCard(cardId) {
+    const card = document.getElementById(cardId);
+    card.classList.add('hiding');
+    card.classList.remove('visible');
+    setTimeout(() => {
+      card.style.display = 'none';
+      card.classList.remove('hiding');
+    }, 450);
+  }
+
+  function showSelectionCard(cardId) {
+    hideTextInput();
+    hideActionBar();
+    const card = document.getElementById(cardId);
+    card.style.display = 'block';
+    requestAnimationFrame(() => {
+      card.classList.add('visible');
+    });
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+  }
+
+  // ─── Floating Progress Card (4 steps) ───
+
+  function advanceStep(stepNumber) {
+    document.querySelectorAll('.fp-step').forEach(step => {
+      const s = parseInt(step.dataset.step);
+      if (s < stepNumber) {
+        step.className = 'fp-step completed';
+      } else if (s === stepNumber) {
+        step.className = 'fp-step active';
+      } else {
+        step.className = 'fp-step upcoming';
+      }
+    });
+  }
+
+  // ─── Floating Progress Card — Collapse Toggle ───
+  document.getElementById('floatingProgressToggle').addEventListener('click', () => {
+    document.getElementById('floatingProgressCard').classList.toggle('collapsed');
+  });
+
+  // ─── Action Bar management ───
+
+  // Tracks the current action bar continue handler
+  let currentContinueHandler = null;
+  let currentSkipHandler = null;
+
+  function updateActionBar(opts) {
+    // opts: { continueLabel, onContinue, skipLabel, onSkip, showSkipLeft, showSkipRight, show }
+    if (opts.show === false) {
+      actionBar.classList.add('hidden');
+      return;
+    }
+    actionBar.classList.remove('hidden');
+
+    // Continue button
+    btnContinue.textContent = opts.continueLabel || 'Continue';
+    if (currentContinueHandler) btnContinue.removeEventListener('click', currentContinueHandler);
+    currentContinueHandler = opts.onContinue || null;
+    if (currentContinueHandler) btnContinue.addEventListener('click', currentContinueHandler);
+
+    // Skip buttons
+    if (opts.showSkipLeft !== false) {
+      btnSkipLeft.style.display = '';
+      btnSkipLeft.textContent = opts.skipLabel || 'Skip for now';
+      if (currentSkipHandler) btnSkipLeft.removeEventListener('click', currentSkipHandler);
+      currentSkipHandler = opts.onSkip || null;
+      if (currentSkipHandler) btnSkipLeft.addEventListener('click', currentSkipHandler);
+    } else {
+      btnSkipLeft.style.display = 'none';
+    }
+
+    if (opts.showSkipRight !== false) {
+      btnSkipRight.style.display = '';
+      btnSkipRight.textContent = opts.skipLabel || 'Skip for now';
+      // Re-use same skip handler
+      btnSkipRight.onclick = opts.onSkip || null;
+    } else {
+      btnSkipRight.style.display = 'none';
+    }
+  }
+
+  function hideActionBar() {
+    actionBar.classList.add('hidden');
+  }
+
+  // ─── Input activation ───
+
+  mainTextInput.addEventListener('input', () => {
+    if (mainTextInput.value.trim().length > 0) {
+      mainSendBtn.classList.add('active');
+    } else {
+      mainSendBtn.classList.remove('active');
+    }
+    mainTextInput.style.height = 'auto';
+    mainTextInput.style.height = mainTextInput.scrollHeight + 'px';
+  });
+
+  mainTextInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+    }
+  });
+
+  // ─── Preview Panel ───
+
+  function openPreviewPanel() {
+    const panel = document.getElementById('previewPanel');
+    const loading = document.getElementById('previewLoading');
+    const content = document.getElementById('previewContent');
+
+    content.classList.remove('visible');
+    loading.style.display = 'flex';
+
+    setTimeout(() => {
+      panel.classList.add('open');
+      setTimeout(() => {
+        renderChatPreview();
+        loading.style.display = 'none';
+        requestAnimationFrame(() => {
+          content.classList.add('visible');
+        });
+      }, 600);
+    }, 400);
+  }
+
+  function closePreviewPanel() {
+    document.getElementById('previewPanel').classList.remove('open');
+  }
+
+  function renderChatPreview() {
+    const conv = SAMPLE_CONVERSATIONS.find(c => c.id === currentConversation);
+    document.getElementById('simCustomerMsg').textContent = conv.customerMessage;
+    document.getElementById('simAgentMsg').textContent = conv.agentResponse[currentTone];
+    document.getElementById('toneBadge').textContent = TONE_OPTIONS.find(t => t.id === currentTone).label;
+  }
+
+  document.getElementById('conversationSelect').addEventListener('change', (e) => {
+    currentConversation = e.target.value;
+    renderChatPreview();
+  });
+
+  // ════════════════════════════════════════════════
+  // STEP 1: WELCOME
+  // ════════════════════════════════════════════════
+
+  const welcomeMsg = "Hi there! Welcome to Gorgias — I'm here to help you get set up. To make sure I point you in the right direction, what are you looking to accomplish today?";
+
+  // Hide action bar initially
+  hideActionBar();
+
+  setTimeout(() => {
+    const a1 = document.getElementById('assistantMsg1');
+    a1.style.transition = 'opacity .3s ease';
+    a1.style.opacity = '1';
+
+    const span1 = document.getElementById('typedText1');
+    typeText(span1, welcomeMsg, 16, () => {
+      setTimeout(() => {
+        showSelectionCard('selectionCard1');
+      }, 400);
+    });
+  }, 800);
+
+  // AI Agent path
+  document.getElementById('optAIAgent').addEventListener('click', () => {
+    hideSelectionCard('selectionCard1');
+    currentMajorStep = 2;
+    showTextInput();
+    setTimeout(() => {
+      addUserMessage("Set up AI Agent to handle customer questions");
+      advanceStep(2);
+      setTimeout(() => startStep2_ConnectShopify(), 2000);
+    }, 300);
+  });
+
+  // Help Desk dead end
+  document.getElementById('optHelpDesk').addEventListener('click', () => {
+    hideSelectionCard('selectionCard1');
+    showTextInput();
+    setTimeout(() => {
+      addUserMessage("Set up my Help Desk for my support team");
+      setTimeout(() => {
+        addAssistantMessage(
+          "Great choice! The guided Help Desk setup flow is coming soon. In the meantime, I'd recommend starting with your AI Agent — it's the fastest way to start handling customer questions automatically, and it works seamlessly alongside your Help Desk once that's ready.",
+          TYPE_SPEED
+        );
+      }, 2000);
+    }, 300);
+  });
+
+  // ════════════════════════════════════════════════
+  // STEP 2: KNOWLEDGE
+  //   2a. Connect Shopify
+  //   2b. Knowledge Sources (optional)
+  //   2c. Guidance Preview (optional, no activation)
+  // ════════════════════════════════════════════════
+
+  // ── 2a: Connect Shopify ──
+
+  function startStep2_ConnectShopify() {
+    addAssistantMessage(
+      "Great choice! To get your AI Agent up and running with the most relevant data, let's start by connecting your Shopify store. This gives the agent access to your product catalog, order data, and customer information.",
+      TYPE_SPEED,
+      () => {
+        setTimeout(() => {
+          showSelectionCard('connectionCard');
+        }, 400);
+      }
+    );
+  }
+
+  document.getElementById('connectShopifyBtn').addEventListener('click', () => {
+    const btn = document.getElementById('connectShopifyBtn');
+    btn.textContent = 'Connecting...';
+    btn.classList.add('loading');
+
+    setTimeout(() => {
+      document.getElementById('connectionInner').style.display = 'none';
+      document.getElementById('connectionSuccess').style.display = 'flex';
+
+      setTimeout(() => {
+        hideSelectionCard('connectionCard');
+        showTextInput();
+        setTimeout(() => startStep2_KnowledgeSources(), 1500);
+      }, 1500);
+    }, 2000);
+  });
+
+  // ── 2b: Knowledge Sources ──
+
+  function buildKnowledgeSourceCards() {
+    let html = '';
+    KNOWLEDGE_SOURCES.forEach((ks, i) => {
+      html += '<div class="inline-card" data-source-index="' + i + '">' +
+        '<div class="inline-card-header">' +
+          '<div class="inline-card-title">' + ks.title + '</div>' +
+          '<span class="source-badge ' + ks.type + '">' + ks.badge + '</span>' +
+          '<button class="inline-card-remove" title="Remove source" data-source-index="' + i + '">' +
+            '<svg viewBox="0 0 24 24"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>' +
+          '</button>' +
+        '</div>' +
+        '<div class="inline-card-desc">' + ks.description + '</div>' +
+        '<div class="inline-card-url">' + ks.sourceUrl + '</div>' +
+      '</div>';
+    });
+    return html;
+  }
+
+  function startStep2_KnowledgeSources() {
+    const msg = "Your Shopify store is connected! I've also scanned your website and found some knowledge sources that will help your AI Agent give better answers:" +
+      '<br><br>' + buildKnowledgeSourceCards();
+
+    addAssistantMessage(msg, TYPE_SPEED, () => {
+      // Show the add source link in the control panel
+      document.getElementById('addSourceLink').classList.add('visible');
+      setTimeout(() => {
+        showSelectionCard('selectionCardKnowledge');
+      }, 400);
+    });
+  }
+
+  // Delegated click handler for knowledge source X remove buttons
+  chatContainer.addEventListener('click', (e) => {
+    const removeBtn = e.target.closest('.inline-card-remove');
+    if (!removeBtn) return;
+    const card = removeBtn.closest('.inline-card');
+    if (!card) return;
+    card.style.maxHeight = card.offsetHeight + 'px';
+    requestAnimationFrame(() => {
+      card.classList.add('removed');
+    });
+  });
+
+  // Add source link click handler
+  document.getElementById('addSourceLink').addEventListener('click', () => {
+    // If selection card is visible, hide it and show text input
+    const knowledgeCard = document.getElementById('selectionCardKnowledge');
+    if (knowledgeCard && knowledgeCard.classList.contains('visible')) {
+      hideSelectionCard('selectionCardKnowledge');
+      showTextInput();
+    }
+    mainTextInput.placeholder = 'Paste a URL or describe the source to add...';
+    setTimeout(() => mainTextInput.focus(), 100);
+  });
+
+  function hideAddSourceLink() {
+    document.getElementById('addSourceLink').classList.remove('visible');
+    mainTextInput.placeholder = 'Ask a question...';
+  }
+
+  document.getElementById('optConfirmKnowledge').addEventListener('click', () => {
+    knowledgeConfirmed = true;
+    hideSelectionCard('selectionCardKnowledge');
+    hideAddSourceLink();
+    showTextInput();
+    setTimeout(() => {
+      addUserMessage("Looks good, let's continue");
+      setTimeout(() => startStep2_GuidancePreview(), 2000);
+    }, 300);
+  });
+
+  document.getElementById('optSkipKnowledge').addEventListener('click', () => {
+    hideSelectionCard('selectionCardKnowledge');
+    hideAddSourceLink();
+    showTextInput();
+    setTimeout(() => {
+      addUserMessage("Skip this for now");
+      setTimeout(() => startStep2_GuidancePreview(), 2000);
+    }, 300);
+  });
+
+  // ── 2c: Guidance Preview (preview-only, no activation) ──
+
+  function buildGuidanceCards() {
+    let html = '';
+    GUIDANCE_TEMPLATES.forEach(g => {
+      html += '<div class="inline-card">' +
+        '<div class="inline-card-header">' +
+          '<div class="inline-card-title">' + g.title + '</div>' +
+          (g.recommended ? '<span class="recommended-badge">Recommended</span>' : '<span class="preview-badge">Preview</span>') +
+        '</div>' +
+        '<div class="inline-card-desc">' + g.description + '</div>' +
+      '</div>';
+    });
+    return html;
+  }
+
+  function startStep2_GuidancePreview() {
+    const msg = "I've also prepared some guidance rules based on your store data. These tell your AI Agent how to handle specific customer scenarios — you can activate them anytime from your dashboard." +
+      '<br><br>' + buildGuidanceCards();
+
+    addAssistantMessage(msg, TYPE_SPEED, () => {
+      setTimeout(() => {
+        showSelectionCard('selectionCardGuidance');
+      }, 400);
+    });
+  }
+
+  document.getElementById('optGuidanceContinue').addEventListener('click', () => {
+    guidanceViewed = true;
+    hideSelectionCard('selectionCardGuidance');
+    currentMajorStep = 3;
+    showTextInput();
+    setTimeout(() => {
+      addUserMessage("Got it, let's continue");
+      advanceStep(3);
+      setTimeout(() => startStep3_ChatPreview(), 2000);
+    }, 300);
+  });
+
+  document.getElementById('optGuidanceSkip').addEventListener('click', () => {
+    hideSelectionCard('selectionCardGuidance');
+    currentMajorStep = 3;
+    showTextInput();
+    setTimeout(() => {
+      addUserMessage("Skip for now");
+      advanceStep(3);
+      setTimeout(() => startStep3_ChatPreview(), 2000);
+    }, 300);
+  });
+
+  // ════════════════════════════════════════════════
+  // STEP 3: CONFIGURE (all optional)
+  //   3a. Chat Preview
+  //   3b. Tone of Voice
+  //   3c. Channels
+  // ════════════════════════════════════════════════
+
+  // ── 3a: Chat Preview ──
+
+  function startStep3_ChatPreview() {
+    addAssistantMessage(
+      "Now let's see your AI Agent in action! I've put together a preview showing how it would respond to some of the most common customer questions. Take a look at the panel on the right.",
+      TYPE_SPEED,
+      () => {
+        setTimeout(() => {
+          openPreviewPanel();
+          setTimeout(() => {
+            showSelectionCard('selectionCardPreview');
+          }, 2000);
+        }, 600);
+      }
+    );
+  }
+
+  document.getElementById('optLooksGreat').addEventListener('click', () => {
+    hideSelectionCard('selectionCardPreview');
+    showTextInput();
+    setTimeout(() => {
+      addUserMessage("Looks great, let's continue");
+      setTimeout(() => startStep3_Tone(), 2000);
+    }, 300);
+  });
+
+  document.getElementById('optAdjustTone').addEventListener('click', () => {
+    hideSelectionCard('selectionCardPreview');
+    showTextInput();
+    setTimeout(() => {
+      addUserMessage("I'd like to adjust the tone");
+      setTimeout(() => startStep3_Tone(), 2000);
+    }, 300);
+  });
+
+  // ── 3b: Tone of Voice ──
+
+  function startStep3_Tone() {
+    addAssistantMessage(
+      'Your AI Agent\'s tone was automatically set to <strong>Professional & Friendly</strong> based on the language and style we found on stevemadden.com. You can adjust it below — the preview on the right will update in real time.',
+      TYPE_SPEED,
+      () => {
+        setTimeout(() => {
+          showSelectionCard('selectionCardTone');
+        }, 400);
+      }
+    );
+  }
+
+  // Tone option clicking — live preview
+  document.querySelectorAll('.tone-option').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tone-option').forEach(b => {
+        b.classList.remove('active-tone');
+        const radio = b.querySelector('.option-radio');
+        radio.style.borderColor = '';
+        radio.style.background = '';
+        radio.style.boxShadow = '';
+      });
+      btn.classList.add('active-tone');
+      const radio = btn.querySelector('.option-radio');
+      radio.style.borderColor = '#7e55f6';
+      radio.style.background = '#7e55f6';
+      radio.style.boxShadow = 'inset 0 0 0 3px #fff';
+
+      currentTone = btn.dataset.tone;
+      selectedToneLabel = TONE_OPTIONS.find(t => t.id === currentTone).label;
+      renderChatPreview();
+    });
+  });
+
+  document.getElementById('confirmToneBtn').addEventListener('click', () => {
+    toneConfigured = true;
+    hideSelectionCard('selectionCardTone');
+    showTextInput();
+    setTimeout(() => {
+      addUserMessage("Use " + selectedToneLabel + " tone");
+      setTimeout(() => startStep3_Channels(), 2000);
+    }, 300);
+  });
+
+  // ── 3c: Channels ──
+
+  function buildChannelCards() {
+    return '<div class="inline-card">' +
+      '<div class="channel-card-inner">' +
+        '<div class="channel-icon email"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg></div>' +
+        '<div class="channel-card-info"><div class="channel-card-title">Email</div><div class="channel-card-desc">Connect your support email to receive and respond to customer emails.</div></div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="inline-card">' +
+      '<div class="channel-card-inner">' +
+        '<div class="channel-icon chat"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>' +
+        '<div class="channel-card-info"><div class="channel-card-title">Live Chat</div><div class="channel-card-desc">Add a chat widget to your website so customers can reach you instantly.</div></div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="inline-card">' +
+      '<div class="channel-card-inner">' +
+        '<div class="channel-icon social"><svg viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg></div>' +
+        '<div class="channel-card-info"><div class="channel-card-title">Social Media</div><div class="channel-card-desc">Connect Instagram, Facebook, and other social channels to manage DMs and comments.</div></div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function startStep3_Channels() {
+    closePreviewPanel();
+
+    setTimeout(() => {
+      const msg = "Next, you can connect the channels where your customers reach out. This lets your AI Agent respond across all your support touchpoints." +
+        '<br><br>' + buildChannelCards();
+
+      addAssistantMessage(msg, TYPE_SPEED, () => {
+        setTimeout(() => {
+          showSelectionCard('selectionCardChannels');
+        }, 400);
+      });
+    }, 500);
+  }
+
+  document.getElementById('optConnectChannels').addEventListener('click', () => {
+    hideSelectionCard('selectionCardChannels');
+    currentMajorStep = 4;
+    showTextInput();
+    setTimeout(() => {
+      addUserMessage("I'll connect channels later from my dashboard");
+      advanceStep(4);
+      setTimeout(() => startStep4_Complete(), 2000);
+    }, 300);
+  });
+
+  // ════════════════════════════════════════════════
+  // STEP 4: COMPLETE
+  //   Summary checklist + Next steps
+  // ════════════════════════════════════════════════
+
+  const checkSvg = '<svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>';
+  const dashSvg = '<svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg>';
+
+  function startStep4_Complete() {
+    const summaryHtml =
+      '<div class="completion-summary">' +
+        '<div class="completion-item"><div class="completion-check">' + checkSvg + '</div><div class="completion-text"><strong>Shopify connected</strong> — stevemadden.com</div></div>' +
+        '<div class="completion-item"><div class="completion-check' + (knowledgeConfirmed ? '' : ' skipped') + '">' + (knowledgeConfirmed ? checkSvg : dashSvg) + '</div><div class="completion-text"><strong>Knowledge sources</strong>' + (knowledgeConfirmed ? ' — 4 sources imported' : ' <span class="skipped-label">— skipped, can add later</span>') + '</div></div>' +
+        '<div class="completion-item"><div class="completion-check' + (guidanceViewed ? '' : ' skipped') + '">' + (guidanceViewed ? checkSvg : dashSvg) + '</div><div class="completion-text"><strong>Guidance rules</strong>' + (guidanceViewed ? ' — 3 rules prepared (not yet active)' : ' <span class="skipped-label">— skipped, can review later</span>') + '</div></div>' +
+        '<div class="completion-item"><div class="completion-check' + (toneConfigured ? '' : ' skipped') + '">' + (toneConfigured ? checkSvg : dashSvg) + '</div><div class="completion-text"><strong>Tone of voice</strong>' + (toneConfigured ? ' — set to ' + selectedToneLabel : ' <span class="skipped-label">— using default (Professional & Friendly)</span>') + '</div></div>' +
+        '<div class="completion-item"><div class="completion-check skipped">' + dashSvg + '</div><div class="completion-text"><strong>Channels</strong> <span class="skipped-label">— not yet connected</span></div></div>' +
+      '</div>';
+
+    const msg = "Nice work! Here's a summary of your setup so far:" + '<br><br>' + summaryHtml;
+
+    addAssistantMessage(msg, TYPE_SPEED, () => {
+      setTimeout(() => {
+        addAssistantMessage(
+          "Your AI Agent is configured and ready. What would you like to tackle next?",
+          TYPE_SPEED,
+          () => {
+            setTimeout(() => {
+              showSelectionCard('selectionCardNextSteps');
+            }, 400);
+          }
+        );
+      }, 1200);
+    });
+  }
+
+  // ── Next step handlers ──
+
+  document.getElementById('optTurnOnGuidance').addEventListener('click', () => {
+    hideSelectionCard('selectionCardNextSteps');
+    showTextInput();
+    setTimeout(() => {
+      addUserMessage("Turn on guidance rules in-product");
+      setTimeout(() => {
+        addAssistantMessage(
+          "Great call! I'll take you to the Guidance settings where you can review and activate each rule. The three rules we prepared — Order Tracking, Returns & Exchanges, and Product Recommendations — are ready to go. You can enable them individually or all at once.",
+          TYPE_SPEED,
+          () => { showTextInput(); }
+        );
+      }, 2000);
+    }, 300);
+  });
+
+  document.getElementById('optSetupHelpdesk').addEventListener('click', () => {
+    hideSelectionCard('selectionCardNextSteps');
+    showTextInput();
+    setTimeout(() => {
+      addUserMessage("Set up my Help Desk");
+      setTimeout(() => {
+        addAssistantMessage(
+          "Let's get your Help Desk set up! This will give your support team a shared inbox, ticket management, and the tools they need to work alongside your AI Agent. I'll walk you through the basics.",
+          TYPE_SPEED,
+          () => { showTextInput(); }
+        );
+      }, 2000);
+    }, 300);
+  });
+
+  document.getElementById('optInviteTeam').addEventListener('click', () => {
+    hideSelectionCard('selectionCardNextSteps');
+    showTextInput();
+    setTimeout(() => {
+      addUserMessage("Invite teammates");
+      setTimeout(() => {
+        addAssistantMessage(
+          "Let's get your team on board! You can invite teammates by email — they'll be able to monitor AI Agent conversations, step in when needed, and manage your support queue. I'll take you to the team settings.",
+          TYPE_SPEED,
+          () => { showTextInput(); }
+        );
+      }, 2000);
+    }, 300);
+  });
+
+  // ─── Side Nav Toggle ───
+  const sideNav = document.getElementById('sideNav');
+  const sideNavExpandBtn = document.getElementById('sideNavExpandBtn');
+  const sideNavCollapseBtn = document.getElementById('sideNavCollapseBtn');
+
+  sideNavCollapseBtn.addEventListener('click', () => {
+    sideNav.classList.add('collapsed');
+    sideNavExpandBtn.classList.add('visible');
+  });
+
+  sideNavExpandBtn.addEventListener('click', () => {
+    sideNav.classList.remove('collapsed');
+    sideNavExpandBtn.classList.remove('visible');
+  });
+</script>
+</body>
+</html>

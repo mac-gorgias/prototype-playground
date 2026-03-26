@@ -58,5 +58,13 @@
     "description": "Prototype exploring the scenario of the loyal Glamnetic shopper getting RCS campaign from AI Journey",
     "file": "rcs-loyal-shopper.html",
     "image": "rcs-loyal-shopper.png"
+  },
+  {
+    "name": "Conversational Onboarding Test",
+    "author": "Mac",
+    "date": "2026-03-26",
+    "description": "Conversational onboarding flow with AI-guided setup for Gorgias",
+    "file": "onboarding-test.html",
+    "image": "onboarding-test.png"
   }
 ]
