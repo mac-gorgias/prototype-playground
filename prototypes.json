@@ -6,5 +6,12 @@
     "description": "Conversational onboarding flow with AI-guided setup for Gorgias",
     "file": "onboarding-test.html",
     "image": "onboarding-test.png"
+  },
+  {
+    "name": "Conversational Launchpad V3",
+    "author": "Mac",
+    "date": "2026-03-26",
+    "description": "Conversational onboarding prototype built with Lovable",
+    "url": "https://conversational-launchpad.lovable.app"
   }
 ]
