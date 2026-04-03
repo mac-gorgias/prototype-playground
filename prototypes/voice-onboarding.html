@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gorgias — Voice Onboarding</title>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #FAF9F7;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #1A1918;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 30%, rgba(127,101,224,0.035) 0%, transparent 65%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* --- Sidebar --- */
+.sidebar {
+  position: fixed;
+  left: 0; top: 0; bottom: 0;
+  width: 44px;
+  background: #fff;
+  border-right: 0.5px solid #EDECEA;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 0;
+  gap: 8px;
+  z-index: 10;
+}
+
+.sidebar-logo {
+  width: 26px; height: 26px;
+  background: #7C6EF5;
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 18px;
+}
+
+.sidebar-logo svg { width: 14px; height: 14px; }
+
+.sidebar-nav { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+
+.nav-item {
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  opacity: 0.2;
+}
+
+.nav-item.active {
+  background: #F0EFFE;
+  opacity: 1;
+}
+
+.nav-item.active::before {
+  content: '';
+  position: absolute;
+  left: -8px; top: 50%; transform: translateY(-50%);
+  width: 2px; height: 14px;
+  background: #7C6EF5;
+  border-radius: 1px;
+}
+
+.nav-item svg { width: 16px; height: 16px; }
+
+/* --- Content Area --- */
+.content {
+  position: fixed;
+  left: 44px; top: 0; right: 0; bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+/* --- Welcome --- */
+#welcome {
+  display: none;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 36px;
+  font-weight: 500;
+  color: #1A1918;
+  letter-spacing: -0.5px;
+}
+
+/* --- Question View --- */
+#questionView {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+}
+
+.question-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 32px;
+  max-width: 480px;
+}
+
+#questionHeader {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 22px;
+  font-weight: 500;
+  color: #1A1918;
+  line-height: 1.4;
+  text-align: center;
+}
+
+#questionSubheader {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 16px;
+  font-weight: 400;
+  color: #888780;
+  line-height: 1.4;
+  text-align: center;
+}
+
+/* --- Orb --- */
+.orb-wrap {
+  position: relative;
+  width: 88px; height: 88px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+
+.orb {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: #7C6EF5;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  z-index: 2;
+  transition: background 0.5s ease;
+}
+
+#orbContent {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  transition: opacity 0.2s ease;
+}
+
+#ringWrap {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transition: opacity 0.6s ease;
+}
+
+.orb-idle { animation: orbPulse 2.6s ease-in-out infinite; }
+
+@keyframes orbPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+
+.ring {
+  position: absolute;
+  inset: -12px;
+  border-radius: 50%;
+  border: 1px solid rgba(124,110,245,0.3);
+  z-index: 1;
+}
+
+.ring-1 { animation: ringExpand 2.6s ease-in-out infinite; }
+.ring-2 { animation: ringExpand 2.6s ease-in-out infinite 0.9s; }
+
+@keyframes ringExpand {
+  0%   { transform: scale(1); opacity: 0.18; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+
+/* --- Speaking bars --- */
+.speak-bars {
+  display: flex; align-items: center; gap: 3px; height: 28px;
+}
+
+.sb {
+  width: 3px; border-radius: 2px; background: white; display: inline-block;
+}
+
+@keyframes sb1 { 0%,100%{height:5px}  50%{height:20px} }
+@keyframes sb2 { 0%,100%{height:10px} 50%{height:26px} }
+@keyframes sb3 { 0%,100%{height:16px} 50%{height:8px}  }
+@keyframes sb4 { 0%,100%{height:7px}  50%{height:22px} }
+@keyframes sb5 { 0%,100%{height:12px} 50%{height:6px}  }
+
+.sb:nth-child(1){animation:sb1 .6s ease-in-out infinite}
+.sb:nth-child(2){animation:sb2 .6s ease-in-out infinite .1s}
+.sb:nth-child(3){animation:sb3 .6s ease-in-out infinite .2s}
+.sb:nth-child(4){animation:sb4 .6s ease-in-out infinite .08s}
+.sb:nth-child(5){animation:sb5 .6s ease-in-out infinite .15s}
+
+/* --- Spinner --- */
+.spinner {
+  width: 24px; height: 24px;
+  border: 3px solid rgba(255,255,255,0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* --- Below orb --- */
+#belowOrb {
+  margin-top: 16px;
+  text-align: center;
+  min-height: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.skip-btn {
+  font-size: 12px;
+  color: #B4B2A9;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  transition: opacity 0.15s ease;
+}
+
+.skip-btn:hover { color: #888780; }
+.skip-btn { transition: opacity 0.4s ease, color 0.2s ease; }
+
+#transcript {
+  font-size: 11px;
+  font-style: italic;
+  color: #888780;
+  width: 320px;
+  height: 16px;
+  line-height: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: opacity 0.4s ease;
+}
+
+#listenHint {
+  font-size: 11px;
+  color: #B4B2A9;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+
+/* --- End States --- */
+#endMessage {
+  display: none;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 20px;
+  color: #888780;
+  text-align: center;
+}
+
+/* --- Tooltip --- */
+.tooltip {
+  position: absolute;
+  bottom: -36px;
+  left: 50%; transform: translateX(-50%);
+  background: #1A1918;
+  color: #fff;
+  font-size: 11px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.tooltip.show { opacity: 1; }
+
+/* --- Signup Screen --- */
+#signupScreen {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: #FAFAFA;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.signup-card {
+  width: 420px;
+  padding: 44px 40px 36px;
+  border-radius: 20px;
+  border: 1.5px solid #E5E5E5;
+  background: #FFFFFF;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+}
+
+.signup-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.signup-logo-mark {
+  width: 36px; height: 36px;
+  border-radius: 9px;
+  background: #1A1918;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.signup-logo-text {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1A1918;
+  letter-spacing: -0.02em;
+}
+
+.signup-heading {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: #1A1918;
+  text-align: center;
+  letter-spacing: -0.02em;
+  margin-bottom: 32px;
+}
+
+.signup-field { margin-bottom: 20px; }
+.signup-field.last { margin-bottom: 28px; }
+
+.signup-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #1A1918;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.signup-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1.5px solid #E5E5E5;
+  font-size: 14px;
+  color: #1A1918;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  outline: none;
+  transition: border-color 0.2s;
+  background: #FFFFFF;
+}
+
+.signup-input:focus { border-color: #c0c0ba; }
+
+.signup-submit {
+  width: 100%;
+  padding: 13px 0;
+  border-radius: 10px;
+  border: none;
+  background: #1A1918;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  transition: background 0.2s;
+}
+
+.signup-submit:hover { background: #333; }
+</style>
+</head>
+<body>
+
+<!-- Signup Screen -->
+<div id="signupScreen">
+  <div class="signup-card" id="signupCard">
+    <div class="signup-logo">
+      <div class="signup-logo-mark">
+        <span style="color:white;font-size:16px;font-weight:700;">G</span>
+      </div>
+      <span class="signup-logo-text">gorgias</span>
+    </div>
+    <h1 class="signup-heading">Create your account</h1>
+    <form id="signupForm">
+      <div class="signup-field">
+        <label class="signup-label">Email address</label>
+        <input class="signup-input" id="signupEmail" type="email" placeholder="you@company.com">
+      </div>
+      <div class="signup-field">
+        <label class="signup-label">Name</label>
+        <input class="signup-input" id="signupName" type="text" placeholder="Your full name">
+      </div>
+      <div class="signup-field last">
+        <label class="signup-label">Store URL</label>
+        <input class="signup-input" id="signupStore" type="text" placeholder="yourstore.com">
+      </div>
+      <button class="signup-submit" type="submit">Create account</button>
+    </form>
+  </div>
+</div>
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <svg viewBox="0 0 24 24" fill="none"><text x="5" y="19" font-size="18" font-weight="700" fill="white" font-family="sans-serif">G</text></svg>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-item active">
+      <svg viewBox="0 0 20 20" fill="none" stroke="#7C6EF5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 8l7-5 7 5v8a1 1 0 01-1 1H4a1 1 0 01-1-1V8z"/>
+        <path d="M8 17v-5h4v5"/>
+      </svg>
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 20 20" fill="none" stroke="#1A1918" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="4" width="14" height="12" rx="1.5"/><path d="M3 7l7 4 7-4"/>
+      </svg>
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 20 20" fill="none" stroke="#1A1918" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="4" y="4" width="12" height="12" rx="1"/><path d="M8 10h4M10 8v4"/>
+      </svg>
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 20 20" fill="none" stroke="#1A1918" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="10" cy="7" r="3"/><path d="M4 17c0-3.3 2.7-6 6-6s6 2.7 6 6"/>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<!-- Content Area -->
+<div class="content" id="contentArea">
+
+  <!-- Welcome -->
+  <div id="welcome"></div>
+
+  <!-- Question + Orb -->
+  <div id="questionView">
+    <div class="question-block">
+      <div id="questionHeader"></div>
+      <div id="questionSubheader"></div>
+    </div>
+
+    <div class="orb-wrap" id="orbWrap">
+      <div class="orb orb-idle" id="orb">
+        <!-- Mic icon (default) -->
+        <div id="orbContent">
+          <svg id="micIcon" width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <rect x="9" y="2" width="6" height="11" rx="3" fill="white"/>
+            <path d="M5 11a7 7 0 0014 0" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="12" y1="18" x2="12" y2="22" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          <canvas id="waveCanvas" width="64" height="64" style="display:none;"></canvas>
+        </div>
+      </div>
+      <div id="ringWrap">
+        <div class="ring ring-1" id="ring1"></div>
+        <div class="ring ring-2" id="ring2"></div>
+      </div>
+      <div class="tooltip" id="tooltip"></div>
+    </div>
+
+    <div id="belowOrb">
+      <div id="transcript"></div>
+      <div id="listenHint">Tap again when you're done</div>
+      <button class="skip-btn" id="skipBtn">Skip for now</button>
+    </div>
+  </div>
+
+  <!-- End Message -->
+  <div id="endMessage"></div>
+
+</div>
+
+<script>
+(function() {
+  // --- TTS mode ---
+  // false = browser speechSynthesis (free, no credits)
+  // true  = ElevenLabs via /api/speak (swap to true for stakeholder demos)
+  const USE_ELEVENLABS = false;
+
+  // --- Merchant config (swap here to change prototype) ---
+  const MERCHANT = {
+    name: 'UrbanStems',
+    industry: 'bouquet gifting'
+  };
+
+  // --- Copy ---
+  const WELCOME_TEXT = 'Welcome to Gorgias.';
+
+  const Q1 = {
+    header: `${MERCHANT.name} \u2014 we\u2019re glad you\u2019re here.`,
+    subheader: `Anything you want us to know about your brand and the people you\u2019re sending flowers to.`
+  };
+
+  const WRAPUP_TEXT = {
+    header: `Perfect \u2014 that\u2019s everything we need.`,
+    subheader: `Let\u2019s build something beautiful for ${MERCHANT.name}.`
+  };
+  const COMPLETE_TEXT = `You\u2019re all set. Handing you off now.`;
+  const SKIP_TEXT = `Got it! We can always come back to this later.`;
+  const LISTENING_HINT = `Tap again when you\u2019re done.`;
+
+  function getQ2(answer) {
+    const a = answer.toLowerCase();
+    let header = 'Thanks for sharing that.';
+    if (/gift|occasion|bouquet|flower|arrangement/.test(a)) header = 'Gift-driven support \u2014 that\u2019s a meaningful experience to get right.';
+    if (/seasonal|holiday|valentine|mother/.test(a))        header = 'Seasonal spikes are something Gorgias handles really well.';
+    if (/subscription|recurring|weekly|monthly/.test(a))    header = 'Subscription gifting is a great fit for what Gorgias does best.';
+    return {
+      header,
+      subheader: 'Is there anything you wish Gorgias would handle for you?'
+    };
+  }
+
+  function getQ3(answer) {
+    const a = answer.toLowerCase();
+    let header = 'Noted.';
+    if (/automat|ai|bot/.test(a))            header = `Automating order updates and delivery questions \u2014 ${MERCHANT.name} customers will feel that.`;
+    if (/speed|fast|response|quick/.test(a)) header = 'Faster replies during peak gifting seasons make a real difference.';
+    if (/revenue|sales|convert|repeat/.test(a)) header = 'Turning gifting support into repeat customers \u2014 smart.';
+    return {
+      header,
+      subheader: 'Tell me about your team and how customers typically reach you.'
+    };
+  }
+
+  // --- State ---
+  let answers = ['', '', ''];
+  let currentQ = 0;
+  let liveText = '';
+  let interimText = '';
+  let micStream = null;
+  let audioCtx = null;
+  let analyser = null;
+  let dataArray = null;
+  let animFrame = null;
+  let isListening = false;
+  let recognition = null;
+  let hasMicAccess = false;
+  let speakAmp = 0;
+  let speakAmpTarget = 0;
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  // questions[0] is static; 1 and 2 are filled dynamically as {header, subheader}
+  const questions = [Q1, null, null];
+
+  // --- DOM refs ---
+  const signupScreen = document.getElementById('signupScreen');
+  const signupCard = document.getElementById('signupCard');
+  const signupForm = document.getElementById('signupForm');
+  const signupEmail = document.getElementById('signupEmail');
+  const signupName = document.getElementById('signupName');
+  const signupStore = document.getElementById('signupStore');
+  const sidebar = document.querySelector('.sidebar');
+  const welcome = document.getElementById('welcome');
+  const questionView = document.getElementById('questionView');
+  const questionHeader = document.getElementById('questionHeader');
+  const questionSubheader = document.getElementById('questionSubheader');
+  const questionBlock = questionHeader.closest('.question-block');
+  const orbWrap = document.getElementById('orbWrap');
+  const orb = document.getElementById('orb');
+  const orbContent = document.getElementById('orbContent');
+  const micIcon = document.getElementById('micIcon');
+  const waveCanvas = document.getElementById('waveCanvas');
+  const ringWrap = document.getElementById('ringWrap');
+  const ring1 = document.getElementById('ring1');
+  const ring2 = document.getElementById('ring2');
+  const belowOrb = document.getElementById('belowOrb');
+  const transcript = document.getElementById('transcript');
+  const listenHint = document.getElementById('listenHint');
+  const skipBtn = document.getElementById('skipBtn');
+  const endMessage = document.getElementById('endMessage');
+  const tooltip = document.getElementById('tooltip');
+  const ctx = waveCanvas.getContext('2d');
+
+  // --- State machine ---
+  function setState(name) {
+    switch (name) {
+      case 'signup':   showSignup();   break;
+      case 'welcome':  showWelcome();  break;
+      case 'question': showQuestion(); break;
+      case 'listening': startListening(); break;
+      case 'processing': stopAndProcess(); break;
+      case 'complete':  showComplete(); break;
+      case 'skipped':   showSkipped();  break;
+    }
+  }
+
+  // --- Signup ---
+  function showSignup() {
+    signupScreen.style.display = 'flex';
+    signupScreen.style.opacity = '1';
+    sidebar.style.display = 'none';
+    welcome.style.display = 'none';
+    questionView.style.display = 'none';
+    endMessage.style.display = 'none';
+  }
+
+  // --- Welcome ---
+  function showWelcome() {
+    signupScreen.style.display = 'none';
+    sidebar.style.display = '';
+    welcome.style.display = 'flex';
+    questionView.style.display = 'none';
+    endMessage.style.display = 'none';
+
+    const words = WELCOME_TEXT.split(' ');
+    welcome.innerHTML = '';
+    const wordSpans = [];
+
+    words.forEach((word, i) => {
+      const span = document.createElement('span');
+      span.textContent = word + (i < words.length - 1 ? '\u00A0' : '');
+      span.style.cssText = 'display:inline-block; will-change:transform,filter,opacity;';
+      welcome.appendChild(span);
+      wordSpans.push(span);
+
+      const anim = span.animate([
+        { filter: 'blur(10px)', opacity: 0, transform: 'translateY(-50px)' },
+        { filter: 'blur(5px)',  opacity: 0.5, transform: 'translateY(5px)'  },
+        { filter: 'blur(0px)',  opacity: 1,   transform: 'translateY(0px)'  }
+      ], { duration: 1400, delay: i * 300, easing: 'ease', fill: 'both' });
+
+      if (i === words.length - 1) {
+        anim.addEventListener('finish', () => {
+          setTimeout(() => {
+            // Stagger each word out individually
+            wordSpans.forEach((s, j) => {
+              const exitAnim = s.animate([
+                { opacity: 1, transform: 'translateY(0px)',   filter: 'blur(0px)'  },
+                { opacity: 0, transform: 'translateY(-24px)', filter: 'blur(4px)'  }
+              ], { duration: 700, delay: j * 150, easing: 'ease', fill: 'forwards' });
+
+              if (j === wordSpans.length - 1) {
+                exitAnim.addEventListener('finish', () => setState('question'));
+              }
+            });
+          }, 3000);
+        });
+      }
+    });
+  }
+
+  // --- Question ---
+  function showQuestion() {
+    welcome.style.display = 'none';
+    questionView.style.display = 'flex';
+    endMessage.style.display = 'none';
+
+    const q = questions[currentQ];
+    questionHeader.textContent = q.header;
+    questionSubheader.textContent = q.subheader;
+    questionBlock.style.transition = 'none';
+    questionBlock.style.opacity = '0';
+    questionBlock.style.transform = 'translateY(12px)';
+
+    // Reset orb to idle
+    orb.className = 'orb orb-idle';
+    orb.style.background = '#7C6EF5';
+    micIcon.style.display = '';
+    waveCanvas.style.display = 'none';
+    ringWrap.style.opacity = '1';
+    setOrbContent('mic');
+
+    // Reset below-orb
+    transcript.textContent = '';
+    listenHint.style.opacity = '0';
+    listenHint.style.pointerEvents = 'none';
+    listenHint.textContent = LISTENING_HINT;
+    skipBtn.style.opacity = '1';
+    skipBtn.style.pointerEvents = 'auto';
+    tooltip.classList.remove('show');
+
+    // Reset state
+    liveText = '';
+    interimText = '';
+    isListening = false;
+
+    // Fade in question block
+    void questionBlock.offsetHeight; // force reflow so transition fires from opacity 0
+    questionBlock.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+    questionBlock.style.opacity = '1';
+    questionBlock.style.transform = 'translateY(0)';
+  }
+
+  // --- Orb content helpers ---
+  function setOrbContent(type) {
+    orbContent.style.opacity = '0';
+
+    setTimeout(() => {
+      // Clear dynamically added elements
+      orbContent.querySelectorAll('.spinner, .speak-bars, svg:not(#micIcon)').forEach(el => el.remove());
+
+      if (type === 'mic') {
+        micIcon.style.display = '';
+        waveCanvas.style.display = 'none';
+      } else if (type === 'wave') {
+        micIcon.style.display = 'none';
+        waveCanvas.style.display = '';
+      } else if (type === 'spinner') {
+        micIcon.style.display = 'none';
+        waveCanvas.style.display = 'none';
+        const sp = document.createElement('div');
+        sp.className = 'spinner';
+        orbContent.appendChild(sp);
+      } else if (type === 'speaking') {
+        micIcon.style.display = 'none';
+        waveCanvas.style.display = 'none';
+        const bars = document.createElement('div');
+        bars.className = 'speak-bars';
+        for (let i = 0; i < 5; i++) {
+          const b = document.createElement('div');
+          b.className = 'sb';
+          bars.appendChild(b);
+        }
+        orbContent.appendChild(bars);
+      } else if (type === 'check') {
+        micIcon.style.display = 'none';
+        waveCanvas.style.display = 'none';
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('width', '24');
+        svg.setAttribute('height', '24');
+        svg.setAttribute('viewBox', '0 0 24 24');
+        svg.setAttribute('fill', 'none');
+        svg.innerHTML = '<path d="M6 12l4 4 8-8" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>';
+        orbContent.appendChild(svg);
+      }
+
+      orbContent.style.opacity = '1';
+    }, 200);
+  }
+
+  // --- Listening ---
+  function startListening() {
+    isListening = true;
+
+    // Remove idle animation and rings
+    orb.classList.remove('orb-idle');
+    ringWrap.style.opacity = '0';
+    skipBtn.style.opacity = '0';
+    skipBtn.style.pointerEvents = 'none';
+    listenHint.style.opacity = '1';
+    listenHint.style.pointerEvents = 'auto';
+
+    // Orb → coral while recording
+    orb.style.background = '#E05C40';
+
+    // Show waveform canvas
+    setOrbContent('wave');
+
+    // Check SpeechRecognition support
+    if (!SpeechRecognition) {
+      tooltip.textContent = 'Voice input requires Chrome or Edge';
+      tooltip.classList.add('show');
+      // Still show simulated wave
+      startSimulatedWave();
+      return;
+    }
+
+    // Request mic
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+      micStream = stream;
+      hasMicAccess = true;
+
+      // Audio analyser
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      const source = audioCtx.createMediaStreamSource(stream);
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 64;
+      source.connect(analyser);
+      dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+      // Draw reactive waveform
+      drawWave();
+
+      // Start speech recognition
+      recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+
+      recognition.onresult = (e) => {
+        let interim = '';
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          if (e.results[i].isFinal) {
+            liveText += e.results[i][0].transcript;
+          } else {
+            interim += e.results[i][0].transcript;
+          }
+        }
+        interimText = interim;
+        const full = (liveText + interimText).trim();
+        const words = full.split(/\s+/).filter(Boolean);
+        const display = words.slice(-10).join(' ');
+        transcript.textContent = display ? '\u201C' + display + '\u201D' : '';
+      };
+
+      recognition.onerror = (e) => {
+        console.log('SpeechRecognition error:', e.error);
+      };
+
+      recognition.start();
+    }).catch(() => {
+      // Mic denied — simulated waveform
+      startSimulatedWave();
+    });
+  }
+
+  function drawWave() {
+    animFrame = requestAnimationFrame(drawWave);
+    analyser.getByteFrequencyData(dataArray);
+    ctx.clearRect(0, 0, 64, 64);
+    const barCount = 7, barW = 3.5, gap = 3;
+    const totalW = barCount * barW + (barCount - 1) * gap;
+    const startX = (64 - totalW) / 2;
+    const bands = [2, 5, 10, 16, 10, 5, 2];
+    for (let i = 0; i < barCount; i++) {
+      const h = Math.max(5, (dataArray[bands[i]] / 255) * 48);
+      ctx.fillStyle = 'rgba(255,255,255,0.92)';
+      ctx.beginPath();
+      ctx.roundRect(startX + i * (barW + gap), (64 - h) / 2, barW, h, 2);
+      ctx.fill();
+    }
+  }
+
+  function startSimulatedWave() {
+    let t = 0;
+    function drawSim() {
+      animFrame = requestAnimationFrame(drawSim);
+      t += 0.04;
+      ctx.clearRect(0, 0, 64, 64);
+      const barCount = 7, barW = 3.5, gap = 3;
+      const totalW = barCount * barW + (barCount - 1) * gap;
+      const startX = (64 - totalW) / 2;
+      for (let i = 0; i < barCount; i++) {
+        const phase = i * 0.8;
+        const h = 8 + Math.sin(t * (1.2 + i * 0.15) + phase) * 12 + Math.sin(t * 0.7 + phase * 2) * 6;
+        ctx.fillStyle = 'rgba(255,255,255,0.92)';
+        ctx.beginPath();
+        ctx.roundRect(startX + i * (barW + gap), (64 - h) / 2, barW, h, 2);
+        ctx.fill();
+      }
+    }
+    drawSim();
+  }
+
+  // --- Processing ---
+  function stopAndProcess() {
+    isListening = false;
+
+    // Stop recognition
+    if (recognition) {
+      try { recognition.stop(); } catch(e) {}
+      recognition = null;
+    }
+
+    // Save answer
+    answers[currentQ] = liveText.trim();
+    console.log('Answer ' + (currentQ + 1) + ':', answers[currentQ]);
+
+    // Stop mic and animation
+    if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+    if (micStream) {
+      micStream.getTracks().forEach(t => t.stop());
+      micStream = null;
+    }
+
+    // Orb → processing
+    orb.style.background = '#3C3489';
+    setOrbContent('spinner');
+    listenHint.style.opacity = '0';
+    listenHint.style.pointerEvents = 'none';
+    transcript.textContent = '';
+
+    // Fade out question block
+    questionBlock.style.transition = 'opacity 0.3s ease';
+    questionBlock.style.opacity = '0';
+
+    // Generate response after delay
+    setTimeout(() => {
+      if (currentQ === 0) {
+        const q2 = getQ2(answers[0]);
+        questions[1] = q2;
+        setQuestionBlock(q2);
+        assistantSpeak(q2.header, q2.subheader);
+      } else if (currentQ === 1) {
+        const q3 = getQ3(answers[1]);
+        questions[2] = q3;
+        setQuestionBlock(q3);
+        assistantSpeak(q3.header, q3.subheader);
+      } else {
+        setQuestionBlock(WRAPUP_TEXT);
+        assistantSpeak(WRAPUP_TEXT.header, WRAPUP_TEXT.subheader);
+      }
+    }, 1200);
+  }
+
+  // --- Question block helper (used during processing response) ---
+  function setQuestionBlock(q) {
+    questionHeader.textContent = q.header;
+    questionSubheader.textContent = q.subheader;
+    questionBlock.style.transition = 'none';
+    questionBlock.style.opacity = '0';
+    questionBlock.style.transform = 'translateY(12px)';
+    void questionBlock.offsetHeight; // force reflow
+    questionBlock.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+    questionBlock.style.opacity = '1';
+    questionBlock.style.transform = 'translateY(0)';
+  }
+
+  function startSpeakingWave() {
+    speakAmp = 0;
+    speakAmpTarget = 0;
+    let t = 0;
+    function drawSpeak() {
+      animFrame = requestAnimationFrame(drawSpeak);
+      t += 0.07;
+      // Smooth amplitude toward target, then decay
+      speakAmp += (speakAmpTarget - speakAmp) * 0.18;
+      speakAmpTarget *= 0.93;
+      ctx.clearRect(0, 0, 64, 64);
+      const barCount = 7, barW = 3.5, gap = 3;
+      const totalW = barCount * barW + (barCount - 1) * gap;
+      const startX = (64 - totalW) / 2;
+      for (let i = 0; i < barCount; i++) {
+        const phase = i * 0.9;
+        const h = Math.max(4,
+          (6 + speakAmp * 22)
+          + Math.sin(t * (1.8 + i * 0.25) + phase) * (3 + speakAmp * 14)
+          + Math.sin(t * 1.3 + phase * 1.7) * (3 + speakAmp * 8)
+        );
+        ctx.fillStyle = 'rgba(255,255,255,0.92)';
+        ctx.beginPath();
+        ctx.roundRect(startX + i * (barW + gap), (64 - h) / 2, barW, h, 2);
+        ctx.fill();
+      }
+    }
+    drawSpeak();
+  }
+
+  // --- TTS ---
+  async function assistantSpeak(text, followUp = null) {
+    // Orb → grey with waveform while speaking
+    orb.style.background = '#888780';
+    setOrbContent('wave');
+
+    if (USE_ELEVENLABS) {
+      // ── ElevenLabs (demo mode) — real reactive waveform via AudioContext ──
+      try {
+        const res = await fetch('/api/speak', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text })
+        });
+
+        if (!res.ok) throw new Error('TTS failed: ' + res.status);
+
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+
+        // Wire to analyser for real frequency data
+        audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+        await audioCtx.resume();
+        const mediaSource = audioCtx.createMediaElementSource(audio);
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 64;
+        mediaSource.connect(analyser);
+        mediaSource.connect(audioCtx.destination);
+        dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+        // Start drawing after orbContent fade
+        setTimeout(() => { if (!animFrame) drawWave(); }, 220);
+
+        audio.onended = () => {
+          if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+          URL.revokeObjectURL(url);
+          onSpeechDone();
+        };
+        audio.onerror = () => {
+          if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+          URL.revokeObjectURL(url);
+          setTimeout(onSpeechDone, 1500);
+        };
+        audio.play().catch(() => setTimeout(onSpeechDone, 1500));
+      } catch (err) {
+        console.error('ElevenLabs TTS error:', err);
+        setTimeout(onSpeechDone, 2000);
+      }
+    } else {
+      // ── Browser speechSynthesis (dev mode) — simulated speech waveform ───
+      setTimeout(() => { if (!animFrame) startSpeakingWave(); }, 220);
+
+      window.speechSynthesis.cancel();
+      const utt = new SpeechSynthesisUtterance(text);
+      utt.rate = 0.95;
+      utt.pitch = 1;
+      utt.onboundary = (e) => {
+        if (e.name === 'word') speakAmpTarget = 1.0;
+      };
+      utt.onend = () => {
+        if (followUp) {
+          setTimeout(() => {
+            const utt2 = new SpeechSynthesisUtterance(followUp);
+            utt2.rate = 0.95;
+            utt2.pitch = 1;
+            utt2.onboundary = (e) => { if (e.name === 'word') speakAmpTarget = 1.0; };
+            utt2.onend = () => {
+              if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+              onSpeechDone();
+            };
+            utt2.onerror = () => {
+              if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+              onSpeechDone();
+            };
+            window.speechSynthesis.speak(utt2);
+          }, 200);
+        } else {
+          if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+          onSpeechDone();
+        }
+      };
+      utt.onerror = () => {
+        if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+        onSpeechDone();
+      };
+      window.speechSynthesis.speak(utt);
+    }
+  }
+
+  function onSpeechDone() {
+    if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+    if (currentQ < 2) {
+      currentQ++;
+      // Text is already shown by setQuestionBlock — just reset the orb to idle
+      // without re-animating the question text (which would cause a bounce)
+      orb.className = 'orb orb-idle';
+      orb.style.background = '#7C6EF5';
+      setOrbContent('mic');
+      ringWrap.style.opacity = '1';
+      transcript.textContent = '';
+      listenHint.style.opacity = '0';
+      listenHint.style.pointerEvents = 'none';
+      listenHint.textContent = LISTENING_HINT;
+      skipBtn.style.opacity = '1';
+      skipBtn.style.pointerEvents = 'auto';
+      tooltip.classList.remove('show');
+      liveText = '';
+      interimText = '';
+      isListening = false;
+    } else {
+      setState('complete');
+    }
+  }
+
+  // --- Complete ---
+  function showComplete() {
+    // Orb → grey with checkmark
+    orb.style.background = '#3D9E6B';
+    orb.classList.remove('orb-idle');
+    ringWrap.style.opacity = '0';
+    setOrbContent('check');
+    listenHint.style.opacity = '0';
+    listenHint.style.pointerEvents = 'none';
+    skipBtn.style.opacity = '0';
+    skipBtn.style.pointerEvents = 'none';
+    transcript.textContent = '';
+
+    console.log('Phase 1 complete', { q1: answers[0], q2: answers[1], q3: answers[2] });
+
+    setTimeout(() => {
+      questionView.animate(
+        [{ opacity: 1 }, { opacity: 0 }],
+        { duration: 800, easing: 'ease', fill: 'forwards' }
+      ).addEventListener('finish', () => {
+        questionView.style.display = 'none';
+        endMessage.style.display = '';
+        endMessage.textContent = COMPLETE_TEXT;
+        endMessage.animate(
+          [{ opacity: 0 }, { opacity: 1 }],
+          { duration: 600, easing: 'ease', fill: 'forwards' }
+        );
+      });
+    }, 1500);
+  }
+
+  // --- Skipped ---
+  function showSkipped() {
+    console.log('Phase 1 skipped');
+
+    questionView.animate(
+      [{ opacity: 1 }, { opacity: 0 }],
+      { duration: 600, easing: 'ease', fill: 'forwards' }
+    ).addEventListener('finish', () => {
+      questionView.style.display = 'none';
+      endMessage.style.display = '';
+      endMessage.textContent = SKIP_TEXT;
+      endMessage.animate(
+        [{ opacity: 0 }, { opacity: 1 }],
+        { duration: 600, easing: 'ease', fill: 'forwards' }
+      );
+    });
+  }
+
+  // --- Signup event listeners ---
+  // Click backdrop to fill defaults
+  signupScreen.addEventListener('click', () => {
+    if (!signupEmail.value && !signupName.value && !signupStore.value) {
+      signupEmail.value = 'lisa@urbanstems.com';
+      signupName.value = 'Lisa T';
+      signupStore.value = 'urbanstems.com';
+    }
+  });
+  signupCard.addEventListener('click', (e) => e.stopPropagation());
+
+  // Submit → fade out → welcome
+  signupForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    signupScreen.animate(
+      [{ opacity: 1 }, { opacity: 0 }],
+      { duration: 400, easing: 'ease', fill: 'forwards' }
+    ).addEventListener('finish', () => setState('welcome'));
+  });
+
+  // --- Event listeners ---
+  orbWrap.addEventListener('click', () => {
+    if (questionView.style.display === 'none') return;
+    if (!isListening) {
+      setState('listening');
+    } else {
+      setState('processing');
+    }
+  });
+
+  skipBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    setState('skipped');
+  });
+
+  // --- Boot ---
+  setState('signup');
+})();
+</script>
+</body>
+</html>

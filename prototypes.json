@@ -14,5 +14,13 @@
     "description": "Conversational onboarding prototype built with Lovable",
     "url": "https://conversational-launchpad.lovable.app",
     "image": "conv-onboarding-v3.png"
+  },
+  {
+    "name": "Voice Onboarding",
+    "author": "Mac",
+    "date": "2026-03-30",
+    "description": "Voice-guided onboarding flow with TTS for Gorgias",
+    "file": "voice-onboarding.html",
+    "image": "voice-onboarding.png"
   }
 ]
