@@ -22,5 +22,13 @@
     "description": "Voice-guided onboarding flow with TTS for Gorgias",
     "file": "voice-onboarding.html",
     "image": "voice-onboarding.png"
+  },
+  {
+    "name": "Conversational Intake",
+    "author": "Mac",
+    "date": "2026-04-08",
+    "description": "Cinematic conversational intake flow — welcome entrance, brand snapshot with shopper persona report cards, focus area picker, Shopify connect, live AI Agent chat preview, channel + helpdesk migration steps, and a sidebar Go-live checklist that ticks off in real time. Self-contained, no API keys required.",
+    "file": "conversational-intake.html",
+    "image": "conversational-intake-v2.png"
   }
 ]
