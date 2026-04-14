@@ -3023,35 +3023,42 @@ var SUGGESTED_CHIPS = [
   "My bouquet arrived damaged",
 ];
 
+// Priority-weighted: evaluated top-to-bottom, first match wins.
+// Urgent/transactional intents first, discovery/browsing last.
 var SCRIPTED_INTENTS = [
   {
-    // Damaged / return — checked first so "bouquet arrived damaged" routes here, not to product recs
-    keywords: ["damaged", "broken", "refund", "return", "wrong"],
+    // Priority 1 — Cancel / modify order (most urgent)
+    keywords: ["cancel", "modify", "change my order", "update my order", "stop my delivery"],
+    response: "I can help with that. Orders can be cancelled or modified up to 2 hours before the scheduled delivery. Could you share your order number or the email you used at checkout so I can look into it?",
+  },
+  {
+    // Priority 2 — Damaged item / return (high emotion)
+    keywords: ["damaged", "broken", "refund", "return", "wrong", "missing", "didn't arrive", "didn\u2019t arrive"],
     response: "I\u2019m so sorry to hear that \u2014 that\u2019s not the experience we want for you. If your arrangement arrived damaged, we\u2019ll make it right. Could you send a photo of the bouquet to care@urbanstems.com? Our team will review it and arrange a replacement or full refund, usually within 24 hours.",
   },
   {
-    // Product recommendation
-    keywords: ["recommend", "popular", "best seller", "what flowers", "what do you have", "gift", "occasion", "bouquet", "what should i get"],
+    // Priority 3 — WISMO / order status
+    keywords: ["where is", "order status", "tracking", "when will", "arrive", "shipping"],
+    response: "Hi! I can look that up for you \u2014 could you share your order number or the email you used at checkout? Most UrbanStems orders arrive within 2\u20134 days, and same-day delivery is available in select cities if you ordered before noon. I\u2019ll get you the exact status right away.",
+  },
+  {
+    // Priority 4 — Delivery areas / what's included (informational)
+    keywords: ["what cities", "do you deliver to", "what's included", "what\u2019s included", "what comes with", "vase", "care card"],
+    response: "We deliver to most major US cities \u2014 same-day delivery is available in NYC, DC, LA, Chicago, and more if you order before noon local time. Each arrangement comes in a glass vase with a care card. Want me to help you find something for a specific occasion or budget?",
+  },
+  {
+    // Priority 5 — Promo / discount (low urgency)
+    keywords: ["promo", "discount", "code", "coupon", "sale"],
+    response: "We occasionally run promotions for new customers and around key holidays like Mother\u2019s Day and Valentine\u2019s Day. If you sign up for our emails at urbanstems.com you\u2019ll get first access. Is there a specific occasion you\u2019re shopping for? I might be able to help find the right arrangement at the right price.",
+  },
+  {
+    // Priority 6 — Product recommendation (discovery — lowest before fallback)
+    keywords: ["recommend", "popular", "best seller", "what flowers", "what do you have", "gift", "occasion", "what should i get", "bouquet"],
     response: "Here are a few of our most-loved arrangements right now \u2014 perfect if you\u2019re looking for something fresh and memorable:",
     products: [
       { name: "Margot", price: 88, originalPrice: 90, image: "urbanstems-margot.png" },
       { name: "Sorbet", price: 68, image: "urbanstems-sorbet.png" },
     ],
-  },
-  {
-    // Product / delivery coverage — "deliver to ...", "bouquet", "what's in"
-    keywords: ["deliver", "bouquet", "included", "what\u2019s in", "what's in", "city"],
-    response: "We deliver to most major US cities \u2014 same-day delivery is available in NYC, DC, LA, Chicago, and more if you order before noon local time. Each arrangement comes in a glass vase with a care card. Want me to help you find something for a specific occasion or budget?",
-  },
-  {
-    // Promo / discount
-    keywords: ["promo", "discount", "code", "coupon", "sale"],
-    response: "We occasionally run promotions for new customers and around key holidays like Mother\u2019s Day and Valentine\u2019s Day. If you sign up for our emails at urbanstems.com you\u2019ll get first access. Is there a specific occasion you\u2019re shopping for? I might be able to help find the right arrangement at the right price.",
-  },
-  {
-    // WISMO — order status
-    keywords: ["order", "arrive", "delivery", "where is", "tracking"],
-    response: "Hi! I can look that up for you \u2014 could you share your order number or the email you used at checkout? Most UrbanStems orders arrive within 2\u20134 days, and same-day delivery is available in select cities if you ordered before noon. I\u2019ll get you the exact status right away.",
   },
 ];
 
