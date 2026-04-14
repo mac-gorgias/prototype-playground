@@ -3025,18 +3025,18 @@ var SUGGESTED_CHIPS = [
 
 var SCRIPTED_INTENTS = [
   {
-    // Product recommendation — placed first so "recommend/popular/gift/bouquet" route to cards
+    // Damaged / return — checked first so "bouquet arrived damaged" routes here, not to product recs
+    keywords: ["damaged", "broken", "refund", "return", "wrong"],
+    response: "I\u2019m so sorry to hear that \u2014 that\u2019s not the experience we want for you. If your arrangement arrived damaged, we\u2019ll make it right. Could you send a photo of the bouquet to care@urbanstems.com? Our team will review it and arrange a replacement or full refund, usually within 24 hours.",
+  },
+  {
+    // Product recommendation
     keywords: ["recommend", "popular", "best seller", "what flowers", "what do you have", "gift", "occasion", "bouquet", "what should i get"],
     response: "Here are a few of our most-loved arrangements right now \u2014 perfect if you\u2019re looking for something fresh and memorable:",
     products: [
       { name: "Margot", price: 88, originalPrice: 90, image: "urbanstems-margot.png" },
       { name: "Sorbet", price: 68, image: "urbanstems-sorbet.png" },
     ],
-  },
-  {
-    // Damaged / return — matched first so "arrived damaged" resolves here, not to WISMO
-    keywords: ["damaged", "broken", "refund", "return", "wrong"],
-    response: "I\u2019m so sorry to hear that \u2014 that\u2019s not the experience we want for you. If your arrangement arrived damaged, we\u2019ll make it right. Could you send a photo of the bouquet to care@urbanstems.com? Our team will review it and arrange a replacement or full refund, usually within 24 hours.",
   },
   {
     // Product / delivery coverage — "deliver to ...", "bouquet", "what's in"
