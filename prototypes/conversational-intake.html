@@ -16,7 +16,7 @@ const { useState, useEffect, useRef, useCallback } = React;
 /* ─── Google Fonts ─── */
 const fontLink = document.createElement("link");
 fontLink.href =
-  "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;450;500;600;700&display=swap";
+  "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;450;500;600;700&family=DM+Sans:wght@700&display=swap";
 fontLink.rel = "stylesheet";
 document.head.appendChild(fontLink);
 
@@ -31,6 +31,7 @@ styleEl.textContent = `
   @keyframes slideUp { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-40px); } }
   @keyframes pulse { 0%, 100% { opacity: .4; } 50% { opacity: 1; } }
   @keyframes slideInRight { from { transform: translateX(100%); opacity:0; } to { transform: translateX(0); opacity:1; } }
+  @keyframes slideOutRight { from { transform: translateX(0); opacity:1; } to { transform: translateX(100%); opacity:0; } }
   @keyframes stageCardIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
   @keyframes copilotIconSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
@@ -6539,6 +6540,32 @@ function OnboardingChatPage({ profile, onComplete }) {
   const [onboardingSubPage, setOnboardingSubPage] = useState("chat");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [modalClosing, setModalClosing] = useState(false);
+  const [livechatPanelWidth, setLivechatPanelWidth] = useState(480);
+  const [livechatResizing, setLivechatResizing] = useState(false);
+  const livechatDragRef = useRef(null);
+  const onLivechatResizeMouseDown = function(e) {
+    e.preventDefault();
+    livechatDragRef.current = { startX: e.clientX, startWidth: livechatPanelWidth };
+    setLivechatResizing(true);
+    const onMove = function(ev) {
+      if (!livechatDragRef.current) return;
+      const dx = livechatDragRef.current.startX - ev.clientX;
+      const next = Math.max(360, Math.min(900, livechatDragRef.current.startWidth + dx));
+      setLivechatPanelWidth(next);
+    };
+    const onUp = function() {
+      livechatDragRef.current = null;
+      setLivechatResizing(false);
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  };
   const [cinematicPhase, setCinematicPhase] = useState("playing"); // "playing" | "done"
   const cinematicRef = useRef(null);
 
@@ -6658,12 +6685,11 @@ function OnboardingChatPage({ profile, onComplete }) {
   const shopifyConnectStartedRef = useRef(false);
 
   const SHOPIFY_CONNECT_STEPS = [
-    "Connecting to Shopify...",
     "Pulling in your orders and products...",
     "Loading customer data...",
     "Setting up your AI Agent...",
   ];
-  const shopifyNarrationFullText = "Your orders, products, and customer data are in. Time to see your AI Agent in action.\n\nI\u2019ve set it up based on what I know about UrbanStems. Try sending a message \u2014 the kind your shoppers actually send.";
+  const shopifyNarrationFullText = "Your orders, products, and customer data are in. Time to see your AI Agent in action.";
 
   const postChatNarrationFullText = "That\u2019s just the start. Your AI Agent will get smarter over time as you add knowledge sources, teach it your policies, and connect more channels.";
   const channelIntroFullText = "Next, we need a channel to start working from. Based on what I found, here\u2019s where UrbanStems is reachable.";
@@ -6872,7 +6898,9 @@ function OnboardingChatPage({ profile, onComplete }) {
       if (charIdx >= fullText.length) {
         clearInterval(interval);
         setPfTypingActive(false);
-        setPostFindingsMessages(function(prev) { return prev.concat([{ role: "ai", text: fullText }]); });
+        // Commit to the thread with preTyped flag so render skips the fadeInUp animation
+        // (avoids flash when the typing div is replaced by the committed message).
+        setPostFindingsMessages(function(prev) { return prev.concat([{ role: "ai", text: fullText, preTyped: true }]); });
         setPfTypingText("");
         setPfPhase("done");
         setTimeout(function() { setShowUseCasePicker(true); }, 600);
@@ -6894,10 +6922,11 @@ function OnboardingChatPage({ profile, onComplete }) {
       setSimTypingText(simIntroText.substring(0, charIdx));
       if (charIdx >= simIntroText.length) {
         clearInterval(interval);
-        // Keep simTypingText set so the rendered text stays in place (no flash from
-        // swapping typing element → committed message). Just stop the cursor blink
-        // and advance the phase.
         setSimTypingActive(false);
+        // Commit to the thread with preTyped flag so it stays in chronological order with
+        // subsequent user replies, without re-animating (no flash).
+        setPostFindingsMessages(function(prev) { return prev.concat([{ role: "ai", text: simIntroText, preTyped: true }]); });
+        setSimTypingText("");
         setSimPhase("done");
         setTimeout(function() { setShowShopifyPicker(true); }, 600);
       }
@@ -7506,7 +7535,7 @@ function OnboardingChatPage({ profile, onComplete }) {
           <div className="golive-checklist">
             <div className={"golive-card" + (checklistCompletedCount === 6 ? " complete" : "")}>
               <div>
-                <p className="golive-title">Go-live checklist</p>
+                <p className="golive-title">Setup progress</p>
                 <div className="golive-progress-track">
                   <div className="golive-progress-fill" style={{ width: ((checklistCompletedCount / 6) * 100) + "%" }} />
                 </div>
@@ -7554,7 +7583,7 @@ function OnboardingChatPage({ profile, onComplete }) {
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: 11, fontWeight: 600, color: TEXT, flexShrink: 0, position: "relative",
           }}>
-            JN
+            LT
             <div style={{
               position: "absolute", bottom: -1, right: -1,
               width: 10, height: 10, borderRadius: "50%",
@@ -7601,7 +7630,10 @@ function OnboardingChatPage({ profile, onComplete }) {
       {onboardingSubPage === "digest" ? (
         <DigestPage profile={profile} onStartChat={function() { setOnboardingSubPage("chat"); }} />
       ) : (<React.Fragment>
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", background: "#ffffff", borderRadius: 16, margin: "16px 16px 16px 0", border: "1px solid #EBECEF", position: "relative" }}>
+      <div
+        onClick={function() { if (activeReport && !modalClosing) closeReportModal(); }}
+        style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", background: "#ffffff", borderRadius: 16, marginTop: 16, marginBottom: 16, marginLeft: 0, marginRight: !modalClosing ? (activeReport === "livechat" ? (16 + livechatPanelWidth) : (({ brand: 16 + 480, voice: 16 + 480, personas: 16 + 480 })[activeReport] || 16)) : 16, transition: livechatResizing ? "none" : "margin-right .2s ease", border: "1px solid #EBECEF", position: "relative" }}
+      >
       {cinematicPhase !== "done" && (
         <div className="cinematic-welcome" ref={cinematicRef} />
       )}
@@ -7614,10 +7646,11 @@ function OnboardingChatPage({ profile, onComplete }) {
             fontSize: 13, fontWeight: 500, color: TEXT_MUTED,
             fontFamily: "'Inter', sans-serif",
             cursor: "pointer", padding: "6px 10px", borderRadius: 6,
+            background: "rgba(255,255,255,0.2)",
             transition: "color .15s, background .15s",
           }}
-          onMouseEnter={function(e) { e.currentTarget.style.color = TEXT; e.currentTarget.style.background = SURFACE; }}
-          onMouseLeave={function(e) { e.currentTarget.style.color = TEXT_MUTED; e.currentTarget.style.background = "transparent"; }}
+          onMouseEnter={function(e) { e.currentTarget.style.color = TEXT; e.currentTarget.style.background = "rgba(255,255,255,0.4)"; }}
+          onMouseLeave={function(e) { e.currentTarget.style.color = TEXT_MUTED; e.currentTarget.style.background = "rgba(255,255,255,0.2)"; }}
         >
           Skip intake
         </div>
@@ -7784,7 +7817,7 @@ function OnboardingChatPage({ profile, onComplete }) {
                       { title: "How your brand sounds", desc: "Warm, playful, never transactional", icon: "voice" },
                       { title: "Who\u2019s buying from you", desc: "3 segments, each with different stakes", icon: "personas" },
                     ].map((card, ci) => (
-                      <div key={ci} onClick={() => setActiveReport(card.icon)} style={{
+                      <div key={ci} onClick={(e) => { e.stopPropagation(); setActiveReport(card.icon); }} style={{
                         border: activeReport === card.icon ? ("1px solid " + ACCENT) : ("1px solid " + BORDER), borderRadius: 12,
                         background: CARD_BG, overflow: "hidden", display: "flex",
                         cursor: "pointer", transition: "border-color .15s, box-shadow .15s",
@@ -7795,9 +7828,22 @@ function OnboardingChatPage({ profile, onComplete }) {
                       >
                         <div style={{ width: 80, minHeight: 72, background: SURFACE, flexShrink: 0, borderRight: ("1px solid " + BORDER), display: "flex", alignItems: "center", justifyContent: "center" }}>
                           {card.icon === "brand" ? (
-                            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" style={{ opacity: 0.95 }}><rect x="6" y="8" width="28" height="3" rx="1.5" fill={TEXT} fillOpacity="0.75" /><rect x="6" y="15" width="22" height="2" rx="1" fill={TEXT} fillOpacity="0.5" /><rect x="6" y="20" width="26" height="2" rx="1" fill={TEXT} fillOpacity="0.5" /><rect x="6" y="25" width="18" height="2" rx="1" fill={TEXT} fillOpacity="0.5" /><circle cx="30" cy="30" r="6" stroke={TEXT} strokeWidth="1.4" strokeDasharray="2 2" /><circle cx="30" cy="30" r="2.5" fill={TEXT} fillOpacity="0.5" /></svg>
+                            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" style={{ opacity: 0.95 }}>
+                              {/* Envelope body */}
+                              <rect x="6" y="11" width="28" height="19" rx="2.5" stroke={TEXT} strokeWidth="1.4" fill={TEXT} fillOpacity="0.12" />
+                              {/* Flap */}
+                              <path d="M7 13 L20 22 L33 13" stroke={TEXT} strokeWidth="1.4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
                           ) : card.icon === "voice" ? (
-                            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" style={{ opacity: 0.95 }}><path d="M6 28 Q13 14, 20 22 T34 16" stroke={TEXT} strokeWidth="1.6" fill="none" strokeDasharray="3 2" /><rect x="6" y="10" width="16" height="2.5" rx="1.2" fill={TEXT} fillOpacity="0.55" /><rect x="6" y="16" width="12" height="2" rx="1" fill={TEXT} fillOpacity="0.45" /><circle cx="32" cy="12" r="5" stroke={TEXT} strokeWidth="1.3" fill={TEXT} fillOpacity="0.1" /><path d="M29.5 12l1.8 1.8 3.5-3.5" stroke={TEXT} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" style={{ opacity: 0.95 }}>
+                              {/* Megaphone cone */}
+                              <path d="M10 17 L10 25 L16 25 L28 30 L28 12 L16 17 Z" stroke={TEXT} strokeWidth="1.4" fill={TEXT} fillOpacity="0.12" strokeLinejoin="round" />
+                              {/* Handle strap */}
+                              <path d="M16 25 L17 31" stroke={TEXT} strokeWidth="1.4" strokeLinecap="round" />
+                              {/* Sound waves */}
+                              <path d="M31 17 Q33.5 21 31 25" stroke={TEXT} strokeWidth="1.4" fill="none" strokeLinecap="round" />
+                              <path d="M34 14 Q37.5 21 34 28" stroke={TEXT} strokeWidth="1.3" fill="none" strokeLinecap="round" strokeDasharray="2 2" />
+                            </svg>
                           ) : (
                             <svg width="40" height="40" viewBox="0 0 40 40" fill="none" style={{ opacity: 0.95 }}><circle cx="14" cy="13" r="4.5" stroke={TEXT} strokeWidth="1.4" /><path d="M7 26c0-4 3.1-7 7-7s7 3 7 7" stroke={TEXT} strokeWidth="1.4" fill="none" /><circle cx="27" cy="15" r="3.5" stroke={TEXT} strokeWidth="1.3" /><path d="M22 26c0-3 2.2-5.5 5-5.5s5 2.5 5 5.5" stroke={TEXT} strokeWidth="1.3" fill="none" /><rect x="6" y="31" width="28" height="2" rx="1" fill={TEXT} fillOpacity="0.45" /></svg>
                           )}
@@ -7857,7 +7903,7 @@ function OnboardingChatPage({ profile, onComplete }) {
               <div key={"pf-" + i} style={{
                 marginBottom: 16, display: "flex", flexDirection: "column",
                 alignItems: msg.role === "user" ? "flex-end" : "flex-start",
-                animation: "fadeInUp .35s ease-out",
+                animation: msg.preTyped ? "none" : "fadeInUp .35s ease-out",
               }}>
                 {msg.role === "user" ? (
                   <div style={{
@@ -7987,7 +8033,7 @@ function OnboardingChatPage({ profile, onComplete }) {
                 </div>
                 <div style={{ flex: 1, padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
                   <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: TEXT, lineHeight: 1.3 }}>Go-live checklist</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: TEXT, lineHeight: 1.3 }}>Setup progress</span>
                     <span style={{ fontSize: 12, color: TEXT_MUTED, lineHeight: 1.3 }}>Step-by-step setup plan to get your AI Agent live</span>
                   </div>
                   <button style={{ fontSize: 12, fontWeight: 500, color: TEXT, background: "transparent", border: ("1px solid " + BORDER), borderRadius: 8, padding: "6px 14px", cursor: "pointer", transition: "all .15s", whiteSpace: "nowrap", flexShrink: 0 }}
@@ -8025,15 +8071,15 @@ function OnboardingChatPage({ profile, onComplete }) {
             </div>
           )}
 
-          {/* Currently typing post-findings text */}
-          {pfTypingActive && pfTypingText && (
+          {/* Post-findings typing text — stays rendered after typing finishes (no flash) */}
+          {pfTypingText && (
             <div style={{ marginBottom: 16 }}>
               <div style={{
                 fontSize: 14, lineHeight: 1.55, color: "#5C6370",
                 fontFamily: "'Inter', sans-serif", fontWeight: 450,
                 whiteSpace: "pre-wrap",
               }}>
-                {pfTypingText}<span style={{ opacity: 0.3, animation: "pulse 1s infinite" }}>|</span>
+                {pfTypingText}{pfTypingActive && <span style={{ opacity: 0.3, animation: "pulse 1s infinite" }}>|</span>}
               </div>
             </div>
           )}
@@ -8177,24 +8223,16 @@ function OnboardingChatPage({ profile, onComplete }) {
           {/* Open live chat card (matches brand report cards) */}
           {showLiveChatButton && (
             <div style={{ marginBottom: 20, animation: "fadeInUp .4s cubic-bezier(.16,1,.3,1) forwards" }}>
-              <BorderGlow
-                animated
-                className="live-chat-card"
-                borderRadius={12}
-                glowRadius={36}
-                glowColor="270 70 68"
-                colors={["#a78bfa", "#a78bfa", "#a78bfa"]}
-                backgroundColor="#ffffff"
-                coneSpread={32}
-                fillOpacity={0.18}
-                edgeSensitivity={20}
-              >
               <div
-                onClick={function() { livechatOpenedRef.current = true; setActiveReport("livechat"); }}
+                onClick={function(e) { e.stopPropagation(); livechatOpenedRef.current = true; setActiveReport("livechat"); }}
+                onMouseEnter={function(e) { if (activeReport !== "livechat") { e.currentTarget.style.borderColor = "#D0D0D0"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,.04)"; } }}
+                onMouseLeave={function(e) { if (activeReport !== "livechat") { e.currentTarget.style.borderColor = BORDER; e.currentTarget.style.boxShadow = "none"; } }}
                 style={{
+                  border: activeReport === "livechat" ? ("1px solid " + ACCENT) : ("1px solid " + BORDER),
                   borderRadius: 12,
                   background: CARD_BG, overflow: "hidden", display: "flex",
                   cursor: "pointer",
+                  transition: "border-color .15s, box-shadow .15s",
                 }}
               >
                 <div style={{ width: 80, minHeight: 72, background: SURFACE, flexShrink: 0, borderRight: ("1px solid " + BORDER), display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -8216,7 +8254,6 @@ function OnboardingChatPage({ profile, onComplete }) {
                   >Open chat</button>
                 </div>
               </div>
-              </BorderGlow>
             </div>
           )}
 
@@ -9109,8 +9146,8 @@ function OnboardingChatPage({ profile, onComplete }) {
       </div>
       </div>
 
-      {/* Report Modal Overlay */}
-      {activeReport && (
+      {/* Report Modal Overlay (simulation / checklist) */}
+      {activeReport && ["simulation", "checklist"].indexOf(activeReport) !== -1 && (
         <div
           onClick={closeReportModal}
           style={{
@@ -9156,12 +9193,108 @@ function OnboardingChatPage({ profile, onComplete }) {
               </svg>
             </div>
 
+            {activeReport === "simulation" && (<ReportSimulation />)}
+            {activeReport === "checklist" && (<ReportChecklist />)}
+          </div>
+        </div>
+      )}
+
+      {/* Brand snapshot side panel (brand / voice / personas) — slides in from right, no overlay */}
+      {activeReport && ["brand", "voice", "personas"].indexOf(activeReport) !== -1 && (
+        <div
+          style={{
+            position: "fixed", top: 0, right: 0, height: "100vh", width: 480,
+            zIndex: 1000,
+            background: "#ffffff",
+            borderLeft: "1px solid #EBECEF",
+            boxShadow: "-8px 0 32px rgba(0,0,0,.06)",
+            animation: modalClosing ? "slideOutRight .2s ease forwards" : "slideInRight .2s ease-out forwards",
+            display: "flex", flexDirection: "column",
+          }}
+        >
+          {/* X close button */}
+          <div
+            onClick={closeReportModal}
+            style={{
+              position: "absolute", top: 16, right: 16, zIndex: 2,
+              width: 32, height: 32, borderRadius: 8,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: "pointer", transition: "background .15s",
+            }}
+            onMouseEnter={function(e) { e.currentTarget.style.background = SURFACE; }}
+            onMouseLeave={function(e) { e.currentTarget.style.background = "transparent"; }}
+          >
+            <svg width="16" height="16" viewBox="0 0 14 14" fill="none">
+              <path d="M3 3l8 8M11 3l-8 8" stroke={TEXT_MUTED} strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </div>
+
+          <div style={{ flex: 1, overflowY: "auto", padding: "32px 24px" }}>
             {activeReport === "brand" && (<ModalWhereShoppersReach />)}
             {activeReport === "voice" && (<ModalHowBrandSounds />)}
             {activeReport === "personas" && (<ModalWhosBuying />)}
-            {activeReport === "livechat" && (<ModalLiveChat />)}
-            {activeReport === "simulation" && (<ReportSimulation />)}
-            {activeReport === "checklist" && (<ReportChecklist />)}
+          </div>
+        </div>
+      )}
+
+      {/* Live chat preview side panel — UrbanStems background + Chat 2.0 widget */}
+      {activeReport === "livechat" && (
+        <div
+          style={{
+            position: "fixed", top: 0, right: 0, height: "100vh", width: livechatPanelWidth,
+            zIndex: 1000, overflow: "hidden",
+            borderLeft: "1px solid rgba(0,0,0,0.1)",
+            animation: modalClosing ? "slideOutRight .2s ease forwards" : "slideInRight .2s ease-out forwards",
+          }}
+        >
+          {/* Left-edge resize handle */}
+          <div
+            onMouseDown={onLivechatResizeMouseDown}
+            style={{
+              position: "absolute", top: 0, left: 0, bottom: 0, width: 6,
+              cursor: "col-resize", zIndex: 30,
+              background: "transparent",
+            }}
+            onMouseEnter={function(e) { e.currentTarget.style.background = "rgba(0,0,0,0.08)"; }}
+            onMouseLeave={function(e) { e.currentTarget.style.background = "transparent"; }}
+          />
+
+          {/* Background layer — UrbanStems website */}
+          <div style={{
+            position: "absolute", inset: 0,
+            backgroundImage: "url('urbanstems-bg.png')",
+            backgroundSize: "cover",
+            backgroundPosition: "right center",
+            backgroundRepeat: "no-repeat",
+            filter: "blur(2px)",
+            transform: "scale(1.02)",
+          }} />
+
+          {/* Close button — top-right, matches brand panel style */}
+          <div
+            onClick={closeReportModal}
+            style={{
+              position: "absolute", top: 16, right: 16, zIndex: 20,
+              width: 32, height: 32, borderRadius: 8,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: "pointer", transition: "background .15s",
+            }}
+            onMouseEnter={function(e) { e.currentTarget.style.background = SURFACE; }}
+            onMouseLeave={function(e) { e.currentTarget.style.background = "transparent"; }}
+          >
+            <svg width="16" height="16" viewBox="0 0 14 14" fill="none">
+              <path d="M3 3l8 8M11 3l-8 8" stroke={TEXT_MUTED} strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </div>
+
+          {/* Chat 2.0 widget anchored bottom-right */}
+          <div style={{
+            position: "absolute", right: 24, bottom: 24,
+            width: 375, height: "min(85%, 680px)",
+            transformOrigin: "bottom right",
+            transform: "scale(0.864)",
+          }}>
+            <ModalLiveChat />
           </div>
         </div>
       )}
@@ -9652,26 +9785,39 @@ function BorderGlow(props) {
 var SUGGESTED_CHIPS = [
   "Where\u2019s my order?",
   "I need to cancel my delivery",
-  "What flowers are best for a birthday under $75?",
+  "What flowers are best for a birthday?",
   "My bouquet arrived damaged",
 ];
 
 var SCRIPTED_INTENTS = [
   {
-    keywords: [["where", "order"], ["track", "order"], ["order", "status"], ["where", "package"], ["where", "delivery"]],
-    response: "On it! Share your order number or the email you used at checkout and I\u2019ll pull up exactly where things are.",
+    // Product recommendation — placed first so "recommend/popular/gift/bouquet" route to cards
+    keywords: ["recommend", "popular", "best seller", "what flowers", "what do you have", "gift", "occasion", "bouquet", "what should i get"],
+    response: "Here are a few of our most-loved arrangements right now \u2014 perfect if you\u2019re looking for something fresh and memorable:",
+    products: [
+      { name: "Margot", price: 88, originalPrice: 90, image: "urbanstems-margot.png" },
+      { name: "Sorbet", price: 68, image: "urbanstems-sorbet.png" },
+    ],
   },
   {
-    keywords: [["cancel"], ["stop", "delivery"], ["stop", "order"], ["call", "off"]],
-    response: "Of course \u2014 let\u2019s sort that out. Share your order number and I\u2019ll check if we can still catch it before it ships.",
+    // Damaged / return — matched first so "arrived damaged" resolves here, not to WISMO
+    keywords: ["damaged", "broken", "refund", "return", "wrong"],
+    response: "I\u2019m so sorry to hear that \u2014 that\u2019s not the experience we want for you. If your arrangement arrived damaged, we\u2019ll make it right. Could you send a photo of the bouquet to care@urbanstems.com? Our team will review it and arrange a replacement or full refund, usually within 24 hours.",
   },
   {
-    keywords: [["birthday"], ["recommend"], ["best", "for"], ["suggest"], ["under", "$"], ["gift", "idea"], ["what", "should"]],
-    response: "Birthdays deserve something special. The Seasonal Bouquet and Classic Roses are both under $75 and always land well \u2014 want a recommendation based on the recipient\u2019s vibe?",
+    // Product / delivery coverage — "deliver to ...", "bouquet", "what's in"
+    keywords: ["deliver", "bouquet", "included", "what\u2019s in", "what's in", "city"],
+    response: "We deliver to most major US cities \u2014 same-day delivery is available in NYC, DC, LA, Chicago, and more if you order before noon local time. Each arrangement comes in a glass vase with a care card. Want me to help you find something for a specific occasion or budget?",
   },
   {
-    keywords: [["damaged"], ["broken"], ["wilted"], ["dead"], ["bad", "shape"], ["arrived", "wrong"], ["not", "fresh"], ["dying"]],
-    response: "That\u2019s the last thing we\u2019d want, especially for a gift. Send over a photo and your order number and we\u2019ll make it right \u2014 whether that\u2019s a replacement or a refund, your call.",
+    // Promo / discount
+    keywords: ["promo", "discount", "code", "coupon", "sale"],
+    response: "We occasionally run promotions for new customers and around key holidays like Mother\u2019s Day and Valentine\u2019s Day. If you sign up for our emails at urbanstems.com you\u2019ll get first access. Is there a specific occasion you\u2019re shopping for? I might be able to help find the right arrangement at the right price.",
+  },
+  {
+    // WISMO — order status
+    keywords: ["order", "arrive", "delivery", "where is", "tracking"],
+    response: "Hi! I can look that up for you \u2014 could you share your order number or the email you used at checkout? Most UrbanStems orders arrive within 2\u20134 days, and same-day delivery is available in select cities if you ordered before noon. I\u2019ll get you the exact status right away.",
   },
 ];
 
@@ -9681,21 +9827,14 @@ function matchScriptedIntent(text) {
   for (var i = 0; i < SCRIPTED_INTENTS.length; i++) {
     var intent = SCRIPTED_INTENTS[i];
     for (var j = 0; j < intent.keywords.length; j++) {
-      var phrase = intent.keywords[j];
-      var allFound = true;
-      for (var k = 0; k < phrase.length; k++) {
-        if (lower.indexOf(phrase[k]) === -1) { allFound = false; break; }
-      }
-      if (allFound) return intent.response;
+      if (lower.indexOf(intent.keywords[j]) !== -1) return intent;
     }
   }
   return null;
 }
 
 function ModalLiveChat() {
-  var messagesState = React.useState([
-    { role: "assistant", text: "Hi! I\u2019m the UrbanStems AI Agent. Ask me anything \u2014 I have access to your store\u2019s products, orders, and policies." }
-  ]);
+  var messagesState = React.useState([]);
   var messages = messagesState[0];
   var setMessages = messagesState[1];
 
@@ -9707,7 +9846,28 @@ function ModalLiveChat() {
   var sending = sendingState[0];
   var setSending = sendingState[1];
 
+  var viewStateState = React.useState("home"); // "home" | "transitioning" | "thread"
+  var viewState = viewStateState[0];
+  var setViewState = viewStateState[1];
+
   var threadRef = React.useRef(null);
+
+  var toastVisibleState = React.useState(false);
+  var toastVisible = toastVisibleState[0];
+  var setToastVisible = toastVisibleState[1];
+  var toastTimerRef = React.useRef(null);
+  var showKnowledgeToast = function() {
+    setToastVisible(true);
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = setTimeout(function() { setToastVisible(false); }, 3000);
+  };
+  var dismissToast = function() {
+    setToastVisible(false);
+    if (toastTimerRef.current) { clearTimeout(toastTimerRef.current); toastTimerRef.current = null; }
+  };
+  React.useEffect(function() {
+    return function() { if (toastTimerRef.current) clearTimeout(toastTimerRef.current); };
+  }, []);
 
   React.useEffect(function() {
     if (threadRef.current) {
@@ -9715,168 +9875,417 @@ function ModalLiveChat() {
     }
   }, [messages, sending]);
 
+  var appendVisible = function() {
+    setMessages(function(prev) {
+      return prev.map(function(m, i) { return i === prev.length - 1 ? Object.assign({}, m, { visible: true }) : m; });
+    });
+  };
+
+  var doAssistantReply = React.useCallback(function(text) {
+    setSending(true);
+    var intent = matchScriptedIntent(text);
+    setTimeout(function() {
+      var payload = intent === null
+        ? { role: "assistant", isFallback: true, visible: false }
+        : { role: "assistant", text: intent.response, products: intent.products || null, visible: false };
+      setMessages(function(prev) { return prev.concat([payload]); });
+      setSending(false);
+      setTimeout(appendVisible, 50);
+    }, 600);
+  }, []);
+
   var sendMessage = React.useCallback(function(text) {
     if (!text || sending) return;
-    var newUserMsg = { role: "user", text: text };
-    var nextMessages = messages.concat([newUserMsg]);
-    setMessages(nextMessages);
+    var userMsg = { role: "user", text: text, visible: false };
     setInput("");
-    setSending(true);
-
-    var reply = matchScriptedIntent(text);
-    var delay = 1000 + Math.random() * 500; // 1.0 – 1.5s
-    setTimeout(function() {
-      if (reply === null) {
-        setMessages(function(prev) { return prev.concat([{ role: "assistant", isFallback: true }]); });
-      } else {
-        setMessages(function(prev) { return prev.concat([{ role: "assistant", text: reply }]); });
-      }
-      setSending(false);
-    }, delay);
-  }, [messages, sending]);
+    if (viewState === "home" || viewState === "transitioning") {
+      setViewState("transitioning");
+      setTimeout(function() {
+        setViewState("thread");
+        setMessages(function(prev) { return prev.concat([userMsg]); });
+        setTimeout(function() {
+          appendVisible();
+          doAssistantReply(text);
+        }, 50);
+      }, 500);
+    } else {
+      setMessages(function(prev) { return prev.concat([userMsg]); });
+      setTimeout(function() {
+        appendVisible();
+        doAssistantReply(text);
+      }, 50);
+    }
+  }, [sending, viewState, doAssistantReply]);
 
   var onChipClick = function(chip) { sendMessage(chip); };
-  var onSendClick = function() { sendMessage(input.trim()); };
   var onKeyDown = function(e) {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage(input.trim());
     }
   };
+  var handleBack = function() { setMessages([]); setViewState("home"); };
+
+  var isHome = viewState === "home";
+  var isTransitioning = viewState === "transitioning";
+  var showHomeElements = isHome || isTransitioning;
+  var showThread = viewState === "thread";
+
+  var pillStyle = {
+    background: "rgba(255,255,255,0.55)",
+    border: "1px solid rgba(255,255,255,0.6)",
+  };
 
   return (
-    <div style={{ fontFamily: "'Inter', sans-serif", color: TEXT }}>
-      <h2 style={{ fontSize: 20, fontWeight: 600, color: TEXT, marginBottom: 4, marginTop: 0, paddingRight: 40 }}>Ask your AI Agent questions</h2>
-      <p style={{ fontSize: 13, color: TEXT_MUTED, marginBottom: 20 }}>It&rsquo;ll use data from your website and Shopify connection to try to answer.</p>
-
+    <div style={{
+      width: "100%", height: "100%",
+      display: "flex", flexDirection: "column",
+      borderRadius: 40, overflow: "hidden",
+      background: "radial-gradient(ellipse 100% 90% at 100% 105%, rgba(241, 157, 79, 0.55), transparent 62%), radial-gradient(ellipse 100% 90% at 0% -5%, rgba(207, 191, 170, 0.75), transparent 60%), linear-gradient(180deg, #EAE2CF 0%, #EFD4CE 100%)",
+      border: "1.5px solid rgba(255,255,255,0.7)",
+      boxShadow: "0 20px 60px rgba(0,0,0,0.12), 0 8px 24px rgba(0,0,0,0.08)",
+      position: "relative",
+      fontFamily: "'Inter', sans-serif",
+      color: "#1E242E",
+    }}>
+      {/* Top nav */}
       <div style={{
-        border: "1px solid " + BORDER, borderRadius: 12,
-        background: "#fafafa",
-        height: 520,
-        display: "flex", flexDirection: "column",
-        overflow: "hidden",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "32px 20px 16px", flexShrink: 0,
+        backdropFilter: "blur(5px)",
+        WebkitBackdropFilter: "blur(5px)",
       }}>
-        {/* Message thread */}
-        <div ref={threadRef} style={{
-          flex: 1, overflowY: "auto",
-          padding: "16px 16px 8px",
-          display: "flex", flexDirection: "column", gap: 10,
+        <div style={{ width: 44, height: 44 }}>
+          <button onClick={handleBack} style={{
+            width: 44, height: 44, borderRadius: 24,
+            background: "rgba(255,255,255,0.2)",
+            border: "none",
+            boxShadow: "0 2px 3px rgba(0,0,0,0.1)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: "pointer", padding: 0,
+            color: "#1E242E",
+            opacity: showThread ? 1 : 0,
+            transform: showThread ? "scale(1)" : "scale(0.9)",
+            pointerEvents: showThread ? "auto" : "none",
+            transition: "all .5s",
+          }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <button style={{
+            width: 44, height: 44, borderRadius: 24,
+            background: "rgba(255,255,255,0.2)",
+            border: "none",
+            boxShadow: "0 2px 3px rgba(0,0,0,0.1)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: "pointer", padding: 0,
+            color: "#1E242E",
+          }}>
+            <svg width="20" height="18" viewBox="0 0 20 18" fill="none">
+              <path d="M2 2h2.37l2.61 9.26c.07.24.21.45.41.59.19.15.44.23.68.23h7.02c.25 0 .49-.08.69-.23.19-.14.34-.36.41-.59L18 4.8H5.17" stroke="#1E242E" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+              <circle cx="8.34" cy="14.88" r="1.13" fill="#1E242E" />
+              <circle cx="14.58" cy="14.88" r="1.13" fill="#1E242E" />
+            </svg>
+          </button>
+          <button style={{
+            height: 44, padding: "0 16px", borderRadius: 24,
+            background: "rgba(255,255,255,0.2)",
+            border: "none",
+            boxShadow: "0 2px 3px rgba(0,0,0,0.1)",
+            display: "flex", alignItems: "center",
+            cursor: "pointer",
+            color: "#1E242E",
+            fontSize: 14, fontWeight: 500, fontFamily: "'Inter', sans-serif",
+          }}>Orders</button>
+        </div>
+      </div>
+
+      {/* Scroll area */}
+      <div ref={threadRef} style={{
+        flex: 1, overflowY: "auto", minHeight: 0,
+        padding: "0 20px 20px",
+        display: "flex", flexDirection: "column",
+        gap: 20,
+      }}>
+        {/* Wordmark home element */}
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "center",
+          transition: "all .5s",
+          opacity: showHomeElements && !isTransitioning ? 1 : 0,
+          transform: showHomeElements && !isTransitioning ? "translateY(0)" : "translateY(-12px)",
+          paddingTop: showHomeElements && !isTransitioning ? 32 : 0,
+          paddingBottom: showHomeElements && !isTransitioning ? 24 : 0,
+          maxHeight: showHomeElements && !isTransitioning ? 200 : 0,
+          pointerEvents: showHomeElements && !isTransitioning ? "auto" : "none",
+          overflow: "hidden",
+          flexShrink: 0,
         }}>
-          {messages.map(function(m, i) {
-            var isUser = m.role === "user";
-            return (
-              <div key={i} style={{
-                alignSelf: isUser ? "flex-end" : "flex-start",
-                maxWidth: "82%",
-                background: isUser ? "#6D4AC7" : "#fff",
-                color: isUser ? "#fff" : TEXT,
-                border: isUser ? "none" : "1px solid " + BORDER,
-                borderRadius: 14,
-                borderBottomRightRadius: isUser ? 6 : 14,
-                borderBottomLeftRadius: isUser ? 14 : 6,
-                padding: "10px 14px",
-                fontSize: 14, lineHeight: 1.5,
-                whiteSpace: "pre-wrap",
-                animation: i > 0 ? "fadeIn .3s ease forwards" : "none",
-              }}>
-                {m.isFallback ? (
-                  <React.Fragment>
-                    I&rsquo;m not able to answer that just yet &mdash; but I&rsquo;ll get smarter as you add more knowledge sources.{" "}
-                    <a href="#" style={{ color: "#6D4AC7", textDecoration: "underline", fontWeight: 500 }}>Add your first one</a>
-                    {" "}to teach me more.
-                  </React.Fragment>
-                ) : m.text}
-              </div>
-            );
-          })}
-          {sending && (
-            <div style={{
-              alignSelf: "flex-start",
-              background: "#fff", border: "1px solid " + BORDER,
-              borderRadius: 14, borderBottomLeftRadius: 6,
-              padding: "10px 14px",
-              display: "flex", alignItems: "center", gap: 4,
+          <img
+            src="urbanstems-logo.png"
+            alt="UrbanStems"
+            style={{ height: 63, width: "auto", opacity: 0.45, userSelect: "none" }}
+            draggable={false}
+          />
+        </div>
+
+        {showHomeElements && !isTransitioning && <div style={{ flex: 1 }} />}
+
+        {showThread && messages.map(function(msg, i) {
+          var visible = msg.visible;
+          var priorAssistantCount = 0;
+          for (var pi = 0; pi < i; pi++) {
+            if (messages[pi].role === "assistant") priorAssistantCount++;
+          }
+          var isFirstAssistant = msg.role === "assistant" && priorAssistantCount === 0;
+          return (
+            <div key={i} style={{
+              transition: "all .5s",
+              opacity: visible ? 1 : 0,
+              transform: visible ? "translateY(0)" : "translateY(6px)",
             }}>
+              {msg.role === "user" ? (
+                <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                  <div style={{
+                    maxWidth: "85%", width: "fit-content",
+                    borderRadius: 24,
+                    padding: "8px 16px",
+                    fontSize: 14, fontWeight: 400, lineHeight: "20px",
+                    background: "#FAFAFA",
+                    color: "#1E242E",
+                  }}>{msg.text}</div>
+                </div>
+              ) : (
+                <div style={{ width: "100%" }}>
+                  <div style={{
+                    fontSize: 14, fontWeight: 400, lineHeight: "20px",
+                    color: "#1E242E",
+                  }}>
+                    {msg.isFallback ? (
+                      <React.Fragment>
+                        I&rsquo;m not able to answer that just yet &mdash; but I&rsquo;ll get smarter the more you teach me.{" "}
+                        <a
+                          href="#"
+                          onClick={function(e) { e.preventDefault(); showKnowledgeToast(); }}
+                          style={{ color: "#1E242E", textDecoration: "underline", fontWeight: 500 }}
+                        >Add more knowledge sources</a>
+                        {" "}to help me get there.
+                      </React.Fragment>
+                    ) : msg.text}
+                  </div>
+                  {msg.products && msg.products.length > 0 && (
+                    <div style={{ display: "flex", gap: 16, marginTop: 16 }}>
+                      {msg.products.map(function(p, pi) {
+                        return (
+                          <div key={pi} style={{
+                            flex: 1, minWidth: 0,
+                            display: "flex", flexDirection: "column",
+                          }}>
+                            {/* Product image with cart button overlay */}
+                            <div style={{
+                              position: "relative",
+                              aspectRatio: "187 / 180",
+                              borderRadius: 20,
+                              overflow: "hidden",
+                              border: "1px solid #EBECEF",
+                              boxShadow: "0 2px 3px rgba(0,0,0,0.02)",
+                              background: "#EFE9DF",
+                            }}>
+                              <img
+                                src={p.image}
+                                alt={p.name}
+                                style={{
+                                  width: "100%", height: "100%",
+                                  objectFit: "cover",
+                                  display: "block",
+                                  pointerEvents: "none",
+                                }}
+                                draggable={false}
+                              />
+                              {/* Glass cart+ button, bottom-right of image */}
+                              <button style={{
+                                position: "absolute", bottom: 4, right: 4,
+                                width: 40, height: 40, borderRadius: 24,
+                                background: "rgba(255,255,255,0.2)",
+                                border: "none",
+                                boxShadow: "0 2px 3px rgba(0,0,0,0.1)",
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                cursor: "pointer", padding: 0,
+                                color: "#1E242E",
+                              }}>
+                                <svg width="20" height="18" viewBox="0 0 20 18" fill="none">
+                                  <path d="M10.77 6.18H4.44" stroke="#1E242E" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                                  <path d="M1.65 3.68h2.1l2.3 8.27c.06.21.18.4.36.53.17.13.39.2.6.2h6.18c.22 0 .43-.07.6-.2.17-.13.3-.32.36-.53l.6-2.15" stroke="#1E242E" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                                  <circle cx="7.25" cy="15.18" r="1" fill="#1E242E" />
+                                  <circle cx="12.75" cy="15.18" r="1" fill="#1E242E" />
+                                  <path d="M16.02 1.82v4.65" stroke="#1E242E" strokeWidth="1.3" strokeLinecap="round" />
+                                  <path d="M18.34 4.14h-4.64" stroke="#1E242E" strokeWidth="1.3" strokeLinecap="round" />
+                                </svg>
+                              </button>
+                            </div>
+                            {/* Text block */}
+                            <div style={{ padding: "8px 8px", display: "flex", flexDirection: "column", gap: 2 }}>
+                              <div style={{ fontSize: 14, lineHeight: "20px", fontWeight: 600, color: "#1E242E" }}>{p.name}</div>
+                              <div style={{ fontSize: 14, lineHeight: "20px", fontWeight: 500, color: "#1E242E" }}>
+                                <span>${p.price} </span>
+                                {p.originalPrice && (
+                                  <span style={{ textDecoration: "line-through", color: "#8992A0" }}>{p.originalPrice}</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {isFirstAssistant && (
+                    <div style={{
+                      padding: "2px 4px 0",
+                      fontSize: 11,
+                      color: "rgba(30,36,46,0.45)",
+                      display: "flex", alignItems: "center", gap: 4,
+                    }}>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 3 L13.5 9 L19.5 10.5 L13.5 12 L12 18 L10.5 12 L4.5 10.5 L10.5 9 Z" fill="currentColor" />
+                        <path d="M19 3 L19.7 5 L21.7 5.7 L19.7 6.4 L19 8.4 L18.3 6.4 L16.3 5.7 L18.3 5 Z" fill="currentColor" />
+                      </svg>
+                      <span>Generated by AI</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        {sending && (
+          <div style={{ marginBottom: 12, padding: 4 }}>
+            <span style={{ display: "inline-flex", gap: 4 }}>
               {[0, 1, 2].map(function(i) {
                 return <span key={i} style={{
-                  width: 5, height: 5, borderRadius: "50%", background: TEXT_MUTED,
+                  width: 6, height: 6, borderRadius: "50%",
+                  background: "rgba(30,36,46,0.3)",
                   animation: "dotBounce 1s infinite",
                   animationDelay: (i * 0.15) + "s",
                 }} />;
               })}
-            </div>
-          )}
-        </div>
-
-        {/* Suggested chips */}
-        {messages.length <= 1 && !sending && (
-          <div style={{
-            padding: "8px 16px 4px",
-            display: "flex", flexWrap: "wrap", gap: 6,
-          }}>
-            {SUGGESTED_CHIPS.map(function(chip, i) {
-              return (
-                <div key={i}
-                  onClick={function() { onChipClick(chip); }}
-                  style={{
-                    padding: "7px 12px", borderRadius: 18,
-                    background: "#fff", border: "1px solid " + BORDER,
-                    fontSize: 12.5, color: TEXT,
-                    cursor: "pointer", transition: "all .15s",
-                    fontFamily: "'Inter', sans-serif",
-                  }}
-                  onMouseEnter={function(e) { e.currentTarget.style.borderColor = "#6D4AC7"; e.currentTarget.style.color = "#6D4AC7"; }}
-                  onMouseLeave={function(e) { e.currentTarget.style.borderColor = BORDER; e.currentTarget.style.color = TEXT; }}
-                >
-                  {chip}
-                </div>
-              );
-            })}
+            </span>
           </div>
         )}
-
-        {/* Input bar */}
-        <div style={{
-          padding: "12px 16px 16px",
-          display: "flex", alignItems: "center", gap: 8,
-        }}>
-          <div style={{
-            flex: 1, minWidth: 0,
-            display: "flex", alignItems: "center",
-            background: "#fff", border: "1px solid " + BORDER,
-            borderRadius: 22,
-            padding: "8px 6px 8px 14px",
-          }}>
-            <input
-              value={input}
-              onChange={function(e) { setInput(e.target.value); }}
-              onKeyDown={onKeyDown}
-              disabled={sending}
-              placeholder="Type a message..."
-              style={{
-                flex: 1, minWidth: 0, border: "none", outline: "none",
-                fontSize: 14, fontFamily: "'Inter', sans-serif", color: TEXT,
-                background: "transparent",
-              }}
-            />
-            <button
-              onClick={onSendClick}
-              disabled={!input.trim() || sending}
-              style={{
-                width: 30, height: 30, borderRadius: "50%", border: "none",
-                background: input.trim() && !sending ? "#6D4AC7" : "#E0E0E0",
-                cursor: input.trim() && !sending ? "pointer" : "default",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                flexShrink: 0,
-              }}
-            >
-              <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style={{ transform: "rotate(-90deg)" }}>
-                <path d="M1 7h12M8 2l5 5-5 5" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-          </div>
-        </div>
       </div>
+
+      {/* Prompt chips */}
+      <div style={{
+        padding: "0 20px",
+        display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 8,
+        transition: "all .5s",
+        opacity: showHomeElements && !isTransitioning ? 1 : 0,
+        transform: showHomeElements && !isTransitioning ? "translateY(0)" : "translateY(8px)",
+        paddingBottom: showHomeElements && !isTransitioning ? 12 : 0,
+        maxHeight: showHomeElements && !isTransitioning ? 300 : 0,
+        pointerEvents: showHomeElements && !isTransitioning ? "auto" : "none",
+        overflow: "hidden",
+        flexShrink: 0,
+      }}>
+        {SUGGESTED_CHIPS.map(function(chip, i) {
+          return (
+            <button key={i}
+              onClick={function() { onChipClick(chip); }}
+              style={{
+                textAlign: "left",
+                fontSize: 14, fontWeight: 500,
+                borderRadius: 999, padding: "10px 16px",
+                background: "rgba(255,255,255,0.5)",
+                backdropFilter: "blur(12px)",
+                WebkitBackdropFilter: "blur(12px)",
+                border: "1px solid rgba(255,255,255,0.55)",
+                color: "rgba(30,36,46,0.8)",
+                cursor: "pointer",
+                fontFamily: "'Inter', sans-serif",
+                whiteSpace: "nowrap",
+              }}>{chip}</button>
+          );
+        })}
+      </div>
+
+      {/* Input */}
+      <form
+        onSubmit={function(e) { e.preventDefault(); if (input.trim()) sendMessage(input.trim()); }}
+        style={{
+          padding: "16px 20px", flexShrink: 0,
+          backdropFilter: "blur(1px)",
+          WebkitBackdropFilter: "blur(1px)",
+        }}
+      >
+        <div style={{
+          display: "flex", alignItems: "center", gap: 16,
+          height: 48,
+          borderRadius: 24,
+          padding: "0 8px 0 16px",
+          background: "rgba(255,255,255,0.4)",
+          boxShadow: "0 0 30px rgba(169, 96, 157, 0.21), 0 2px 3px rgba(0,0,0,0.1)",
+        }}>
+          <input
+            value={input}
+            onChange={function(e) { setInput(e.target.value); }}
+            onKeyDown={onKeyDown}
+            placeholder="Ask anything"
+            style={{
+              flex: 1, minWidth: 0, border: "none", outline: "none", background: "transparent",
+              fontSize: 14, fontWeight: 500, lineHeight: "20px",
+              fontFamily: "'Inter', sans-serif", color: "#1E242E",
+            }}
+          />
+          <button
+            type={input.trim() ? "submit" : "button"}
+            style={{
+              width: 32, height: 32, borderRadius: 6,
+              background: "rgba(255,255,255,0.01)",
+              border: "none",
+              color: "#1E242E",
+              cursor: "pointer", padding: 0,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            {input.trim() ? (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13" />
+                <polygon points="22 2 15 22 11 13 2 9 22 2" />
+              </svg>
+            ) : (
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10 2.92H6.08c-1.4 0-2.1 0-2.64.27a2.43 2.43 0 0 0-1.09 1.09c-.27.54-.27 1.24-.27 2.64v7c0 1.4 0 2.1.27 2.64.24.47.62.85 1.09 1.09.54.27 1.24.27 2.64.27h7.66c.78 0 1.17 0 1.48-.08a2.5 2.5 0 0 0 1.77-1.77c.09-.31.09-.7.09-1.48" />
+                <path d="M15.42 7.08V2.08M12.92 4.58h5" />
+                <circle cx="6.67" cy="7.5" r="1.67" />
+                <path d="M12.07 10.35l-7.05 6.4" />
+              </svg>
+            )}
+          </button>
+        </div>
+      </form>
+
+      {/* Knowledge sources toast */}
+      {toastVisible && (
+        <div
+          onClick={dismissToast}
+          style={{
+            position: "absolute", left: "50%", bottom: 80,
+            transform: "translateX(-50%)",
+            background: "rgba(30,36,46,0.92)", color: "#fff",
+            fontSize: 12, lineHeight: 1.4,
+            padding: "10px 14px", borderRadius: 8,
+            cursor: "pointer", zIndex: 50,
+            boxShadow: "0 6px 20px rgba(0,0,0,0.22)",
+            maxWidth: "calc(100% - 32px)", textAlign: "center",
+            animation: "fadeIn .2s ease forwards",
+          }}
+        >
+          In the real product, this would open Knowledge Base settings.
+        </div>
+      )}
     </div>
   );
 }
@@ -9931,7 +10340,7 @@ function ModalWhereShoppersReach() {
 
   return (
     <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, lineHeight: 1.6, color: TEXT }}>
-      <h2 style={{ fontSize: 20, fontWeight: 600, color: TEXT, marginBottom: 4, marginTop: 0, paddingRight: 40 }}>Where shoppers reach you</h2>
+      <h2 style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 26, fontWeight: 500, letterSpacing: "-0.5px", color: "#1A1918", marginBottom: 4, marginTop: 0, paddingRight: 40 }}>Where shoppers reach you</h2>
       <p style={{ fontSize: 13, color: TEXT_MUTED, marginBottom: 8 }}>Email and phone only — no real-time support</p>
 
       <ModalSectionHeading>Channels</ModalSectionHeading>
@@ -9999,7 +10408,7 @@ function ModalHowBrandSounds() {
   ];
   return (
     <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, lineHeight: 1.6, color: TEXT }}>
-      <h2 style={{ fontSize: 20, fontWeight: 600, color: TEXT, marginBottom: 4, marginTop: 0, paddingRight: 40 }}>How your brand sounds</h2>
+      <h2 style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 26, fontWeight: 500, letterSpacing: "-0.5px", color: "#1A1918", marginBottom: 4, marginTop: 0, paddingRight: 40 }}>How your brand sounds</h2>
       <p style={{ fontSize: 13, color: TEXT_MUTED, marginBottom: 8 }}>Warm, playful, never transactional</p>
 
       <ModalSectionHeading>Your voice in 3 traits</ModalSectionHeading>
@@ -10052,7 +10461,7 @@ function ModalWhosBuying() {
   ];
   return (
     <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, lineHeight: 1.6, color: TEXT }}>
-      <h2 style={{ fontSize: 20, fontWeight: 600, color: TEXT, marginBottom: 4, marginTop: 0, paddingRight: 40 }}>Who{"\u2019"}s buying from you</h2>
+      <h2 style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 26, fontWeight: 500, letterSpacing: "-0.5px", color: "#1A1918", marginBottom: 4, marginTop: 0, paddingRight: 40 }}>Who{"\u2019"}s buying from you</h2>
       <p style={{ fontSize: 13, color: TEXT_MUTED, marginBottom: 8 }}>3 segments, each with different stakes</p>
 
       <ModalSectionHeading>The segments</ModalSectionHeading>
@@ -10072,33 +10481,30 @@ function ModalWhosBuying() {
         })}
       </div>
 
-      {/* Segment table */}
+      {/* Segment list — title + percent on top row, description stacked below */}
       <div style={{ border: "1px solid " + BORDER, borderRadius: 10, overflow: "hidden" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-          <tbody>
-            {personas.map(function(p, pi) {
-              return (
-                <tr key={pi} style={{ borderBottom: pi < personas.length - 1 ? "1px solid " + BORDER : "none" }}>
-                  <td style={{ padding: "12px 16px", verticalAlign: "top", whiteSpace: "nowrap" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <div style={{
-                        width: 12, height: 12, borderRadius: 3,
-                        background: p.color, flexShrink: 0,
-                      }} />
-                      <span style={{ fontSize: 14, fontWeight: 600, color: TEXT }}>{p.name}</span>
-                    </div>
-                  </td>
-                  <td style={{ padding: "12px 16px", verticalAlign: "top", whiteSpace: "nowrap", fontSize: 13, fontWeight: 600, color: TEXT }}>
-                    {p.percent}%
-                  </td>
-                  <td style={{ padding: "12px 16px", verticalAlign: "top", fontSize: 13, color: TEXT_MUTED, lineHeight: 1.5 }}>
-                    {p.desc}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        {personas.map(function(p, pi) {
+          return (
+            <div key={pi} style={{
+              padding: "12px 16px",
+              borderBottom: pi < personas.length - 1 ? "1px solid " + BORDER : "none",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 6 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                  <div style={{
+                    width: 12, height: 12, borderRadius: 3,
+                    background: p.color, flexShrink: 0,
+                  }} />
+                  <span style={{ fontSize: 14, fontWeight: 600, color: TEXT }}>{p.name}</span>
+                </div>
+                <span style={{ fontSize: 13, fontWeight: 600, color: TEXT, flexShrink: 0 }}>{p.percent}%</span>
+              </div>
+              <div style={{ fontSize: 13, color: TEXT_MUTED, lineHeight: 1.5 }}>
+                {p.desc}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       <ModalSectionHeading>What this means for your support</ModalSectionHeading>
