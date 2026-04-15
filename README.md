@@ -27,8 +27,11 @@ prototype-playground/
 ├── index.html          ← The dashboard
 ├── prototypes.json     ← Manifest (tracks all prototypes)
 ├── publish.sh          ← The publish script
-├── prototypes/         ← Where HTML files live
+├── prototypes/         ← Each prototype lives in its own subfolder
+│   ├── my-prototype/
+│   │   └── index.html
 │   └── .gitkeep
+├── images/             ← Preview images (one per prototype, named by slug)
 └── README.md
 ```
 
@@ -61,7 +64,8 @@ After creating a prototype in Claude Cowork (or any tool), save the HTML file an
 ```
 
 That's it. The script will:
-- Copy the file to `prototypes/`
+- Copy the file to `prototypes/<slug>/index.html`
+- Copy the preview image (if any) to `images/<slug>.png`
 - Update the manifest
 - Push to GitHub
 - Print the shareable URL
@@ -98,7 +102,7 @@ Just share the dashboard link. No GitHub account needed to view prototypes.
 **Dashboard:** `https://YOUR_USERNAME.github.io/prototype-playground`
 
 Each prototype also has a direct link like:
-`https://YOUR_USERNAME.github.io/prototype-playground/prototypes/my-prototype.html`
+`https://YOUR_USERNAME.github.io/prototype-playground/viewer.html?file=my-prototype/index.html`
 
 ---
 
