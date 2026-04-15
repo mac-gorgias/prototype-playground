@@ -1,12 +1,12 @@
 # ◈ Prototype Playground
 
-A lightweight, self-hosted prototype gallery for the design team. Publish HTML prototypes from Claude Cowork (or anywhere) and share them with a link.
+A lightweight, self-hosted prototype gallery for the design team. Publish HTML prototypes from Claude Code (or anywhere) and share them with a link.
 
 **Live dashboard:** `https://YOUR_USERNAME.github.io/prototype-playground`
 
 ---
 
-## Quick Start (5 minutes)
+## Quick Start
 
 ### 1. Create the GitHub repo
 
@@ -25,8 +25,9 @@ Copy all the files from this package into your repo:
 ```
 prototype-playground/
 ├── index.html          ← The dashboard
+├── viewer.html         ← Wraps each prototype with a "Back" button
 ├── prototypes.json     ← Manifest (tracks all prototypes)
-├── publish.sh          ← The publish script
+├── publish.md          ← Claude Code slash command for publishing
 ├── prototypes/         ← Each prototype lives in its own subfolder
 │   ├── my-prototype/
 │   │   └── index.html
@@ -35,15 +36,7 @@ prototype-playground/
 └── README.md
 ```
 
-### 3. Update the config
-
-Open `publish.sh` and change line 38:
-
-```bash
-GITHUB_USERNAME="YOUR_GITHUB_USERNAME"    # ← put your actual username here
-```
-
-### 4. Enable GitHub Pages
+### 3. Enable GitHub Pages
 
 1. Push your code: `git add -A && git commit -m "init" && git push`
 2. Go to your repo on GitHub → **Settings** → **Pages**
@@ -57,41 +50,37 @@ Your dashboard will be live at `https://YOUR_USERNAME.github.io/prototype-playgr
 
 ## Publishing a Prototype
 
-After creating a prototype in Claude Cowork (or any tool), save the HTML file and run:
+Publishing is handled by the `/publish` slash command in [Claude Code](https://claude.com/claude-code). The command is defined in `publish.md` at the repo root.
 
-```bash
-./publish.sh "My Prototype Name" ./path/to/file.html
+In a Claude Code session, just say something like:
+
+```
+/publish ~/Downloads/onboarding.html as "AI Agent Onboarding V2"
 ```
 
-That's it. The script will:
-- Copy the file to `prototypes/<slug>/index.html`
-- Copy the preview image (if any) to `images/<slug>.png`
-- Update the manifest
-- Push to GitHub
-- Print the shareable URL
-- Copy the URL to your clipboard (on Mac)
+Claude will:
+- Generate a slug from the name (e.g. `ai-agent-onboarding-v2`)
+- Create `prototypes/<slug>/index.html` with your HTML file
+- Copy a preview image into `images/<slug>.png` (if you provide one)
+- Append an entry to `prototypes.json`
+- Commit and push to GitHub
+- Share the viewer link
 
-### Options
+### Screenshots
 
-```bash
-# Full example with all options
-./publish.sh "AI Agent Onboarding V2" ./onboarding.html \
-  --author "Lisa" \
-  --status "In Review" \
-  --tags "AI Agent,Onboarding" \
-  --description "Redesigned onboarding flow with guided setup"
+If you don't explicitly pass a screenshot, Claude will offer to use the most recent one from your Desktop (`~/Desktop/Screenshot*.png`). You can also say:
 
-# Update an existing prototype
-./publish.sh "AI Agent Onboarding V2" ./onboarding-v3.html --update
-
-# Minimal (uses git username, defaults to Draft)
-./publish.sh "Quick Test" ./test.html
+```
+/publish ~/Downloads/sms.html as "SMS Builder" with my latest screenshot
 ```
 
-### Status options
-- `Draft` — Work in progress (default)
-- `In Review` — Ready for feedback
-- `Final` — Approved / complete
+### Updating an existing prototype
+
+```
+/publish the new version of "AI Agent Onboarding V2" from ~/Downloads/onboarding-v3.html
+```
+
+Claude matches by slug, replaces the file (and/or image), and pushes the update.
 
 ---
 
@@ -111,32 +100,29 @@ Each prototype also has a direct link like:
 If other designers want to publish too:
 
 1. **Install Git** — Download from [git-scm.com](https://git-scm.com/) or run `xcode-select --install` on Mac
-2. **Get repo access** — Ask the repo owner to add you as a collaborator
-3. **Clone the repo:**
+2. **Install [Claude Code](https://claude.com/claude-code)**
+3. **Get repo access** — Ask the repo owner to add you as a collaborator
+4. **Clone the repo:**
    ```bash
    git clone https://github.com/YOUR_USERNAME/prototype-playground.git
    ```
-4. **Publish:**
-   ```bash
-   cd prototype-playground
-   ./publish.sh "My Prototype" ./my-file.html --author "Your Name"
-   ```
+5. **Open the repo in Claude Code and run `/publish`** with your HTML file.
 
 ---
 
 ## Troubleshooting
 
-**"prototypes.json not found"**
-→ Make sure you're running the script from the repo root directory.
-
 **Merge conflicts on prototypes.json**
-→ The script does `git pull --rebase` before pushing. If there's a conflict, run `git pull` manually, resolve conflicts in prototypes.json, then try again.
+→ The publish flow does `git pull --rebase` before pushing. If there's a conflict, run `git pull` manually, resolve conflicts in `prototypes.json`, then push again.
 
 **Changes not showing on the live site**
-→ GitHub Pages can take 1-2 minutes to deploy. Check the Actions tab on your repo for deploy status.
+→ GitHub Pages can take 1–2 minutes to deploy. Check the Actions tab on your repo for deploy status.
 
-**"Permission denied" on publish.sh**
-→ Run `chmod +x publish.sh`
+**Dashboard card has a broken image**
+→ Make sure the image exists at `images/<slug>.png` (or whatever extension is in the manifest). The `image` field in `prototypes.json` is the filename only — no folder prefix.
+
+**Prototype 404s inside the viewer**
+→ Confirm the `file` field in `prototypes.json` is `<slug>/index.html` and that the file actually exists at `prototypes/<slug>/index.html`.
 
 ---
 
@@ -145,8 +131,9 @@ If other designers want to publish too:
 The system is intentionally simple — no build step, no backend, no database.
 
 - `index.html` is a static page that fetches `prototypes.json` at load time and renders the gallery
+- `viewer.html` is a thin wrapper that iframes a prototype and adds a "Back to projects" button
 - `prototypes.json` is the single source of truth for all prototype metadata
-- `publish.sh` automates the boring parts: file copying, manifest updates, git operations
+- `publish.md` is a Claude Code slash command that automates slug generation, file copying, manifest updates, and git operations
 - GitHub Pages serves everything as static files for free
 
 Future ideas:
