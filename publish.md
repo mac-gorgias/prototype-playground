@@ -32,58 +32,59 @@ If the user says something like "use the latest screenshot" or "grab my screensh
 
 ## Steps to publish
 
-1. **Generate a filename slug** from the prototype name (lowercase, hyphens, no special characters). Example: "AI Agent Onboarding V2" → `ai-agent-onboarding-v2.html`
+1. **Generate a folder slug** from the prototype name (lowercase, hyphens, no special characters).
+   Example: "AI Agent Onboarding V2" → `ai-agent-onboarding-v2`
 
-2. **Copy the HTML file**:
-   ```bash
-   cp "<SOURCE_FILE>" ~/Documents/prototype-playground/prototypes/<slug>.html
-   ```
+2. **Create the prototype folder and copy the HTML file**:
+```bash
+   mkdir -p ~/Documents/prototype-playground/prototypes/<slug>
+   cp "<SOURCE_FILE>" ~/Documents/prototype-playground/prototypes/<slug>/index.html
+```
 
 3. **If a screenshot is provided or found**, copy it to the images folder:
-   ```bash
-   mkdir -p ~/Documents/prototype-playground/images
+```bash
    cp "<SCREENSHOT_PATH>" ~/Documents/prototype-playground/images/<slug>.png
-   ```
-   If the source image is .jpg or .jpeg or .webp, keep that extension instead.
+```
+   If the source image is .jpg, .jpeg, or .webp, keep that extension instead.
 
-4. **Update prototypes.json** — Read the current JSON array, then append a new entry:
-   ```json
+4. **Update prototypes.json** — read the current JSON array, then append a new entry:
+```json
    {
      "name": "<PROTOTYPE_NAME>",
      "author": "Mac",
      "date": "<TODAY YYYY-MM-DD>",
      "description": "<DESCRIPTION>",
-     "file": "<slug>.html",
+     "file": "<slug>/index.html",
      "image": "<slug>.png"
    }
-   ```
-   Only include the `"image"` field if a screenshot was provided.
+```
+   Only include `"image"` if a screenshot was provided.
    Write the updated array back to prototypes.json with proper formatting.
 
 5. **Push to GitHub**:
-   ```bash
+```bash
    cd ~/Documents/prototype-playground
    git pull --rebase
    git add -A
    git commit -m "add: <PROTOTYPE_NAME>"
    git push
-   ```
+```
 
 6. **Share the links**:
-   - Prototype: `https://mac-gorgias.github.io/prototype-playground/prototypes/<slug>.html`
+   - Prototype: `https://mac-gorgias.github.io/prototype-playground/viewer.html?file=<slug>/index.html`
    - Dashboard: `https://mac-gorgias.github.io/prototype-playground`
 
 ## Example prompts the user might say
 
-- "Publish ~/Downloads/onboarding.html as 'AI Agent Onboarding V2'"  → ask if they want to include a screenshot
+- "Publish ~/Downloads/onboarding.html as 'AI Agent Onboarding V2'" → ask if they want a screenshot
 - "Publish this with my latest screenshot" → find most recent screenshot on Desktop
 - "Publish ~/Downloads/sms.html as 'SMS Builder' with screenshot ~/Desktop/Screenshot 2026-03-02.png"
-- "Add a screenshot to the existing AI Agent Onboarding V2 prototype" → update the image field and copy the image
+- "Add a screenshot to the existing AI Agent Onboarding V2 prototype" → update image field and copy image
 
 ## Updating an existing prototype
 
 If the user wants to update a prototype that already exists:
-1. Replace the HTML file in prototypes/
-2. If a new screenshot is provided, replace the image in images/
-3. Update the entry in prototypes.json (match by filename slug)
+1. Replace `prototypes/<slug>/index.html` with the new file
+2. If a new screenshot is provided, replace `images/<slug>.png`
+3. Update the entry in `prototypes.json` (match by slug)
 4. Commit and push

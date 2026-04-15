@@ -4,7 +4,7 @@
     "author": "Mac",
     "date": "2026-03-26",
     "description": "Conversational onboarding flow with AI-guided setup for Gorgias",
-    "file": "onboarding-test.html",
+    "file": "onboarding-test/index.html",
     "image": "onboarding-test.png"
   },
   {
@@ -20,7 +20,7 @@
     "author": "Mac",
     "date": "2026-03-30",
     "description": "Voice-guided onboarding flow with TTS for Gorgias",
-    "file": "voice-onboarding.html",
+    "file": "voice-onboarding/index.html",
     "image": "voice-onboarding.png"
   },
   {
@@ -28,7 +28,7 @@
     "author": "Mac",
     "date": "2026-04-08",
     "description": "Cinematic conversational intake flow — welcome entrance, brand snapshot with shopper persona report cards, focus area picker, Shopify connect, live AI Agent chat preview, channel + helpdesk migration steps, and a sidebar Go-live checklist that ticks off in real time. Self-contained, no API keys required.",
-    "file": "conversational-intake.html",
+    "file": "conversational-intake/index.html",
     "image": "conversational-intake-v2.png"
   }
 ]
