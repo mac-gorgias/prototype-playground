@@ -30,5 +30,13 @@
     "description": "Cinematic conversational intake flow — welcome entrance, brand snapshot with shopper persona report cards, focus area picker, Shopify connect, live AI Agent chat preview, channel + helpdesk migration steps, and a sidebar Go-live checklist that ticks off in real time. Self-contained, no API keys required.",
     "file": "conversational-intake/index.html",
     "image": "conversational-intake-v2.png"
+  },
+  {
+    "name": "Intake — AI Agent Trial",
+    "author": "Mac",
+    "date": "2026-04-29",
+    "description": "Streamlined intake variant scoped to AI Agent trial users — landing page → tone-of-voice voice card → 9-skill setup with Edit/Preview right panels (UrbanStems Chat 2.0 widget preloaded per skill) → 2-channel selection (Email + Chat) → cinematic closing scoped to the content area. Reuses the existing intake prototype's component patterns. Self-contained, no API keys required.",
+    "file": "intake-ai-agent-trial/index.html",
+    "image": "intake-ai-agent-trial.png"
   }
 ]
