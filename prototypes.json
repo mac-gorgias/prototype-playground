@@ -36,6 +36,7 @@
     "author": "Mac",
     "date": "2026-04-29",
     "description": "Streamlined intake variant scoped to AI Agent trial users — landing page → tone-of-voice voice card → 9-skill setup with Edit/Preview right panels (UrbanStems Chat 2.0 widget preloaded per skill) → 2-channel selection (Email + Chat) → cinematic closing scoped to the content area. Reuses the existing intake prototype's component patterns. Self-contained, no API keys required.",
-    "file": "intake-ai-agent-trial/index.html"
+    "file": "intake-ai-agent-trial/index.html",
+    "image": "intake-ai-agent-trial.png"
   }
 ]
