@@ -78,7 +78,7 @@ styleEl.textContent = `
     flex-wrap: wrap;
     justify-content: center;
     align-items: center;
-    font-family: Georgia, 'Times New Roman', serif;
+    font-family: 'Inter', sans-serif;
     font-size: 56px;
     font-weight: 500;
     color: #1A1918;
@@ -479,15 +479,21 @@ function renderTextWithBold(text, boldPart) {
   );
 }
 
-/* ─── Voice-focused research sources (narrower than the full-brand version) ─── */
+/* ─── Research sources covering brand + knowledge ─── */
 const VOICE_RESEARCH_SOURCES = [
-  { isQuery: true, title: "urbanstems.com voice and tone" },
-  { isQuery: true, title: "\"urbanstems\" writing samples" },
-  { favicon: "urbanstems.com", title: "UrbanStems | Online Flower Delivery", source: "urbanstems" },
-  { favicon: "instagram.com", title: "@urbanstems — caption style and brand voice", source: "instagram" },
+  { isQuery: true, title: "urbanstems.com" },
+  { isQuery: true, title: "\"urbanstems\"" },
+  { isQuery: true, title: "urbanstems website" },
+  { favicon: "urbanstems.com", title: "UrbanStems | Online Flower Delivery | UrbanStems", source: "urbanstems" },
+  { favicon: "instagram.com", title: "UrbanStems (@urbanstems) • Instagram photos and videos", source: "instagram" },
+  { favicon: "help.urbanstems.com", title: "UrbanStems Help Center — FAQs, returns, and shipping", source: "help" },
+  { favicon: "facebook.com", title: "UrbanStems | Facebook", source: "facebook" },
   { favicon: "trustpilot.com", title: "Read Customer Service Reviews of urbanstems.com", source: "trustpilot" },
+  { favicon: "tiktok.com", title: "UrbanStems (@urbanstems) | TikTok", source: "tiktok" },
   { favicon: "youtube.com", title: "UrbanStems vs. Floom — Honest Review", source: "youtube" },
+  { favicon: "pinterest.com", title: "UrbanStems on Pinterest", source: "pinterest" },
   { favicon: "thequalityedit.com", title: "Bouqs vs. UrbanStems vs. 1-800-Flowers Review", source: "thequalityedit" },
+  { favicon: "reddit.com", title: "r/flowers — UrbanStems delivery experience", source: "reddit" },
 ];
 
 /* ─── Voice card content (mirrors the existing prototype's ModalHowBrandSounds) ─── */
@@ -536,7 +542,7 @@ function VoiceCardPanel() {
 
   return (
     <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, lineHeight: 1.6, color: TEXT }}>
-      <h2 style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 26, fontWeight: 500, letterSpacing: "-0.5px", color: "#1A1918", marginBottom: 4, marginTop: 0, paddingRight: 40 }}>How your brand sounds</h2>
+      <h2 style={{ fontFamily: "'Inter', sans-serif", fontSize: 26, fontWeight: 500, letterSpacing: "-0.5px", color: "#1A1918", marginBottom: 4, marginTop: 0, paddingRight: 40 }}>How your brand sounds</h2>
       <p style={{ fontSize: 13, color: TEXT_MUTED, marginBottom: 8 }}>Warm, playful, never transactional</p>
 
       {sectionHeading("Your voice in 3 traits")}
@@ -572,6 +578,78 @@ function VoiceCardPanel() {
 
       {sectionHeading("What this means for your AI Agent")}
       <p style={{ margin: 0 }}>Your AI Agent should match this. No corporate phrasing, no over-apologizing. Empathy first, resolution second — especially for occasion gifters where emotions run high.</p>
+    </div>
+  );
+}
+
+/* ─── Knowledge card content (mirrors VoiceCardPanel structure) ─── */
+function KnowledgeCardPanel() {
+  const ACTIVE_COLOR = "#2E7D32";
+  const ACTIVE_BG = "#E8F5E9";
+  const MISSING_COLOR = TEXT_MUTED;
+  const MISSING_BG = SURFACE;
+
+  const checkIcon = (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <path d="M5 12l5 5L20 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+  const emptyIcon = (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" strokeWidth="1.6" />
+    </svg>
+  );
+
+  const sources = [
+    { name: "Store website", desc: "urbanstems.com", status: "found" },
+    { name: "Help Center articles", desc: "help.urbanstems.com", status: "found" },
+    { name: "URLs", desc: "3 additional pages indexed", status: "found" },
+    { name: "Integrations", desc: "Shopify store", status: "found" },
+    { name: "Documents", desc: "none uploaded", status: "missing" },
+  ];
+
+  const sectionHeading = (text) => (
+    <h3 style={{
+      fontFamily: "'Inter', sans-serif",
+      fontSize: 13, fontWeight: 600, color: TEXT_MUTED,
+      textTransform: "uppercase", letterSpacing: "0.04em",
+      marginBottom: 12, marginTop: 24,
+    }}>{text}</h3>
+  );
+
+  return (
+    <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, lineHeight: 1.6, color: TEXT }}>
+      <h2 style={{ fontFamily: "'Inter', sans-serif", fontSize: 26, fontWeight: 500, letterSpacing: "-0.5px", color: "#1A1918", marginBottom: 4, marginTop: 0, paddingRight: 40 }}>How your AI Agent will think</h2>
+      <p style={{ fontSize: 13, color: TEXT_MUTED, marginBottom: 8 }}>Website, help center, connected apps</p>
+
+      {sectionHeading("Your knowledge sources")}
+      <div style={{ border: "1px solid " + BORDER, borderRadius: 10, overflow: "hidden" }}>
+        {sources.map((s, si) => {
+          const isFound = s.status === "found";
+          return (
+            <div key={si} style={{
+              padding: "12px 16px",
+              borderBottom: si < sources.length - 1 ? "1px solid " + BORDER : "none",
+              display: "flex", alignItems: "center", gap: 12,
+            }}>
+              <div style={{
+                width: 36, height: 36, borderRadius: 8,
+                background: isFound ? ACTIVE_BG : MISSING_BG,
+                color: isFound ? ACTIVE_COLOR : MISSING_COLOR,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                flexShrink: 0,
+              }}>{isFound ? checkIcon : emptyIcon}</div>
+              <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 2 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: TEXT }}>{s.name}</div>
+                <div style={{ fontSize: 13, color: TEXT_MUTED }}>{s.desc}</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {sectionHeading("What this means for your AI Agent")}
+      <p style={{ margin: 0 }}>Instead of generic answers, your AI Agent responds with your actual policies, your real product details, and your brand’s tone — every time.</p>
     </div>
   );
 }
@@ -985,6 +1063,7 @@ function SidebarNav({ collapsed, onToggleCollapse, checklist, cinematicDone }) {
 
   const checklistItems = [
     { key: "tone", label: "Set up tone of voice" },
+    { key: "knowledge", label: "Add background knowledge" },
     { key: "skills", label: "Configure skills" },
     { key: "channels", label: "Connect support channels" },
   ];
@@ -1934,7 +2013,7 @@ function ClosingScreen({ onTakeMeToInbox, onInviteTeammate }) {
 
         {/* Cinematic headline — split across two visual lines for staggered fade */}
         <h1 style={{
-          fontFamily: "Georgia, 'Times New Roman', serif",
+          fontFamily: "'Inter', sans-serif",
           fontSize: 38, fontWeight: 500, letterSpacing: "-0.6px",
           color: "#1A1918", lineHeight: 1.2, marginBottom: 18,
         }}>
@@ -2201,7 +2280,7 @@ function IntakePage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Setup checklist (3 items, parallel to existing 6-item version)
-  const [checklist, setChecklist] = useState({ tone: false, skills: false, channels: false });
+  const [checklist, setChecklist] = useState({ tone: false, knowledge: false, skills: false, channels: false });
   const completeChecklistItem = useCallback((key) => {
     setChecklist((prev) => prev[key] ? prev : { ...prev, [key]: true });
   }, []);
@@ -2267,12 +2346,12 @@ function IntakePage() {
   const [voiceEditHelp, setVoiceEditHelp] = useState(null);
   const [voiceFreeform, setVoiceFreeform] = useState("");
   const findingsStartedRef = useRef(false);
-  const findingsFullText = "Here’s how I’d describe UrbanStems’ voice based on your site, social, and product copy:";
-  const findingsBold = "UrbanStems’ voice";
-  const findingsFollowUp = "Take a quick look — does this sound like your brand? You can fine-tune these details later in settings at anytime.";
+  const findingsFullText = "Here’s what I learned about UrbanStems from your site, social, and store:";
+  const findingsBold = "UrbanStems";
+  const findingsFollowUp = "Take a quick look — does this feel like your brand? You can fine-tune these details in settings anytime.";
 
   // Right-side panels (Voice card / Preview / Edit)
-  const [activePanel, setActivePanel] = useState(null); // null | "voice" | "preview" | "edit"
+  const [activePanel, setActivePanel] = useState(null); // null | "voice" | "knowledge" | "preview" | "edit"
   const [activeSkillIdx, setActiveSkillIdx] = useState(null);
   const [panelClosing, setPanelClosing] = useState(false);
   const closePanel = () => {
@@ -2510,18 +2589,20 @@ function IntakePage() {
 
   /* Voice card actions */
   const handleVoiceYes = () => {
-    setVoiceUserReply("Yes, looks good. I’ll adjust it later if needed.");
+    setVoiceUserReply("Yes, looks good. I’ll adjust later if needed.");
     setShowVoiceConfirm(false);
     completeChecklistItem("tone");
+    completeChecklistItem("knowledge");
     closePanel();
     setTimeout(startSkillsTyping, 900);
   };
   const handleVoiceNo = () => {
-    setVoiceUserReply("No, I need to update the tone of voice");
+    setVoiceUserReply("No, I need to make some changes.");
     setShowVoiceConfirm(false);
     setTimeout(() => {
       setVoiceEditHelp("No problem — open the Voice card on the right and use the edit panel to adjust traits, samples, or examples. We’ll keep going and you can come back to it any time.");
       completeChecklistItem("tone");
+      completeChecklistItem("knowledge");
       setTimeout(startSkillsTyping, 1500);
     }, 800);
   };
@@ -2531,6 +2612,7 @@ function IntakePage() {
     setVoiceFreeform("");
     setShowVoiceConfirm(false);
     completeChecklistItem("tone");
+    completeChecklistItem("knowledge");
     closePanel();
     setTimeout(startSkillsTyping, 900);
   };
@@ -2706,8 +2788,8 @@ function IntakePage() {
                   )}
                   <span style={{ fontSize: 13, color: TEXT_MUTED, flex: 1 }}>
                     {researchPhase === "running"
-                      ? "Reviewing UrbanStems' brand voice across writing samples and public reviews"
-                      : "Reviewed " + researchSources.length + " sources for tone of voice"}
+                      ? "Reviewing UrbanStems’ site, social, and store"
+                      : "Reviewed " + researchSources.length + " sources about urbanstems.com"}
                   </span>
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{
                     transition: "transform .2s",
@@ -2717,7 +2799,7 @@ function IntakePage() {
                   </svg>
                 </div>
                 {(() => {
-                  const COLLAPSED_COUNT = 3;
+                  const COLLAPSED_COUNT = 5;
                   const isCollapsed = researchPhase === "done" && !researchExpanded;
                   const visibleSources = isCollapsed ? researchSources.slice(0, COLLAPSED_COUNT) : researchSources;
                   const hiddenCount = researchSources.length - COLLAPSED_COUNT;
@@ -2791,7 +2873,7 @@ function IntakePage() {
                 </div>
                 {showVoiceCard && (
                   <div>
-                    <div style={{ marginTop: 20 }}>
+                    <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 10 }}>
                       <div
                         onClick={(e) => { e.stopPropagation(); setActivePanel("voice"); }}
                         style={{
@@ -2824,7 +2906,41 @@ function IntakePage() {
                           }}
                             onMouseEnter={(e) => { e.currentTarget.style.background = SURFACE; }}
                             onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-                          >View report</button>
+                          >View</button>
+                        </div>
+                      </div>
+                      <div
+                        onClick={(e) => { e.stopPropagation(); setActivePanel("knowledge"); }}
+                        style={{
+                          border: activePanel === "knowledge" ? "1px solid " + ACCENT : "1px solid " + BORDER,
+                          borderRadius: 12, background: CARD_BG, overflow: "hidden", display: "flex",
+                          cursor: "pointer", transition: "border-color .15s, box-shadow .15s",
+                          animation: "fadeInUp .5s cubic-bezier(.16,1,.3,1) forwards",
+                        }}
+                        onMouseEnter={(e) => { if (activePanel !== "knowledge") { e.currentTarget.style.borderColor = "#D0D0D0"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,.04)"; } }}
+                        onMouseLeave={(e) => { if (activePanel !== "knowledge") { e.currentTarget.style.borderColor = BORDER; e.currentTarget.style.boxShadow = "none"; } }}
+                      >
+                        <div style={{ width: 80, minHeight: 72, background: SURFACE, flexShrink: 0, borderRight: "1px solid " + BORDER, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <svg width="40" height="40" viewBox="0 0 40 40" fill="none" style={{ opacity: 0.95 }}>
+                            {/* Brain - two-lobe shape with center division */}
+                            <path d="M11 16c0-3 2.5-5.5 5.5-5.5 1.5 0 2.8 0.6 3.5 1.5 0.7-0.9 2-1.5 3.5-1.5 3 0 5.5 2.5 5.5 5.5 0 0.8-0.2 1.6-0.5 2.3 1.2 1 2 2.5 2 4.2 0 3-2.5 5.5-5.5 5.5-1.5 0-2.8-0.6-3.5-1.5-0.7 0.9-2 1.5-3.5 1.5-3 0-5.5-2.5-5.5-5.5 0-1.7 0.8-3.2 2-4.2-0.3-0.7-0.5-1.5-0.5-2.3z" stroke={TEXT} strokeWidth="1.4" fill={TEXT} fillOpacity="0.12" strokeLinejoin="round" />
+                            <path d="M20 12v18" stroke={TEXT} strokeWidth="1.4" strokeLinecap="round" />
+                          </svg>
+                        </div>
+                        <div style={{ flex: 1, padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: TEXT, lineHeight: 1.3 }}>How your AI Agent will think</span>
+                            <span style={{ fontSize: 12, color: TEXT_MUTED, lineHeight: 1.3 }}>Website, help center, connected apps</span>
+                          </div>
+                          <button style={{
+                            fontSize: 12, fontWeight: 500, color: TEXT,
+                            background: "transparent", border: "1px solid " + BORDER,
+                            borderRadius: 8, padding: "6px 14px", cursor: "pointer",
+                            transition: "all .15s", whiteSpace: "nowrap", flexShrink: 0,
+                          }}
+                            onMouseEnter={(e) => { e.currentTarget.style.background = SURFACE; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                          >View</button>
                         </div>
                       </div>
                     </div>
@@ -3089,11 +3205,11 @@ function IntakePage() {
                     overflow: "hidden",
                   }}>
                     <div style={{ padding: "14px 18px 12px", fontSize: 14, fontWeight: 600, color: TEXT, borderBottom: "1px solid " + BORDER }}>
-                      Does this sound like UrbanStems?
+                      Does this capture the UrbanStems context well?
                     </div>
                     {[
-                      { label: "Yes, looks good. I’ll adjust it later if needed.", icon: "check", onClick: handleVoiceYes },
-                      { label: "No, I need to update the tone of voice", icon: "cross", onClick: handleVoiceNo },
+                      { label: "Yes, looks good. I’ll adjust later if needed.", icon: "check", onClick: handleVoiceYes },
+                      { label: "No, I need to make some changes.", icon: "cross", onClick: handleVoiceNo },
                     ].map((opt, oi) => (
                       <div key={oi}
                         onClick={opt.onClick}
@@ -3236,6 +3352,37 @@ function IntakePage() {
           </div>
           <div style={{ flex: 1, overflowY: "auto", padding: "32px 24px" }}>
             <VoiceCardPanel />
+          </div>
+        </div>
+      )}
+
+      {/* Knowledge card panel */}
+      {activePanel === "knowledge" && (
+        <div style={{
+          position: "fixed", top: 0, right: 0, height: "100vh", width: 480,
+          zIndex: 1000,
+          background: "#ffffff",
+          borderLeft: "1px solid #EBECEF",
+          boxShadow: "-8px 0 32px rgba(0,0,0,.06)",
+          animation: panelClosing ? "slideOutRight .2s ease forwards" : "slideInRight .2s ease-out forwards",
+          display: "flex", flexDirection: "column",
+        }}>
+          <div onClick={closePanel}
+            style={{
+              position: "absolute", top: 16, right: 16, zIndex: 2,
+              width: 32, height: 32, borderRadius: 8,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: "pointer", transition: "background .15s",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = SURFACE; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+          >
+            <svg width="16" height="16" viewBox="0 0 14 14" fill="none">
+              <path d="M3 3l8 8M11 3l-8 8" stroke={TEXT_MUTED} strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </div>
+          <div style={{ flex: 1, overflowY: "auto", padding: "32px 24px" }}>
+            <KnowledgeCardPanel />
           </div>
         </div>
       )}
