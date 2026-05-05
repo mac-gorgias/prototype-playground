@@ -176,6 +176,38 @@ const TEXT = "#1a1a1a";
 const TEXT_MUTED = "#8A8A8A";
 const SURFACE = "#F2F2F2";
 
+/* ─── Axiom button styles ─── */
+const BTN_BASE = {
+  display: "inline-flex", alignItems: "center", justifyContent: "center",
+  gap: 6, fontFamily: "'Inter', sans-serif", fontWeight: 600,
+  borderRadius: 8, cursor: "pointer", whiteSpace: "nowrap",
+  boxSizing: "border-box", transition: "background .15s, box-shadow .15s, border-color .15s",
+};
+const BTN_MD = { ...BTN_BASE, height: 32, fontSize: 14, lineHeight: "20px", padding: "0 12px" };
+const BTN_SM = { ...BTN_BASE, height: 24, fontSize: 12, lineHeight: "16px", padding: "0 8px", borderRadius: 6 };
+const BTN_PRIMARY = {
+  ...BTN_MD, color: "#fff", background: "#1E242E",
+  border: "1px solid transparent",
+  boxShadow: "0px 2px 3px 0px rgba(0,0,0,0.05)",
+};
+const BTN_PRIMARY_HOVER = { background: "#333" };
+const BTN_PRIMARY_LEAVE = { background: "#1E242E" };
+const BTN_SECONDARY = {
+  ...BTN_MD, color: "#1E242E", background: "rgba(255,255,255,0.5)",
+  border: "1px solid rgba(103,113,131,0.5)",
+  boxShadow: "0px 2px 3px 0px rgba(0,0,0,0.05)",
+};
+const BTN_SECONDARY_HOVER = { background: "rgba(27,35,50,0.03)", boxShadow: "none" };
+const BTN_SECONDARY_LEAVE = { background: "rgba(255,255,255,0.5)", boxShadow: "0px 2px 3px 0px rgba(0,0,0,0.05)" };
+const BTN_TERTIARY = {
+  ...BTN_MD, color: "#1E242E", background: "transparent",
+  border: "1px solid transparent", boxShadow: "none",
+};
+const BTN_TERTIARY_HOVER = { background: "rgba(27,35,50,0.03)" };
+const BTN_TERTIARY_LEAVE = { background: "transparent" };
+const BTN_SECONDARY_SM = { ...BTN_SM, color: "#1E242E", background: "rgba(255,255,255,0.5)", border: "1px solid rgba(103,113,131,0.5)", boxShadow: "0px 2px 3px 0px rgba(0,0,0,0.05)" };
+const BTN_TERTIARY_SM = { ...BTN_SM, color: "#1E242E", background: "transparent", border: "1px solid transparent", boxShadow: "none" };
+
 /* ─── Skill icons ─── */
 const SKILL_ICONS = {
   tracking: (
@@ -418,35 +450,95 @@ function matchScriptedIntent(text) {
 }
 
 /* Render plain text with one substring bolded (used for the "9 skills" inline bold) */
-function renderTextWithBold(text, boldPart) {
-  if (!boldPart) return text;
-  const parts = Array.isArray(boldPart) ? boldPart : [boldPart];
+const GLOSSARY_TERMS_BASE = [
+  { term: "automation rate", tip: "The percentage of customer requests the AI agent handles without human intervention." },
+  { term: "tone of voice", tip: "The communication style the AI agent uses when responding to customers." },
+  { term: "knowledge sources", tip: "The sources the AI agent searches to find information — like your website, help center, or uploaded documents." },
+  { term: "instructions", tip: "The step-by-step behavior the AI agent follows when handling a specific intent." },
+  { term: "instruction", tip: "The step-by-step behavior the AI agent follows when handling a specific intent." },
+  { term: "knowledge", tip: "The sources the AI agent searches to find information — like your website, help center, or uploaded documents." },
+  { term: "channels", tip: "The support surfaces where the AI agent is active, such as email or chat." },
+  { term: "channel", tip: "The support surface where the AI agent is active, such as email or chat." },
+  { term: "intents", tip: "The types of requests customers make (e.g. asking about an order, requesting a return). They determine which skill the AI agent applies." },
+  { term: "intent", tip: "The type of request a customer is making (e.g. asking about an order, requesting a return). It determines which skill the AI agent applies." },
+  { term: "skills", tip: "Ways to tell your AI agent exactly how to handle specific types of customer requests — with precise instructions it follows every time." },
+  { term: "skill", tip: "A way to tell your AI agent exactly how to handle a specific type of customer request — with precise instructions it follows every time." },
+];
+
+function GlossaryTip({ tip, children }) {
+  const [show, setShow] = React.useState(false);
+  const ref = React.useRef(null);
+  const [pos, setPos] = React.useState({ top: 0, left: 0 });
+
+  React.useEffect(() => {
+    if (show && ref.current) {
+      const r = ref.current.getBoundingClientRect();
+      setPos({ top: r.top - 8, left: r.left + r.width / 2 });
+    }
+  }, [show]);
+
+  return (
+    <span
+      ref={ref}
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+      style={{ borderBottom: "1px dotted #8992A0", cursor: "help", position: "relative" }}
+    >
+      {children}
+      {show && ReactDOM.createPortal(
+        <div style={{
+          position: "fixed", top: pos.top, left: pos.left,
+          transform: "translate(-50%, -100%)",
+          background: "#1E242E", color: "#fff",
+          fontSize: 12, lineHeight: 1.4, fontWeight: 450,
+          padding: "6px 10px", borderRadius: 8,
+          maxWidth: 260, pointerEvents: "none",
+          zIndex: 99999, fontFamily: "'Inter', sans-serif",
+          boxShadow: "0 4px 12px rgba(0,0,0,.15)",
+        }}>{tip}</div>,
+        document.body
+      )}
+    </span>
+  );
+}
+
+function renderThreadText(text, seenTerms) {
+  if (!text) return text;
+  const lower = text.toLowerCase();
   const matches = [];
-  parts.forEach((p) => {
-    if (!p) return;
-    const i = text.indexOf(p);
-    if (i < 0) return;
-    matches.push({ start: i, end: i + p.length });
+  GLOSSARY_TERMS_BASE.forEach((g) => {
+    if (seenTerms && seenTerms.has(g.term)) return;
+    const idx = lower.indexOf(g.term);
+    if (idx < 0) return;
+    const end = idx + g.term.length;
+    const before = idx === 0 ? " " : text[idx - 1];
+    const after = end >= text.length ? " " : text[end];
+    if (/\W/.test(before) && /\W|$/.test(after)) {
+      matches.push({ start: idx, end: end, tip: g.tip, term: g.term });
+    }
   });
   if (matches.length === 0) return text;
   matches.sort((a, b) => a.start - b.start);
-  const merged = [];
+  const filtered = [];
   for (const m of matches) {
-    if (merged.length && m.start <= merged[merged.length - 1].end) {
-      merged[merged.length - 1].end = Math.max(merged[merged.length - 1].end, m.end);
-    } else {
-      merged.push({ ...m });
+    if (filtered.length === 0 || m.start >= filtered[filtered.length - 1].end) {
+      filtered.push(m);
+      if (seenTerms) seenTerms.add(m.term);
     }
   }
   const out = [];
   let cursor = 0;
-  merged.forEach((m, idx) => {
+  filtered.forEach((m, idx) => {
     if (cursor < m.start) out.push(<React.Fragment key={"t" + idx}>{text.slice(cursor, m.start)}</React.Fragment>);
-    out.push(<strong key={"b" + idx} style={{ color: "#1a1a1a", fontWeight: 600 }}>{text.slice(m.start, m.end)}</strong>);
+    out.push(<GlossaryTip key={"g" + idx} tip={m.tip}>{text.slice(m.start, m.end)}</GlossaryTip>);
     cursor = m.end;
   });
   if (cursor < text.length) out.push(<React.Fragment key="tend">{text.slice(cursor)}</React.Fragment>);
   return <React.Fragment>{out}</React.Fragment>;
+}
+
+function renderTextWithBold(text, boldPart, seenTerms) {
+  return renderThreadText(text, seenTerms);
 }
 
 /* ─── Research sources covering brand + knowledge ─── */
@@ -512,7 +604,7 @@ function VoiceCardPanel() {
 
   return (
     <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, lineHeight: 1.6, color: TEXT }}>
-      <h2 style={{ fontFamily: "'Inter', sans-serif", fontSize: 26, fontWeight: 500, letterSpacing: "-0.5px", color: "#1A1918", marginBottom: 4, marginTop: 0, paddingRight: 40 }}>Your brand’s tone of voice</h2>
+      <h2 style={{ fontFamily: "'Inter', sans-serif", fontSize: 26, fontWeight: 700, letterSpacing: "-0.5px", color: "#1A1918", marginBottom: 4, marginTop: 0, paddingRight: 40 }}>Your brand’s tone of voice</h2>
       <p style={{ fontSize: 13, color: TEXT_MUTED, marginBottom: 8 }}>Warm, playful, never transactional</p>
 
       {sectionHeading("Your voice in 3 traits")}
@@ -589,7 +681,7 @@ function KnowledgeCardPanel() {
 
   return (
     <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, lineHeight: 1.6, color: TEXT }}>
-      <h2 style={{ fontFamily: "'Inter', sans-serif", fontSize: 26, fontWeight: 500, letterSpacing: "-0.5px", color: "#1A1918", marginBottom: 4, marginTop: 0, paddingRight: 40 }}>Your knowledge sources</h2>
+      <h2 style={{ fontFamily: "'Inter', sans-serif", fontSize: 26, fontWeight: 700, letterSpacing: "-0.5px", color: "#1A1918", marginBottom: 4, marginTop: 0, paddingRight: 40 }}>Your knowledge sources</h2>
       <p style={{ fontSize: 13, color: TEXT_MUTED, marginBottom: 8 }}>Website, help center, connected apps</p>
 
       {sectionHeading("Your knowledge sources")}
@@ -1237,10 +1329,9 @@ function SidebarNav({ collapsed, onToggleCollapse, checklist, cinematicDone }) {
             <div style={{
               background: "#ffffff",
               border: "1px solid #EBECEF",
-              borderRadius: goliveExpanded ? 14 : 999,
+              borderRadius: 14,
               boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06)",
               overflow: "hidden",
-              transition: "border-radius .28s cubic-bezier(.16,1,.3,1)",
             }}>
               {headerRow}
               <div style={{
@@ -1349,7 +1440,8 @@ function SidebarNav({ collapsed, onToggleCollapse, checklist, cinematicDone }) {
 }
 
 /* ─── Skill card (each skill is its own card, matches the Voice card visual style) ─── */
-function SkillCard({ skill, index, isActive, onPreview, onEdit, needsInfo }) {
+function SkillCard({ skill, index, isActive, onPreview, onEdit, needsInfo, answeredSkillKeys }) {
+  const isAnswered = answeredSkillKeys && answeredSkillKeys.has(skill.key);
   return (
     <div style={{
       border: isActive ? "1px solid " + ACCENT : "1px solid " + BORDER,
@@ -1369,43 +1461,36 @@ function SkillCard({ skill, index, isActive, onPreview, onEdit, needsInfo }) {
         display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
         minWidth: 0,
       }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: TEXT, lineHeight: 1.3 }}>{skill.title}</span>
-            {needsInfo && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
+          {needsInfo && (
+            isAnswered ? (
               <span style={{
-                fontSize: 11, fontWeight: 500, color: "#B45309",
-                background: "#FEF3C7", padding: "2px 8px", borderRadius: 999,
-                lineHeight: 1.3, whiteSpace: "nowrap",
-              }}>Needs info</span>
-            )}
-          </div>
-          <span style={{ fontSize: 12, color: TEXT_MUTED, lineHeight: 1.3 }}>{skill.subtitle}</span>
+                fontSize: 11, fontWeight: 500, color: "#147656",
+                background: "#E9FBF5", padding: "2px 8px", borderRadius: 6,
+                lineHeight: 1.3, whiteSpace: "nowrap", alignSelf: "flex-start",
+              }}>Ready to enable</span>
+            ) : (
+              <span style={{
+                fontSize: 11, fontWeight: 500, color: "#A94F13",
+                background: "#FFF5EE", padding: "2px 8px", borderRadius: 6,
+                lineHeight: 1.3, whiteSpace: "nowrap", alignSelf: "flex-start",
+              }}>Needs review</span>
+            )
+          )}
+          <span style={{ fontSize: 13, fontWeight: 600, color: TEXT, lineHeight: 1.3 }}>{skill.title}</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
           <button
             onClick={() => onEdit(index)}
-            style={{
-              fontSize: 12, fontWeight: 500, color: TEXT,
-              background: "transparent", border: "none",
-              borderRadius: 8, padding: "6px 12px", cursor: "pointer",
-              transition: "all .15s", whiteSpace: "nowrap",
-              fontFamily: "'Inter', sans-serif",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = SURFACE; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-          >Edit</button>
+            style={BTN_TERTIARY_SM}
+            onMouseEnter={(e) => { Object.assign(e.currentTarget.style, BTN_TERTIARY_HOVER); }}
+            onMouseLeave={(e) => { Object.assign(e.currentTarget.style, BTN_TERTIARY_LEAVE); }}
+          >Review</button>
           <button
             onClick={() => onPreview(index)}
-            style={{
-              fontSize: 12, fontWeight: 500, color: TEXT,
-              background: "transparent", border: "1px solid " + BORDER,
-              borderRadius: 8, padding: "6px 14px", cursor: "pointer",
-              transition: "all .15s", whiteSpace: "nowrap",
-              fontFamily: "'Inter', sans-serif",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = SURFACE; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+            style={BTN_SECONDARY_SM}
+            onMouseEnter={(e) => { Object.assign(e.currentTarget.style, BTN_SECONDARY_HOVER); }}
+            onMouseLeave={(e) => { Object.assign(e.currentTarget.style, BTN_SECONDARY_LEAVE); }}
           >Test</button>
         </div>
       </div>
@@ -1414,7 +1499,7 @@ function SkillCard({ skill, index, isActive, onPreview, onEdit, needsInfo }) {
 }
 
 /* ─── Skill list: separate cards + inline "N more skills" expander (matches research "4 more" pattern) ─── */
-function SkillListCard({ skills = SKILLS, startIndex = 0, visibleCount = 3, needsInfo = false, activeSkillIdx, expanded, onToggleExpanded, onPreview, onEdit }) {
+function SkillListCard({ skills = SKILLS, startIndex = 0, visibleCount = 3, needsInfo = false, answeredSkillKeys, activeSkillIdx, expanded, onToggleExpanded, onPreview, onEdit }) {
   const visibleSkills = expanded ? skills : skills.slice(0, visibleCount);
   const hiddenCount = skills.length - visibleCount;
 
@@ -1429,6 +1514,7 @@ function SkillListCard({ skills = SKILLS, startIndex = 0, visibleCount = 3, need
           onPreview={onPreview}
           onEdit={onEdit}
           needsInfo={needsInfo}
+          answeredSkillKeys={answeredSkillKeys}
         />
       ))}
       {hiddenCount > 0 && (
@@ -1459,6 +1545,80 @@ function SkillListCard({ skills = SKILLS, startIndex = 0, visibleCount = 3, need
   );
 }
 
+/* ─── Chat input bar: single-line with +, send/thinking icon ─── */
+function ChatInputBar({ value, onChange, onSend, onKeyDown, placeholder, sendDisabled, thinking }) {
+  const [focused, setFocused] = useState(false);
+  const filled = value && value.trim().length > 0;
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", gap: 10,
+      border: focused ? "1px solid #8992A0" : "1px solid rgba(0,0,0,0.08)",
+      borderRadius: 8,
+      background: "#ffffff",
+      padding: filled ? "6px 8px" : "6px 4px 6px 8px",
+      height: 40,
+      transition: "border-color .15s ease",
+    }}>
+      <input
+        value={value}
+        onChange={onChange}
+        onKeyDown={onKeyDown}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        placeholder={placeholder || "Send a message..."}
+        style={{
+          flex: 1, border: "none", outline: "none", background: "transparent",
+          fontSize: 14, fontWeight: 400, lineHeight: "20px",
+          fontFamily: "'Inter', sans-serif",
+          color: filled ? "#1E242E" : "#8992A0",
+          minWidth: 0,
+        }}
+      />
+      <div style={{ display: "flex", alignItems: "center", gap: 2, flexShrink: 0 }}>
+        {/* + button */}
+        <div style={{
+          width: 24, height: 24, borderRadius: 6,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          cursor: "pointer",
+        }}>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M3.5 8H8M8 8H12.5M8 8V12.5M8 8V3.5" stroke="#1E242E" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
+        {/* Send / Thinking icon */}
+        {thinking ? (
+          <div style={{
+            width: 24, height: 24, borderRadius: 6,
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ animation: "spin 1.5s linear infinite" }}>
+              <path d="M14 8a6 6 0 0 1-6 6M2 8a6 6 0 0 1 6-6" stroke="#8992A0" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </div>
+        ) : (
+          <button
+            onClick={onSend}
+            disabled={sendDisabled}
+            style={{
+              width: 24, height: 24, borderRadius: 6, border: "none",
+              background: filled ? "#1E242E" : "transparent",
+              boxShadow: filled ? "0px 2px 3px rgba(0,0,0,0.05)" : "none",
+              cursor: sendDisabled ? "default" : "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              transition: "background .15s", flexShrink: 0, padding: 0,
+              opacity: filled ? 1 : 0.5,
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M7.193 8.807l3.09-3.09M13.443 3.832l-2.608 8.476c-.234.759-.35 1.14-.55 1.265a.667.667 0 01-.581.049c-.22-.091-.398-.447-.753-1.158l-1.652-3.303a1.335 1.335 0 00-.122-.218.668.668 0 00-.115-.116 1.34 1.34 0 00-.227-.119L3.536 7.052c-.71-.355-.89-.533-.98-.753a.667.667 0 01.048-.582c.126-.201.506-.318 1.265-.552l8.475-2.608c.597-.183.896-.275 1.098-.201a.667.667 0 01.379.379c.074.201-.018.501-.201 1.097z" stroke={filled ? "white" : "#1E242E"} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ─── Question card: numbered options (optional badge) + freeform input + X close ─── */
 function QuestionCard({ title, options, onSelect, onClose, freeformValue, onFreeformChange, onFreeformSubmit }) {
   const opts = options || [
@@ -1468,32 +1628,26 @@ function QuestionCard({ title, options, onSelect, onClose, freeformValue, onFree
   return (
     <div style={{
       animation: "fadeInUp .35s ease-out",
-      border: "1px solid " + BORDER, borderRadius: 16, background: CARD_BG,
-      boxShadow: "0 2px 16px rgba(0,0,0,.04)",
-      overflow: "hidden",
-      marginTop: 16,
-      position: "relative",
+      border: "1px solid " + BORDER, borderRadius: 8, background: "#ffffff",
+      overflow: "hidden", padding: "12px 0 0",
+      marginTop: 16, position: "relative",
     }}>
       {/* Header */}
       <div style={{
-        padding: "14px 18px 12px",
-        borderBottom: "1px solid " + BORDER,
-        display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+        padding: "0 16px 12px",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
       }}>
-        <div style={{ fontSize: 14, fontWeight: 600, color: TEXT }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: "#1E242E" }}>
           {title || "What use cases would you like AI Agent to handle?"}
         </div>
         {onClose && (
           <div onClick={onClose} style={{
-            width: 28, height: 28, borderRadius: 8,
+            width: 24, height: 24, borderRadius: 6, marginLeft: 16,
             display: "flex", alignItems: "center", justifyContent: "center",
-            cursor: "pointer", transition: "background .15s", flexShrink: 0,
-          }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = SURFACE; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M3 3l8 8M11 3l-8 8" stroke={TEXT_MUTED} strokeWidth="1.5" strokeLinecap="round" />
+            cursor: "pointer", flexShrink: 0,
+          }}>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M11.98 11.99L7.99 8M7.99 8L4 4.01M7.99 8l3.99-3.99M7.99 8L4 11.99" stroke="#1E242E" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
         )}
@@ -1502,14 +1656,14 @@ function QuestionCard({ title, options, onSelect, onClose, freeformValue, onFree
         <div key={opt.key}
           onClick={() => onSelect(opt.key)}
           style={{
-            padding: "12px 18px", cursor: "pointer",
+            padding: "16px 16px", cursor: "pointer",
             display: "flex", alignItems: "flex-start", gap: 12,
             transition: "background .15s",
-            borderBottom: "1px solid " + BORDER,
-            background: CARD_BG,
+            borderTop: "1px solid " + BORDER,
+            background: "#ffffff",
           }}
           onMouseEnter={(e) => { e.currentTarget.style.background = SURFACE; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = CARD_BG; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "#ffffff"; }}
         >
           <div style={{
             width: 26, height: 26, borderRadius: 6,
@@ -1518,22 +1672,22 @@ function QuestionCard({ title, options, onSelect, onClose, freeformValue, onFree
             fontSize: 12, fontWeight: 600, color: TEXT_MUTED, marginTop: 1,
           }}>{oi + 1}</div>
           <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
-            <span style={{ fontSize: 14, fontWeight: 500, color: TEXT, lineHeight: 1.35 }}>{opt.title}</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 14, fontWeight: 500, color: "#1E242E", lineHeight: 1.35 }}>{opt.title}</span>
+              {opt.badge && (
+                <span style={{
+                  fontSize: 12, fontWeight: 500, color: ACCENT,
+                  background: ACCENT_LIGHT, padding: "2px 8px", borderRadius: 6,
+                  whiteSpace: "nowrap", flexShrink: 0,
+                }}>{opt.badge}</span>
+              )}
+            </div>
             <span style={{ fontSize: 13, color: "#8992A0", lineHeight: 1.4 }}>{opt.desc}</span>
           </div>
-          {opt.badge && (
-            <span style={{
-              fontSize: 12, fontWeight: 500, color: ACCENT,
-              background: ACCENT_LIGHT, padding: "4px 10px", borderRadius: 999,
-              whiteSpace: "nowrap", flexShrink: 0, marginTop: 2,
-            }}>{opt.badge}</span>
-          )}
         </div>
       ))}
       {/* Freeform */}
-      <div style={{
-        padding: "12px 18px", display: "flex", alignItems: "center", gap: 12,
-      }}>
+      <div style={{ padding: "16px 16px", display: "flex", alignItems: "center", gap: 12, borderTop: "1px solid " + BORDER }}>
         <div style={{
           width: 26, height: 26, borderRadius: 6,
           background: "transparent", border: "1px solid " + BORDER,
@@ -1551,7 +1705,7 @@ function QuestionCard({ title, options, onSelect, onClose, freeformValue, onFree
           placeholder="Something else..."
           style={{
             flex: 1, border: "none", outline: "none", background: "transparent",
-            fontSize: 14, fontFamily: "'Inter', sans-serif", color: TEXT,
+            fontSize: 14, fontFamily: "'Inter', sans-serif", color: "#1E242E",
             fontStyle: freeformValue ? "normal" : "italic",
           }}
         />
@@ -1560,38 +1714,33 @@ function QuestionCard({ title, options, onSelect, onClose, freeformValue, onFree
   );
 }
 
-/* ─── Skill follow-up card: bold question + pagination + numbered options + freeform ─── */
+/* ─── Skill follow-up card: bold question + close + numbered options + freeform ─── */
 function SkillFollowUpCard({ followUp, onSelect, onSkip, freeformValue, onFreeformChange, onFreeformSubmit }) {
   return (
     <div style={{
       animation: "fadeInUp .35s ease-out",
-      border: "1px solid " + BORDER, borderRadius: 16, background: CARD_BG,
-      boxShadow: "0 2px 16px rgba(0,0,0,.04)",
-      overflow: "hidden",
+      border: "1px solid " + BORDER, borderRadius: 8, background: "#ffffff",
+      overflow: "hidden", padding: "12px 0 0",
     }}>
-      {/* Header: question + pagination indicator (inert) — no X close per user spec */}
+      {/* Header: question + close button */}
       <div style={{
-        padding: "14px 18px 12px",
+        padding: "0 16px 12px",
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        borderBottom: "1px solid " + BORDER, gap: 12,
       }}>
-        <div style={{ fontSize: 14, fontWeight: 600, color: TEXT, flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: "#1E242E", flex: 1, minWidth: 0 }}>
           {followUp.question}
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
-          <div style={{ width: 24, height: 24, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", cursor: "default", opacity: 0.4 }}>
-            <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-              <path d="M9 3l-4 4 4 4" stroke={TEXT_MUTED} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </div>
-          <span style={{ fontSize: 12, color: TEXT_MUTED, whiteSpace: "nowrap" }}>
-            {followUp.position.current} of {followUp.position.total}
-          </span>
-          <div style={{ width: 24, height: 24, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", cursor: "default", opacity: 0.4 }}>
-            <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-              <path d="M5 3l4 4-4 4" stroke={TEXT_MUTED} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </div>
+        <div
+          onClick={onSkip}
+          style={{
+            width: 24, height: 24, borderRadius: 6, marginLeft: 16,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: "pointer", flexShrink: 0,
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M11.98 11.99L7.99 8M7.99 8L4 4.01M7.99 8l3.99-3.99M7.99 8L4 11.99" stroke="#1E242E" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </div>
       </div>
 
@@ -1600,14 +1749,14 @@ function SkillFollowUpCard({ followUp, onSelect, onSkip, freeformValue, onFreefo
         <div key={oi}
           onClick={() => onSelect(opt)}
           style={{
-            padding: "12px 18px", cursor: "pointer",
+            padding: "16px 16px", cursor: "pointer",
             display: "flex", alignItems: "center", gap: 12,
             transition: "background .15s",
-            borderBottom: "1px solid " + BORDER,
-            background: CARD_BG,
+            borderTop: "1px solid " + BORDER,
+            background: "#ffffff",
           }}
           onMouseEnter={(e) => { e.currentTarget.style.background = SURFACE; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = CARD_BG; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "#ffffff"; }}
         >
           <div style={{
             width: 26, height: 26, borderRadius: 6,
@@ -1615,12 +1764,12 @@ function SkillFollowUpCard({ followUp, onSelect, onSkip, freeformValue, onFreefo
             display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
             fontSize: 12, fontWeight: 600, color: TEXT_MUTED,
           }}>{oi + 1}</div>
-          <span style={{ fontSize: 14, color: TEXT, fontFamily: "'Inter', sans-serif" }}>{opt}</span>
+          <span style={{ fontSize: 14, color: "#1E242E", fontFamily: "'Inter', sans-serif" }}>{opt}</span>
         </div>
       ))}
 
       {/* Freeform Something else */}
-      <div style={{ padding: "12px 18px", display: "flex", alignItems: "center", gap: 12 }}>
+      <div style={{ padding: "16px 16px", display: "flex", alignItems: "center", gap: 12, borderTop: "1px solid " + BORDER }}>
         <div style={{
           width: 26, height: 26, borderRadius: 6,
           background: "transparent", border: "1px solid " + BORDER,
@@ -1638,7 +1787,7 @@ function SkillFollowUpCard({ followUp, onSelect, onSkip, freeformValue, onFreefo
           placeholder="Something else..."
           style={{
             flex: 1, border: "none", outline: "none", background: "transparent",
-            fontSize: 14, fontFamily: "'Inter', sans-serif", color: TEXT,
+            fontSize: 14, fontFamily: "'Inter', sans-serif", color: "#1E242E",
             fontStyle: freeformValue ? "normal" : "italic",
           }}
         />
@@ -1648,26 +1797,17 @@ function SkillFollowUpCard({ followUp, onSelect, onSkip, freeformValue, onFreefo
 }
 
 /* ─── Confirmation row: right-aligned (user action). Click to expand and list items. ─── */
-function ConfirmationRow({ label, items }) {
-  const [expanded, setExpanded] = useState(false);
+function ConfirmationRow({ label }) {
   return (
     <div style={{
-      display: "flex", flexDirection: "column", alignItems: "flex-end",
-      gap: 6, marginBottom: 16,
+      display: "flex", flexDirection: "column", alignItems: "flex-start",
+      marginBottom: 16,
       animation: "fadeInUp .35s ease-out",
     }}>
-      <div
-        onClick={() => setExpanded((p) => !p)}
-        style={{
-          display: "inline-flex", alignItems: "center", gap: 8,
-          padding: "8px 12px", borderRadius: 10,
-          cursor: "pointer", transition: "background .15s",
-          background: expanded ? SURFACE : "transparent",
-          border: "1px solid " + (expanded ? BORDER : "transparent"),
-        }}
-        onMouseEnter={(e) => { if (!expanded) e.currentTarget.style.background = SURFACE; }}
-        onMouseLeave={(e) => { if (!expanded) e.currentTarget.style.background = "transparent"; }}
-      >
+      <div style={{
+        display: "inline-flex", alignItems: "center", gap: 8,
+        padding: "8px 0",
+      }}>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
           <circle cx="8" cy="8" r="7" fill={SURFACE} />
           <path d="M5 8.5l2 2 4-4" stroke={TEXT_MUTED} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
@@ -1675,35 +1815,7 @@ function ConfirmationRow({ label, items }) {
         <span style={{ fontSize: 13, color: TEXT_MUTED, whiteSpace: "nowrap" }}>
           {label}
         </span>
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{
-          flexShrink: 0,
-          transition: "transform .2s",
-          transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
-        }}>
-          <path d="M4 5.5l3 3 3-3" stroke={TEXT_MUTED} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
       </div>
-      {expanded && (
-        <div style={{
-          background: CARD_BG, border: "1px solid " + BORDER, borderRadius: 12,
-          padding: "6px 0", minWidth: 260,
-          boxShadow: "0 4px 16px rgba(0,0,0,.06)",
-          animation: "fadeInUp .2s ease-out",
-        }}>
-          {items.map((item, i) => (
-            <div key={i} style={{
-              padding: "8px 16px", display: "flex", alignItems: "center", gap: 10,
-              fontSize: 13, color: TEXT, lineHeight: 1.4,
-            }}>
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
-                <circle cx="8" cy="8" r="7" fill={SURFACE} />
-                <path d="M5 8.5l2 2 4-4" stroke={TEXT_MUTED} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <span>{item}</span>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
@@ -1802,7 +1914,7 @@ function EditPanel({ skillIdx, onClose, closing, skipSlideIn, postEditAnswer }) 
         {/* Title */}
         <h2 style={{
           fontFamily: "'Inter', sans-serif",
-          fontSize: 28, fontWeight: 600, color: TEXT,
+          fontSize: 28, fontWeight: 700, color: TEXT,
           marginBottom: 6, paddingRight: 40,
         }}>{skill.title}</h2>
         <p style={{ fontSize: 13, color: TEXT_MUTED, marginBottom: 28 }}>{skill.subtitle}</p>
@@ -1822,19 +1934,6 @@ function EditPanel({ skillIdx, onClose, closing, skipSlideIn, postEditAnswer }) 
             }}>{intent}</span>
           ))}
         </div>
-
-        {/* Sample message */}
-        <h3 style={{
-          fontSize: 11, fontWeight: 600, color: TEXT_MUTED,
-          textTransform: "uppercase", letterSpacing: "0.06em",
-          marginBottom: 10,
-        }}>Sample message</h3>
-        <div style={{
-          borderLeft: "3px solid " + ACCENT,
-          paddingLeft: 16,
-          marginBottom: 28,
-          fontSize: 14, color: TEXT, fontStyle: "italic", lineHeight: 1.55,
-        }}>{skill.edit.sample}</div>
 
         {/* Instructions */}
         <h3 style={{
@@ -1944,71 +2043,79 @@ function ChannelsCard({ toggles, onToggle, onConfirm, onSkip, onClose, freeformV
     { key: "email", label: "Email: support@urbanstems.com" },
     { key: "chat",  label: "Chat: @urbanstems" },
   ];
+  const selectedCount = Object.values(toggles).filter(Boolean).length;
+  const hasSelection = selectedCount > 0;
   const handleSubmit = () => { if (frozen) return; onConfirm(); };
   return (
     <div style={{
       animation: "fadeInUp .35s ease-out",
-      border: "1px solid " + BORDER, borderRadius: 16, background: CARD_BG,
-      boxShadow: "0 2px 16px rgba(0,0,0,.04)",
-      overflow: "hidden",
+      border: "1px solid " + BORDER, borderRadius: 8, background: "#ffffff",
+      overflow: "hidden", padding: "12px 0 0",
     }}>
-      {/* Header — no X close per user spec; users dismiss via Skip button below */}
+      {/* Header + close */}
       <div style={{
-        padding: "14px 18px 12px",
-        borderBottom: "1px solid " + BORDER,
+        padding: "0 16px 12px",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
       }}>
-        <div style={{ fontSize: 14, fontWeight: 600, color: TEXT }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: "#1E242E" }}>
           What channels should AI Agent use to talk to customers?
         </div>
+        {onClose && (
+          <div onClick={() => { if (!frozen) onClose(); }} style={{
+            width: 24, height: 24, borderRadius: 6, marginLeft: 16,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: "pointer", flexShrink: 0,
+          }}>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M11.98 11.99L7.99 8M7.99 8L4 4.01M7.99 8l3.99-3.99M7.99 8L4 11.99" stroke="#1E242E" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+        )}
       </div>
 
       {/* Channel checkbox rows */}
-      {channels.map((c, ci) => {
+      {channels.map((c) => {
         const checked = !!toggles[c.key];
         return (
           <div key={c.key}
             onClick={() => { if (!frozen) onToggle(c.key); }}
             style={{
-              padding: "14px 18px",
+              padding: "16px 16px",
               cursor: frozen ? "default" : "pointer",
-              display: "flex", alignItems: "center", gap: 14,
+              display: "flex", alignItems: "center", gap: 12,
               transition: "background .15s",
-              borderBottom: "1px solid " + BORDER,
-              background: CARD_BG,
+              borderTop: "1px solid " + BORDER,
+              background: "#ffffff",
             }}
             onMouseEnter={(e) => { if (!frozen) e.currentTarget.style.background = SURFACE; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = CARD_BG; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "#ffffff"; }}
           >
-            {/* Purple checkbox */}
             <div style={{
-              width: 22, height: 22, borderRadius: 6, flexShrink: 0,
-              border: "1.5px solid " + (checked ? ACCENT : "#C9CDD4"),
+              width: 24, height: 24, borderRadius: 6, flexShrink: 0,
+              border: checked ? "none" : "1.5px solid #C9CDD4",
               background: checked ? ACCENT : "transparent",
               display: "flex", alignItems: "center", justifyContent: "center",
               transition: "all .15s",
             }}>
               {checked && (
-                <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
                   <path d="M3.5 8.5l3 3 6-6.5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               )}
             </div>
-            <span style={{ fontSize: 14, color: TEXT, lineHeight: 1.4, flex: 1, minWidth: 0 }}>{c.label}</span>
+            <span style={{ fontSize: 14, color: "#1E242E", lineHeight: 1.4, flex: 1, minWidth: 0 }}>{c.label}</span>
           </div>
         );
       })}
 
       {/* Something else freeform */}
-      <div style={{
-        padding: "12px 18px", display: "flex", alignItems: "center", gap: 12,
-        borderBottom: "1px solid " + BORDER,
-      }}>
+      <div style={{ padding: "16px 16px", display: "flex", alignItems: "center", gap: 12, borderTop: "1px solid " + BORDER }}>
         <div style={{
-          width: 24, height: 24, borderRadius: 6,
-          border: "1px solid " + BORDER,
+          width: 26, height: 26, borderRadius: 6,
+          background: "transparent", border: "1px solid " + BORDER,
           display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
         }}>
-          <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
             <path d="M11.2 1.8a1.6 1.6 0 0 1 2.3 0l.7.7a1.6 1.6 0 0 1 0 2.3L5.7 13.3l-3.4.9.9-3.4Z" stroke={TEXT_MUTED} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
             <path d="M9.5 3.5l3 3" stroke={TEXT_MUTED} strokeWidth="1.2" strokeLinecap="round" />
           </svg>
@@ -2021,40 +2128,35 @@ function ChannelsCard({ toggles, onToggle, onConfirm, onSkip, onClose, freeformV
           disabled={frozen}
           style={{
             flex: 1, border: "none", outline: "none", background: "transparent",
-            fontSize: 14, fontFamily: "'Inter', sans-serif", color: TEXT,
+            fontSize: 14, fontFamily: "'Inter', sans-serif", color: "#1E242E",
+            fontStyle: (freeformValue || "").trim() ? "normal" : "italic",
           }}
         />
       </div>
 
-      {/* Skip + Submit */}
-      <div style={{ padding: "14px 18px", display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 12 }}>
-        {onSkip && (
-          <button
-            onClick={() => { if (!frozen) onSkip(); }}
-            style={{
-              fontSize: 14, fontWeight: 500, color: TEXT,
-              background: "transparent", border: "none",
-              borderRadius: 8, padding: "9px 14px",
-              cursor: frozen ? "default" : "pointer",
-              transition: "background .15s", fontFamily: "'Inter', sans-serif",
-            }}
-            onMouseEnter={(e) => { if (!frozen) e.currentTarget.style.background = SURFACE; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-          >Skip</button>
-        )}
+      {/* Bottom bar: helper text + send button */}
+      <div style={{
+        padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between",
+        borderTop: "1px solid " + BORDER,
+      }}>
+        <span style={{ fontSize: 13, color: "#8992A0", fontFamily: "'Inter', sans-serif" }}>
+          {hasSelection ? selectedCount + " selected" : "Pick one option or skip question"}
+        </span>
         <button
           onClick={handleSubmit}
-          disabled={frozen || (!toggles.email && !toggles.chat)}
+          disabled={frozen || !hasSelection}
           style={{
-            fontSize: 14, fontWeight: 600, color: "#fff",
-            background: (frozen || (!toggles.email && !toggles.chat)) ? "#9CA3AF" : TEXT, border: "none",
-            borderRadius: 8, padding: "10px 18px",
-            cursor: (frozen || (!toggles.email && !toggles.chat)) ? "default" : "pointer",
-            transition: "background .15s", fontFamily: "'Inter', sans-serif",
+            width: 32, height: 32, borderRadius: 8, border: "none",
+            background: (frozen || !hasSelection) ? "#E0E0E0" : "#1E242E",
+            cursor: (frozen || !hasSelection) ? "default" : "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            transition: "background .15s", flexShrink: 0, padding: 0,
           }}
-          onMouseEnter={(e) => { if (!frozen && (toggles.email || toggles.chat)) e.currentTarget.style.background = "#333"; }}
-          onMouseLeave={(e) => { if (!frozen && (toggles.email || toggles.chat)) e.currentTarget.style.background = TEXT; }}
-        >Submit</button>
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M7.193 8.807l3.09-3.09M13.443 3.832l-2.608 8.476c-.234.759-.35 1.14-.55 1.265a.667.667 0 01-.581.049c-.22-.091-.398-.447-.753-1.158l-1.652-3.303a1.335 1.335 0 00-.122-.218.668.668 0 00-.115-.116 1.34 1.34 0 00-.227-.119L3.536 7.052c-.71-.355-.89-.533-.98-.753a.667.667 0 01.048-.582c.126-.201.506-.318 1.265-.552l8.475-2.608c.597-.183.896-.275 1.098-.201a.667.667 0 01.379.379c.074.201-.018.501-.201 1.097z" stroke="white" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
       </div>
     </div>
   );
@@ -2071,14 +2173,16 @@ function ClosingScreen({ onTakeMeToInbox, onInviteTeammate }) {
   return (
     <div style={{
       position: "absolute", inset: 0, zIndex: 2000,
-      background: "radial-gradient(ellipse 80% 60% at 50% 30%, rgba(237,232,248,0.6), transparent 70%), radial-gradient(ellipse 70% 50% at 50% 90%, rgba(255,243,224,0.45), transparent 70%), linear-gradient(180deg, #ffffff 0%, #FAF7FF 100%)",
-      backdropFilter: "blur(16px)",
-      WebkitBackdropFilter: "blur(16px)",
+      background: "#ffffff",
       display: "flex", alignItems: "center", justifyContent: "center",
       padding: "48px 32px",
       animation: "overlayBackdropIn .6s ease forwards",
+      overflow: "hidden",
     }}>
-      <div style={{ maxWidth: 640, width: "100%", textAlign: "center" }}>
+      <div style={{ position: "absolute", inset: 0, zIndex: 0, opacity: 0, animation: "fadeIn 1.2s ease 0.3s forwards" }}>
+        <AuroraBlob opacity={0.7} scale={1.1} />
+      </div>
+      <div style={{ maxWidth: 640, width: "100%", textAlign: "center", position: "relative", zIndex: 1 }}>
         {/* Sparkle icon — pop in */}
         <div style={{
           width: 80, height: 80, borderRadius: 22,
@@ -2097,14 +2201,14 @@ function ClosingScreen({ onTakeMeToInbox, onInviteTeammate }) {
 
         {/* Cinematic headline + subheader (two lines, staggered fade) */}
         <h1 style={{
-          fontFamily: "'Inter', sans-serif",
-          fontSize: 38, fontWeight: 500, letterSpacing: "-0.6px",
+          fontFamily: "’Inter’, sans-serif",
+          fontSize: 38, fontWeight: 700, letterSpacing: "-0.6px",
           color: "#1A1918", lineHeight: 1.2, marginBottom: 12,
         }}>
           <span style={wordIn(.65)}>Great work!</span>
         </h1>
         <p style={Object.assign({}, wordIn(.95), {
-          fontFamily: "'Inter', sans-serif",
+          fontFamily: "’Inter’, sans-serif",
           fontSize: 18, fontWeight: 400, lineHeight: 1.45,
           color: TEXT_MUTED, marginBottom: 18, maxWidth: 560,
         })}>
@@ -2176,30 +2280,17 @@ function ClosingScreen({ onTakeMeToInbox, onInviteTeammate }) {
           opacity: 0,
           animation: "cinematicSlideUp .55s cubic-bezier(.16,1,.3,1) 2.4s forwards",
         }}>
-          <button onClick={onInviteTeammate}
-            style={{
-              fontSize: 14, fontWeight: 500, color: TEXT,
-              background: "#fff", border: "1px solid " + BORDER,
-              borderRadius: 8, padding: "10px 18px",
-              cursor: "pointer", transition: "background .15s, border-color .15s",
-              fontFamily: "'Inter', sans-serif",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = SURFACE; e.currentTarget.style.borderColor = "#D0D0D0"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "#fff"; e.currentTarget.style.borderColor = BORDER; }}
-          >Invite a teammate</button>
           <button onClick={onTakeMeToInbox}
-            style={{
-              fontSize: 14, fontWeight: 500, color: "#fff",
-              background: TEXT, border: "1px solid " + TEXT,
-              borderRadius: 8, padding: "10px 18px",
-              display: "inline-flex", alignItems: "center", gap: 8,
-              cursor: "pointer", transition: "background .15s, border-color .15s",
-              fontFamily: "'Inter', sans-serif",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "#333"; e.currentTarget.style.borderColor = "#333"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = TEXT; e.currentTarget.style.borderColor = TEXT; }}
+            style={BTN_SECONDARY}
+            onMouseEnter={(e) => { Object.assign(e.currentTarget.style, BTN_SECONDARY_HOVER); }}
+            onMouseLeave={(e) => { Object.assign(e.currentTarget.style, BTN_SECONDARY_LEAVE); }}
+          >Take me to my inbox</button>
+          <button onClick={onInviteTeammate}
+            style={BTN_PRIMARY}
+            onMouseEnter={(e) => { Object.assign(e.currentTarget.style, BTN_PRIMARY_HOVER); }}
+            onMouseLeave={(e) => { Object.assign(e.currentTarget.style, BTN_PRIMARY_LEAVE); }}
           >
-            Take me to my inbox
+            Review my AI Agent skills
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
@@ -2290,18 +2381,9 @@ function LandingPage({ onStartSetup, closing }) {
 
           {/* Start setup CTA — Axiom dark-primary style */}
           <button onClick={onStartSetup}
-            style={{
-              alignSelf: "flex-start",
-              fontSize: 14, fontWeight: 500, color: "#fff",
-              background: TEXT, border: "1px solid " + TEXT,
-              borderRadius: 8, padding: "10px 18px",
-              display: "inline-flex", alignItems: "center", gap: 8,
-              cursor: "pointer", transition: "background .15s, border-color .15s",
-              fontFamily: "'Inter', sans-serif",
-              marginTop: 8,
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "#333"; e.currentTarget.style.borderColor = "#333"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = TEXT; e.currentTarget.style.borderColor = TEXT; }}
+            style={{ ...BTN_PRIMARY, alignSelf: "flex-start", marginTop: 8 }}
+            onMouseEnter={(e) => { Object.assign(e.currentTarget.style, BTN_PRIMARY_HOVER); }}
+            onMouseLeave={(e) => { Object.assign(e.currentTarget.style, BTN_PRIMARY_LEAVE); }}
           >
             Start setup
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -2466,9 +2548,9 @@ function IntakePage() {
   const [skillsBatch1Messages, setSkillsBatch1Messages] = useState([]); // batch 1 committed messages
   const [skillsBatch2Messages, setSkillsBatch2Messages] = useState([]); // batch 2 committed messages
   const SKILL_INTRO_MESSAGES_BATCH_1 = [
-    { text: "Great! With your tone of voice and knowledge sources pulled in, AI Agent can answer general questions and sound like your brand.", bold: ["tone of voice", "knowledge sources"] },
-    { text: "Next, let’s give AI Agent skills so it knows how to handle your most common requests.", bold: "skills" },
-    { text: "I’ve already set up 3 skills as a starting point. Try them out and let me know if we need to make any adjustments.", bold: "3 skills" },
+    { text: "With your tone of voice and knowledge sources, AI Agent now knows how to sound like your brand and answer general questions.", bold: ["tone of voice", "knowledge sources"] },
+    { text: "Now it needs skills to act on your most common customer requests. When a request comes in, AI Agent detects the intent, matches it to a skill, and follows its instructions to respond.", bold: "skills" },
+    { text: "I’ve already set up 3 to get you started. Try them out and let me know what needs adjusting.", bold: "3" },
   ];
   const SKILL_INTRO_MESSAGES_BATCH_2 = [
     { text: "Great work! You’re now covering X% of your incoming tickets automatically.", bold: "X% of your incoming tickets automatically" },
@@ -2476,7 +2558,7 @@ function IntakePage() {
     { text: "Let’s make sure they’ll work with your current workflows." },
   ];
   const [skillsBatch2Expanded, setSkillsBatch2Expanded] = useState(false);
-  const [skillsBatch1Choice, setSkillsBatch1Choice] = useState(null); // null | "all" | "pick" | "skip" | "freeform"
+  const [skillsBatch1Choice, setSkillsBatch1Choice] = useState(null); // null | "all" | "pick" | "freeform"
   const [skillsBatch2Choice, setSkillsBatch2Choice] = useState(null);
   const [skillsBatch1Reply, setSkillsBatch1Reply] = useState(null); // user-bubble text after picking
   const [skillsBatch2Reply, setSkillsBatch2Reply] = useState(null);
@@ -2485,14 +2567,12 @@ function IntakePage() {
   const skillEnabledCountBatch1 = 3;
   const skillEnabledCountBatch2 = 6;
   const SKILL_ENABLE_OPTIONS = [
-    { key: "all", title: "Enable all of these skills", desc: "AI Agent will follow skill instructions when a matching intent is detected", badge: "Most reliable" },
-    { key: "pick", title: "Let me choose", desc: "AI Agent will use only the skills you turn on" },
-    { key: "skip", title: "Skip for now", desc: "AI Agent will rely entirely on your background knowledge to respond" },
+    { key: "all", title: "Enable all of these skills", desc: "AI Agent will always follow skill instructions when matching intent is detected", badge: "Recommended" },
+    { key: "pick", title: "Let me choose", desc: "Pick which skills to enable — the rest will rely on knowledge alone" },
   ];
   const SKILL_ENABLE_REPLY_TEXT = {
     all: "Enable all of these skills",
     pick: "Let me choose",
-    skip: "Skip for now",
   };
 
   // Channels phase
@@ -2513,8 +2593,10 @@ function IntakePage() {
   const [followUpAnswered, setFollowUpAnswered] = useState(false);
   const [followUpAnswer, setFollowUpAnswer] = useState(null);
   const [followUpAnswerSkillKey, setFollowUpAnswerSkillKey] = useState(null);
+  const [answeredSkillKeys, setAnsweredSkillKeys] = useState(new Set());
   const [followUpFreeform, setFollowUpFreeform] = useState("");
-  const [editChatMessages, setEditChatMessages] = useState([]); // { role, text } appended on follow-up answer + free-text sends while Edit is open
+  const [editChatMessages, setEditChatMessages] = useState([]); // { role, text, phase } appended on follow-up answer + free-text sends while Edit is open
+  const [editAiTyping, setEditAiTyping] = useState(null); // { text, phase, cursor } for typewriter on AI reply
 
   // Closing
   const [closingPhase, setClosingPhase] = useState("idle"); // idle | shown
@@ -2591,7 +2673,7 @@ function IntakePage() {
             setTimeout(() => setResearchPhase("running"), 800);
           }
         }
-      }, 18);
+      }, 10);
     }, currentMsgIndex === 0 ? 500 : 300);
     return () => clearTimeout(startDelay);
   }, [currentMsgIndex, cinematicPhase]);
@@ -2638,7 +2720,7 @@ function IntakePage() {
           setTimeout(() => setShowVoiceCard(true), 300);
           setTimeout(() => setShowVoiceConfirm(true), 1500);
         }
-      }, 14);
+      }, 10);
     }, 800);
     return () => clearTimeout(startDelay);
   }, [researchPhase]);
@@ -2667,7 +2749,7 @@ function IntakePage() {
           setTimeout(() => setSkillsPhase("shown-batch1"), 600);
         }
       }
-    }, 14);
+    }, 10);
     return () => clearInterval(interval);
   }, [skillsPhase, skillsBatch1MsgIdx]);
 
@@ -2705,7 +2787,7 @@ function IntakePage() {
           setTimeout(() => setSkillsPhase("shown-batch2"), 600);
         }
       }
-    }, 14);
+    }, 10);
     return () => clearInterval(interval);
   }, [skillsPhase, skillsBatch2MsgIdx]);
 
@@ -2745,7 +2827,7 @@ function IntakePage() {
           setTimeout(() => setChannelsPhase("shown"), 500);
         }
       }
-    }, 14);
+    }, 10);
     return () => clearInterval(interval);
   }, [channelsPhase, channelsMsgIdx]);
 
@@ -2813,11 +2895,31 @@ function IntakePage() {
     setFollowUpAnswered(true);
     setFollowUpAnswer(answer);
     setFollowUpAnswerSkillKey(skillKey);
+    if (skillKey) setAnsweredSkillKeys((prev) => new Set([...prev, skillKey]));
+    const phase = activeSkillIdx !== null && activeSkillIdx < 3 ? "batch1" : "batch2";
+    const aiText = "Got it — I’ve updated the Instructions to reflect a " + answer + " return window.";
     setEditChatMessages((prev) => prev.concat([
-      { role: "user", text: answer },
-      { role: "ai", text: "Got it — I’ve updated the Instructions to reflect a " + answer + " return window." },
+      { role: "user", text: answer, phase },
     ]));
+    setEditAiTyping({ text: aiText, phase, cursor: 0 });
   };
+  useEffect(() => {
+    if (!editAiTyping) return;
+    const interval = setInterval(() => {
+      setEditAiTyping((prev) => {
+        if (!prev) return null;
+        const next = prev.cursor + 1;
+        if (next >= prev.text.length) {
+          clearInterval(interval);
+          setEditChatMessages((msgs) => msgs.concat([{ role: "ai", text: prev.text, phase: prev.phase }]));
+          return null;
+        }
+        return { ...prev, cursor: next };
+      });
+    }, 8);
+    return () => clearInterval(interval);
+  }, [editAiTyping && editAiTyping.text]);
+
   const onFollowUpSelect = (option) => commitFollowUpAnswer(option);
   const onFollowUpFreeformSubmit = () => {
     if (!followUpFreeform.trim()) return;
@@ -2832,6 +2934,8 @@ function IntakePage() {
   /* Right margin for content area when a panel is open */
   const panelOpen = !!activePanel && !panelClosing;
   const contentRightMargin = panelOpen ? "496px" : "16px";
+
+  const seenTerms = new Set();
 
   return (
     <div style={{
@@ -2868,40 +2972,38 @@ function IntakePage() {
             onClick={() => setClosingPhase("shown")}
             style={{
               position: "absolute", top: 16, right: 20, zIndex: 4,
-              fontSize: 13, fontWeight: 500, color: TEXT_MUTED,
+              fontSize: 14, fontWeight: 600, color: "#1E242E",
               fontFamily: "'Inter', sans-serif",
-              cursor: "pointer", padding: "6px 12px", borderRadius: 8,
-              background: "rgba(255,255,255,0.75)",
-              backdropFilter: "blur(8px)",
-              WebkitBackdropFilter: "blur(8px)",
-              border: "1px solid " + BORDER,
-              boxShadow: "0 1px 3px rgba(0,0,0,.04)",
-              transition: "color .15s, background .15s",
+              cursor: "pointer", padding: "0 12px", height: 32, lineHeight: "32px", borderRadius: 8,
+              background: "transparent",
+              border: "1px solid transparent",
+              transition: "background .15s",
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = TEXT; e.currentTarget.style.background = "rgba(255,255,255,0.95)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = TEXT_MUTED; e.currentTarget.style.background = "rgba(255,255,255,0.75)"; }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(27,35,50,0.03)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
           >
             Skip setup
           </div>
         )}
 
         {/* Chat thread */}
-        <div ref={chatScrollRef} onScroll={handleChatScroll} style={{ flex: 1, overflowY: "auto", padding: "48px 0 24px" }}>
+        <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
+        <div ref={chatScrollRef} onScroll={handleChatScroll} style={{ height: "100%", overflowY: "auto", padding: "48px 0 24px" }}>
           <div style={{ maxWidth: 740, margin: "0 auto", padding: "0 24px" }}>
             {/* Welcome messages */}
             {chatMessages.map((msg, i) => (
               <div key={i} style={{ marginBottom: 16, display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
                 <div style={{
-                  fontSize: 14, lineHeight: 1.55, color: "#5C6370",
+                  fontSize: 14, lineHeight: 1.55, color: "#1E242E",
                   fontFamily: "'Inter', sans-serif", fontWeight: 450,
                   whiteSpace: "pre-wrap",
-                }}>{msg.bold ? renderTextWithBold(msg.text, msg.bold) : msg.text}</div>
+                }}>{renderThreadText(msg.text, seenTerms)}</div>
               </div>
             ))}
             {isTypingMessage && typingText && (
               <div style={{ marginBottom: 16 }}>
                 <div style={{
-                  fontSize: 14, lineHeight: 1.55, color: "#5C6370",
+                  fontSize: 14, lineHeight: 1.55, color: "#1E242E",
                   fontFamily: "'Inter', sans-serif", fontWeight: 450,
                 }}>
                   {typingText}<span style={{ opacity: 0.3, animation: "pulse 1s infinite" }}>|</span>
@@ -3010,10 +3112,10 @@ function IntakePage() {
             {(findingsTyping || findingsComplete) && findingsText && (
               <div style={{ marginBottom: 16 }}>
                 <div style={{
-                  fontSize: 14, lineHeight: 1.55, color: "#5C6370",
+                  fontSize: 14, lineHeight: 1.55, color: "#1E242E",
                   fontFamily: "'Inter', sans-serif", fontWeight: 450, whiteSpace: "pre-wrap",
                 }}>
-                  {findingsTyping ? findingsText : renderTextWithBold(findingsText, findingsBold)}
+                  {findingsTyping ? findingsText : renderThreadText(findingsText, seenTerms)}
                   {findingsTyping && <span style={{ opacity: 0.3, animation: "pulse 1s infinite" }}>|</span>}
                 </div>
                 {showVoiceCard && (
@@ -3023,7 +3125,7 @@ function IntakePage() {
                         onClick={(e) => { e.stopPropagation(); setActivePanel("voice"); }}
                         style={{
                           border: activePanel === "voice" ? "1px solid " + ACCENT : "1px solid " + BORDER,
-                          borderRadius: 12, background: CARD_BG, overflow: "hidden", display: "flex",
+                          borderRadius: 8, background: CARD_BG, overflow: "hidden", display: "flex",
                           cursor: "pointer", transition: "border-color .15s, box-shadow .15s",
                           animation: "fadeInUp .5s cubic-bezier(.16,1,.3,1) forwards",
                         }}
@@ -3043,14 +3145,9 @@ function IntakePage() {
                             <span style={{ fontSize: 13, fontWeight: 600, color: TEXT, lineHeight: 1.3 }}>Your brand’s tone of voice</span>
                             <span style={{ fontSize: 12, color: TEXT_MUTED, lineHeight: 1.3 }}>Warm, playful, never transactional</span>
                           </div>
-                          <button style={{
-                            fontSize: 12, fontWeight: 500, color: TEXT,
-                            background: "transparent", border: "1px solid " + BORDER,
-                            borderRadius: 8, padding: "6px 14px", cursor: "pointer",
-                            transition: "all .15s", whiteSpace: "nowrap", flexShrink: 0,
-                          }}
-                            onMouseEnter={(e) => { e.currentTarget.style.background = SURFACE; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                          <button style={{ ...BTN_SECONDARY_SM, flexShrink: 0 }}
+                            onMouseEnter={(e) => { Object.assign(e.currentTarget.style, BTN_SECONDARY_HOVER); }}
+                            onMouseLeave={(e) => { Object.assign(e.currentTarget.style, BTN_SECONDARY_LEAVE); }}
                           >View</button>
                         </div>
                       </div>
@@ -3058,7 +3155,7 @@ function IntakePage() {
                         onClick={(e) => { e.stopPropagation(); setActivePanel("knowledge"); }}
                         style={{
                           border: activePanel === "knowledge" ? "1px solid " + ACCENT : "1px solid " + BORDER,
-                          borderRadius: 12, background: CARD_BG, overflow: "hidden", display: "flex",
+                          borderRadius: 8, background: CARD_BG, overflow: "hidden", display: "flex",
                           cursor: "pointer", transition: "border-color .15s, box-shadow .15s",
                           animation: "fadeInUp .5s cubic-bezier(.16,1,.3,1) forwards",
                         }}
@@ -3067,9 +3164,9 @@ function IntakePage() {
                       >
                         <div style={{ width: 80, minHeight: 72, background: SURFACE, flexShrink: 0, borderRight: "1px solid " + BORDER, display: "flex", alignItems: "center", justifyContent: "center" }}>
                           <svg width="40" height="40" viewBox="0 0 40 40" fill="none" style={{ opacity: 0.95 }}>
-                            {/* Brain - two-lobe shape with center division */}
-                            <path d="M11 16c0-3 2.5-5.5 5.5-5.5 1.5 0 2.8 0.6 3.5 1.5 0.7-0.9 2-1.5 3.5-1.5 3 0 5.5 2.5 5.5 5.5 0 0.8-0.2 1.6-0.5 2.3 1.2 1 2 2.5 2 4.2 0 3-2.5 5.5-5.5 5.5-1.5 0-2.8-0.6-3.5-1.5-0.7 0.9-2 1.5-3.5 1.5-3 0-5.5-2.5-5.5-5.5 0-1.7 0.8-3.2 2-4.2-0.3-0.7-0.5-1.5-0.5-2.3z" stroke={TEXT} strokeWidth="1.4" fill={TEXT} fillOpacity="0.12" strokeLinejoin="round" />
-                            <path d="M20 12v18" stroke={TEXT} strokeWidth="1.4" strokeLinecap="round" />
+                            {/* Open book */}
+                            <path d="M20 12c-2-2-5-3-8-3s-5 .5-5 .5V28s2-.5 5-.5 6 1 8 3c2-2 5-3 8-3s5 .5 5 .5V9.5S30 9 27 9s-5 1-7 3z" stroke={TEXT} strokeWidth="1.4" fill={TEXT} fillOpacity="0.08" strokeLinejoin="round" />
+                            <path d="M20 12v19" stroke={TEXT} strokeWidth="1.4" strokeLinecap="round" />
                           </svg>
                         </div>
                         <div style={{ flex: 1, padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
@@ -3077,14 +3174,9 @@ function IntakePage() {
                             <span style={{ fontSize: 13, fontWeight: 600, color: TEXT, lineHeight: 1.3 }}>Your knowledge sources</span>
                             <span style={{ fontSize: 12, color: TEXT_MUTED, lineHeight: 1.3 }}>Website, help center, connected apps</span>
                           </div>
-                          <button style={{
-                            fontSize: 12, fontWeight: 500, color: TEXT,
-                            background: "transparent", border: "1px solid " + BORDER,
-                            borderRadius: 8, padding: "6px 14px", cursor: "pointer",
-                            transition: "all .15s", whiteSpace: "nowrap", flexShrink: 0,
-                          }}
-                            onMouseEnter={(e) => { e.currentTarget.style.background = SURFACE; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                          <button style={{ ...BTN_SECONDARY_SM, flexShrink: 0 }}
+                            onMouseEnter={(e) => { Object.assign(e.currentTarget.style, BTN_SECONDARY_HOVER); }}
+                            onMouseLeave={(e) => { Object.assign(e.currentTarget.style, BTN_SECONDARY_LEAVE); }}
                           >View</button>
                         </div>
                       </div>
@@ -3110,10 +3202,10 @@ function IntakePage() {
             {voiceEditHelp && (
               <div style={{ marginBottom: 16 }}>
                 <div style={{
-                  fontSize: 14, lineHeight: 1.55, color: "#5C6370",
+                  fontSize: 14, lineHeight: 1.55, color: "#1E242E",
                   fontFamily: "'Inter', sans-serif", fontWeight: 450, whiteSpace: "pre-wrap",
                   animation: "fadeInUp .35s ease-out",
-                }}>{voiceEditHelp}</div>
+                }}>{renderThreadText(voiceEditHelp, seenTerms)}</div>
               </div>
             )}
 
@@ -3121,10 +3213,10 @@ function IntakePage() {
             {skillsBatch1Messages.map((msg, i) => (
               <div key={"sk1m-" + i} style={{ marginBottom: 16 }}>
                 <div style={{
-                  fontSize: 14, lineHeight: 1.55, color: "#5C6370",
+                  fontSize: 14, lineHeight: 1.55, color: "#1E242E",
                   fontFamily: "'Inter', sans-serif", fontWeight: 450, whiteSpace: "pre-wrap",
                 }}>
-                  {msg.bold ? renderTextWithBold(msg.text, msg.bold) : msg.text}
+                  {renderThreadText(msg.text, seenTerms)}
                 </div>
               </div>
             ))}
@@ -3132,7 +3224,7 @@ function IntakePage() {
             {skillsTypingText && skillsPhase === "typing-batch1" && (
               <div style={{ marginBottom: 16 }}>
                 <div style={{
-                  fontSize: 14, lineHeight: 1.55, color: "#5C6370",
+                  fontSize: 14, lineHeight: 1.55, color: "#1E242E",
                   fontFamily: "'Inter', sans-serif", fontWeight: 450, whiteSpace: "pre-wrap",
                 }}>
                   {skillsTypingText}
@@ -3152,12 +3244,45 @@ function IntakePage() {
                   skills={SKILLS.slice(0, 3)}
                   startIndex={0}
                   visibleCount={3}
+                  needsInfo={true}
+                  answeredSkillKeys={new Set(SKILLS.slice(0, 3).map(s => s.key))}
                   activeSkillIdx={activePanel ? activeSkillIdx : null}
                   expanded={true}
                   onToggleExpanded={() => {}}
                   onPreview={(idx) => { setActiveSkillIdx(idx); setActivePanel("preview"); }}
                   onEdit={(idx) => { setActiveSkillIdx(idx); setActivePanel("edit"); }}
                 />
+              </div>
+            )}
+
+            {/* Edit chat messages from batch 1 skills */}
+            {editChatMessages.filter(m => m.phase === "batch1").map((msg, i) => (
+              <div key={"edm1-" + i} style={{
+                marginBottom: 12, marginTop: i === 0 ? 12 : 0,
+                display: "flex", flexDirection: "column",
+                alignItems: msg.role === "user" ? "flex-end" : "flex-start",
+                animation: "fadeInUp .35s ease-out",
+              }}>
+                {msg.role === "user" ? (
+                  <div style={{
+                    fontSize: 14, lineHeight: 1.45, color: TEXT,
+                    maxWidth: "85%", padding: "11px 16px", borderRadius: 14,
+                    background: SURFACE, fontFamily: "'Inter', sans-serif",
+                  }}>{msg.text}</div>
+                ) : (
+                  <div style={{
+                    fontSize: 14, lineHeight: 1.55, color: "#1E242E",
+                    fontFamily: "'Inter', sans-serif", fontWeight: 450, whiteSpace: "pre-wrap",
+                  }}>{renderThreadText(msg.text, seenTerms)}</div>
+                )}
+              </div>
+            ))}
+            {editAiTyping && editAiTyping.phase === "batch1" && (
+              <div style={{ marginBottom: 12, animation: "fadeInUp .35s ease-out" }}>
+                <div style={{
+                  fontSize: 14, lineHeight: 1.55, color: "#1E242E",
+                  fontFamily: "'Inter', sans-serif", fontWeight: 450, whiteSpace: "pre-wrap",
+                }}>{editAiTyping.text.substring(0, editAiTyping.cursor)}<span style={{ opacity: 0.3, animation: "pulse 1s infinite" }}>|</span></div>
               </div>
             )}
 
@@ -3187,10 +3312,10 @@ function IntakePage() {
             {skillsBatch2Messages.map((msg, i) => (
               <div key={"sk2m-" + i} style={{ marginBottom: 16 }}>
                 <div style={{
-                  fontSize: 14, lineHeight: 1.55, color: "#5C6370",
+                  fontSize: 14, lineHeight: 1.55, color: "#1E242E",
                   fontFamily: "'Inter', sans-serif", fontWeight: 450, whiteSpace: "pre-wrap",
                 }}>
-                  {msg.bold ? renderTextWithBold(msg.text, msg.bold) : msg.text}
+                  {renderThreadText(msg.text, seenTerms)}
                 </div>
               </div>
             ))}
@@ -3198,7 +3323,7 @@ function IntakePage() {
             {skillsTypingText && skillsPhase === "typing-batch2" && (
               <div style={{ marginBottom: 16 }}>
                 <div style={{
-                  fontSize: 14, lineHeight: 1.55, color: "#5C6370",
+                  fontSize: 14, lineHeight: 1.55, color: "#1E242E",
                   fontFamily: "'Inter', sans-serif", fontWeight: 450, whiteSpace: "pre-wrap",
                 }}>
                   {skillsTypingText}
@@ -3219,6 +3344,7 @@ function IntakePage() {
                   startIndex={3}
                   visibleCount={3}
                   needsInfo={true}
+                  answeredSkillKeys={answeredSkillKeys}
                   activeSkillIdx={activePanel ? activeSkillIdx : null}
                   expanded={skillsBatch2Expanded}
                   onToggleExpanded={() => setSkillsBatch2Expanded((p) => !p)}
@@ -3228,9 +3354,9 @@ function IntakePage() {
               </div>
             )}
 
-            {/* Edit chat messages — user replies + Copilot acks added while Edit is open */}
-            {editChatMessages.map((msg, i) => (
-              <div key={"edm-" + i} style={{
+            {/* Edit chat messages from batch 2 skills */}
+            {editChatMessages.filter(m => m.phase === "batch2").map((msg, i) => (
+              <div key={"edm2-" + i} style={{
                 marginBottom: 12, marginTop: i === 0 ? 12 : 0,
                 display: "flex", flexDirection: "column",
                 alignItems: msg.role === "user" ? "flex-end" : "flex-start",
@@ -3244,12 +3370,20 @@ function IntakePage() {
                   }}>{msg.text}</div>
                 ) : (
                   <div style={{
-                    fontSize: 14, lineHeight: 1.55, color: "#5C6370",
+                    fontSize: 14, lineHeight: 1.55, color: "#1E242E",
                     fontFamily: "'Inter', sans-serif", fontWeight: 450, whiteSpace: "pre-wrap",
-                  }}>{msg.text}</div>
+                  }}>{renderThreadText(msg.text, seenTerms)}</div>
                 )}
               </div>
             ))}
+            {editAiTyping && editAiTyping.phase === "batch2" && (
+              <div style={{ marginBottom: 12, animation: "fadeInUp .35s ease-out" }}>
+                <div style={{
+                  fontSize: 14, lineHeight: 1.55, color: "#1E242E",
+                  fontFamily: "'Inter', sans-serif", fontWeight: 450, whiteSpace: "pre-wrap",
+                }}>{editAiTyping.text.substring(0, editAiTyping.cursor)}<span style={{ opacity: 0.3, animation: "pulse 1s infinite" }}>|</span></div>
+              </div>
+            )}
 
             {/* User reply bubble for batch 2 choice */}
             {skillsBatch2Reply && (
@@ -3277,10 +3411,10 @@ function IntakePage() {
             {channelsCommittedMessages.map((msg, i) => (
               <div key={"chm-" + i} style={{ marginBottom: 16 }}>
                 <div style={{
-                  fontSize: 14, lineHeight: 1.55, color: "#5C6370",
+                  fontSize: 14, lineHeight: 1.55, color: "#1E242E",
                   fontFamily: "'Inter', sans-serif", fontWeight: 450, whiteSpace: "pre-wrap",
                 }}>
-                  {msg.bold ? renderTextWithBold(msg.text, msg.bold) : msg.text}
+                  {renderThreadText(msg.text, seenTerms)}
                 </div>
               </div>
             ))}
@@ -3288,7 +3422,7 @@ function IntakePage() {
             {channelsTypingText && channelsPhase === "typing-intro" && (
               <div style={{ marginBottom: 16 }}>
                 <div style={{
-                  fontSize: 14, lineHeight: 1.55, color: "#5C6370",
+                  fontSize: 14, lineHeight: 1.55, color: "#1E242E",
                   fontFamily: "'Inter', sans-serif", fontWeight: 450, whiteSpace: "pre-wrap",
                 }}>
                   {channelsTypingText}
@@ -3301,33 +3435,35 @@ function IntakePage() {
               </div>
             )}
 
-            {/* Channels card (in chat history) — appears here only AFTER confirm (frozen, non-interactive) */}
-            {channelsPhase === "done" && !channelsCardClosed && (
-              <div style={{ marginBottom: 16 }}>
-                <ChannelsCard
-                  toggles={channelToggles}
-                  onToggle={() => {}}
-                  onConfirm={() => {}}
-                  onSkip={null}
-                  onClose={null}
-                  freeformValue=""
-                  onFreeformChange={() => {}}
-                  onFreeformSubmit={() => {}}
-                  frozen={true}
-                />
-              </div>
-            )}
-
-            {/* Channels confirmation row (right-aligned, clickable dropdown lists active channels) */}
+            {/* Channels confirmation row */}
             {channelsPhase === "done" && (
               <ConfirmationRow
                 label={"Connected " + Object.values(channelToggles).filter(Boolean).length + " support channel" + (Object.values(channelToggles).filter(Boolean).length === 1 ? "" : "s")}
-                items={Object.entries(channelToggles).filter((e) => e[1]).map((e) => e[0] === "email" ? "Email: support@urbanstems.com" : "Chat: @urbanstems")}
               />
             )}
 
             <div ref={chatEndRef} />
           </div>
+        </div>
+        {/* Scroll to bottom button — inside chat area, above thread */}
+        {userScrolledUp && closingPhase !== "shown" && (
+          <button
+            onClick={() => chatEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" })}
+            style={{
+              position: "absolute", bottom: 12, left: "50%", transform: "translateX(-50%)",
+              zIndex: 10,
+              width: 32, height: 32, borderRadius: 8,
+              background: "rgba(255,255,255,0.5)", border: "1px solid " + BORDER,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: "pointer", padding: 0,
+              backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
+            }}
+          >
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M10 16.6L13.6667 12.9334M10 16.6L6.33337 12.9334M10 16.6V3.40002" stroke="#1E242E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+        )}
         </div>
 
         {/* Bottom area — always present (input by default, picker when needed). Hidden once closing screen takes over. */}
@@ -3352,53 +3488,15 @@ function IntakePage() {
                       onFreeformSubmit={onFollowUpFreeformSubmit}
                     />
                   ) : (
-                    <div style={{
-                      border: "1.5px solid " + BORDER, borderRadius: 16, background: CARD_BG,
-                      boxShadow: "0 2px 16px rgba(0,0,0,.06), 0 0 0 1px rgba(0,0,0,.02)",
-                      display: "flex", flexDirection: "column", padding: "4px 6px",
-                    }}>
-                      <textarea
-                        value={chatInput}
-                        onChange={(e) => setChatInput(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); if (!sendDisabled) handleSend(); } }}
-                        placeholder={(activeSkillIdx !== null ? SKILLS[activeSkillIdx].editPlaceholder : null) || EDIT_PLACEHOLDER_DEFAULT}
-                        rows={1}
-                        style={{
-                          width: "100%", border: "none", outline: "none", resize: "none",
-                          padding: "8px 10px 4px", fontSize: 14, lineHeight: 1.5,
-                          fontFamily: "'Inter', sans-serif", color: TEXT, background: "transparent",
-                        }}
-                      />
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 0 2px" }}>
-                        <div style={{
-                          width: 32, height: 32, borderRadius: 8, display: "flex",
-                          alignItems: "center", justifyContent: "center", cursor: "pointer",
-                          transition: "background .15s", flexShrink: 0,
-                        }}
-                          onMouseEnter={(e) => { e.currentTarget.style.background = SURFACE; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-                        >
-                          <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
-                            <path d="M14.5 10.5l-6.2 6.2a3.5 3.5 0 01-5-5l7.8-7.8a2.33 2.33 0 013.3 3.3l-7.1 7.1a1.17 1.17 0 01-1.7-1.6l6.2-6.2" stroke={TEXT_MUTED} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                        </div>
-                        <button
-                          onClick={() => { if (!sendDisabled) handleSend(); }}
-                          disabled={sendDisabled}
-                          style={{
-                            width: 30, height: 30, borderRadius: 8, border: "none",
-                            background: sendDisabled ? "#E0E0E0" : TEXT,
-                            cursor: sendDisabled ? "not-allowed" : "pointer",
-                            display: "flex", alignItems: "center", justifyContent: "center",
-                            transition: "background .15s", flexShrink: 0,
-                          }}
-                        >
-                          <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style={{ transform: "rotate(-90deg)" }}>
-                            <path d="M1 7h12M8 2l5 5-5 5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
+                    <ChatInputBar
+                      value={chatInput}
+                      onChange={(e) => setChatInput(e.target.value)}
+                      onSend={() => { if (!sendDisabled) handleSend(); }}
+                      onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); if (!sendDisabled) handleSend(); } }}
+                      placeholder={(activeSkillIdx !== null ? SKILLS[activeSkillIdx].editPlaceholder : null) || EDIT_PLACEHOLDER_DEFAULT}
+                      sendDisabled={sendDisabled}
+                      thinking={narrating}
+                    />
                   )
                 ) : channelsPhase === "shown" && !channelsCardClosed ? (
                   <ChannelsCard
@@ -3414,18 +3512,20 @@ function IntakePage() {
                   />
                 ) : (skillsPhase === "shown-batch1" && !skillsBatch1Choice) ? (
                   <QuestionCard
-                    title="Do you want to enable these AI Agent skills?"
+                    title="Do you want to enable these skills?"
                     options={SKILL_ENABLE_OPTIONS}
                     onSelect={(key) => advanceFromBatch1(key)}
+                    onClose={() => advanceFromBatch1("all")}
                     freeformValue={skillsBatch1Freeform}
                     onFreeformChange={setSkillsBatch1Freeform}
                     onFreeformSubmit={() => { if (skillsBatch1Freeform.trim()) advanceFromBatch1("freeform", skillsBatch1Freeform.trim()); }}
                   />
                 ) : (skillsPhase === "shown-batch2" && !skillsBatch2Choice) ? (
                   <QuestionCard
-                    title="Do you want to enable these AI Agent skills?"
+                    title="Do you want to enable these skills?"
                     options={SKILL_ENABLE_OPTIONS}
                     onSelect={(key) => advanceFromBatch2(key)}
+                    onClose={() => advanceFromBatch2("all")}
                     freeformValue={skillsBatch2Freeform}
                     onFreeformChange={setSkillsBatch2Freeform}
                     onFreeformSubmit={() => { if (skillsBatch2Freeform.trim()) advanceFromBatch2("freeform", skillsBatch2Freeform.trim()); }}
@@ -3433,8 +3533,7 @@ function IntakePage() {
                 ) : showVoiceConfirm ? (
                   <div style={{
                     animation: "fadeInUp .35s ease-out",
-                    border: "1px solid " + BORDER, borderRadius: 16, background: CARD_BG,
-                    boxShadow: "0 2px 16px rgba(0,0,0,.04)",
+                    border: "1px solid " + BORDER, borderRadius: 8, background: "#ffffff",
                     overflow: "hidden",
                   }}>
                     <div style={{ padding: "14px 18px 12px", fontSize: 14, fontWeight: 600, color: TEXT, borderBottom: "1px solid " + BORDER }}>
@@ -3495,53 +3594,15 @@ function IntakePage() {
                     </div>
                   </div>
                 ) : (
-                  <div style={{
-                    border: "1.5px solid " + BORDER, borderRadius: 16, background: CARD_BG,
-                    boxShadow: "0 2px 16px rgba(0,0,0,.06), 0 0 0 1px rgba(0,0,0,.02)",
-                    display: "flex", flexDirection: "column", padding: "4px 6px",
-                  }}>
-                    <textarea
-                      value={chatInput}
-                      onChange={(e) => setChatInput(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); if (!sendDisabled) handleSend(); } }}
-                      placeholder={activePanel === "edit" && activeSkillIdx !== null ? (SKILLS[activeSkillIdx].editPlaceholder || EDIT_PLACEHOLDER_DEFAULT) : "Reply..."}
-                      rows={1}
-                      style={{
-                        width: "100%", border: "none", outline: "none", resize: "none",
-                        padding: "8px 10px 4px", fontSize: 14, lineHeight: 1.5,
-                        fontFamily: "'Inter', sans-serif", color: TEXT, background: "transparent",
-                      }}
-                    />
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 0 2px" }}>
-                      <div style={{
-                        width: 32, height: 32, borderRadius: 8, display: "flex",
-                        alignItems: "center", justifyContent: "center", cursor: "pointer",
-                        transition: "background .15s", flexShrink: 0,
-                      }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = SURFACE; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-                      >
-                        <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
-                          <path d="M14.5 10.5l-6.2 6.2a3.5 3.5 0 01-5-5l7.8-7.8a2.33 2.33 0 013.3 3.3l-7.1 7.1a1.17 1.17 0 01-1.7-1.6l6.2-6.2" stroke={TEXT_MUTED} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </div>
-                      <button
-                        onClick={() => { if (!sendDisabled) handleSend(); }}
-                        disabled={sendDisabled}
-                        style={{
-                          width: 30, height: 30, borderRadius: 8, border: "none",
-                          background: sendDisabled ? "#E0E0E0" : TEXT,
-                          cursor: sendDisabled ? "not-allowed" : "pointer",
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                          transition: "background .15s", flexShrink: 0,
-                        }}
-                      >
-                        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style={{ transform: "rotate(-90deg)" }}>
-                          <path d="M1 7h12M8 2l5 5-5 5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
+                  <ChatInputBar
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    onSend={() => { if (!sendDisabled) handleSend(); }}
+                    onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); if (!sendDisabled) handleSend(); } }}
+                    placeholder={activePanel === "edit" && activeSkillIdx !== null ? (SKILLS[activeSkillIdx].editPlaceholder || EDIT_PLACEHOLDER_DEFAULT) : "Send a message..."}
+                    sendDisabled={sendDisabled}
+                    thinking={narrating}
+                  />
                 )}
               </div>
             </div>
@@ -3683,10 +3744,10 @@ function AuroraBlob({ opacity, scale }) {
         }}
       >
         <defs>
-          <radialGradient id="aurora-mint"  cx="30%" cy="40%" r="40%"><stop offset="0%" stopColor="#a8e6cf" stopOpacity="0.95" /><stop offset="100%" stopColor="#a8e6cf" stopOpacity="0" /></radialGradient>
-          <radialGradient id="aurora-pink"  cx="70%" cy="35%" r="40%"><stop offset="0%" stopColor="#ffd3e0" stopOpacity="0.95" /><stop offset="100%" stopColor="#ffd3e0" stopOpacity="0" /></radialGradient>
-          <radialGradient id="aurora-lav"   cx="60%" cy="70%" r="45%"><stop offset="0%" stopColor="#c9b8ff" stopOpacity="0.9" /><stop offset="100%" stopColor="#c9b8ff" stopOpacity="0" /></radialGradient>
-          <radialGradient id="aurora-peach" cx="35%" cy="65%" r="40%"><stop offset="0%" stopColor="#ffe4b5" stopOpacity="0.9" /><stop offset="100%" stopColor="#ffe4b5" stopOpacity="0" /></radialGradient>
+          <radialGradient id="aurora-mint"  cx="30%" cy="40%" r="40%"><stop offset="0%" stopColor="#F1ECFF" stopOpacity="0.95" /><stop offset="100%" stopColor="#F1ECFF" stopOpacity="0" /></radialGradient>
+          <radialGradient id="aurora-pink"  cx="70%" cy="35%" r="40%"><stop offset="0%" stopColor="#FEE1F9" stopOpacity="0.95" /><stop offset="100%" stopColor="#FEE1F9" stopOpacity="0" /></radialGradient>
+          <radialGradient id="aurora-lav"   cx="60%" cy="70%" r="45%"><stop offset="0%" stopColor="#E8F5F8" stopOpacity="0.9" /><stop offset="100%" stopColor="#E8F5F8" stopOpacity="0" /></radialGradient>
+          <radialGradient id="aurora-peach" cx="35%" cy="65%" r="40%"><stop offset="0%" stopColor="#FDF1CD" stopOpacity="0.9" /><stop offset="100%" stopColor="#FDF1CD" stopOpacity="0" /></radialGradient>
         </defs>
         <path fill="url(#aurora-mint)"  d={AURORA_PATH_A}>
           <animate attributeName="d" values={`${AURORA_PATH_A};${AURORA_PATH_B};${AURORA_PATH_C};${AURORA_PATH_A}`} dur="8s"  repeatCount="indefinite" />
@@ -3916,18 +3977,12 @@ function WelcomeIntro({ onStartSetup, closing }) {
               type="button"
               onClick={onStartSetup}
               style={{
-                alignSelf: "flex-start",
-                fontSize: 14, fontWeight: 500, color: "#fff",
-                background: TEXT, border: "1px solid " + TEXT,
-                borderRadius: 8, padding: "10px 18px",
-                display: "inline-flex", alignItems: "center", gap: 8,
-                cursor: "pointer", transition: "background .15s, border-color .15s",
-                fontFamily: "'Inter', sans-serif",
-                marginTop: 8,
+                ...BTN_PRIMARY,
+                alignSelf: "flex-start", marginTop: 8,
                 animation: "welcomeFadeUp 600ms cubic-bezier(0.22, 1, 0.36, 1) 550ms both",
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "#333"; e.currentTarget.style.borderColor = "#333"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = TEXT; e.currentTarget.style.borderColor = TEXT; }}
+              onMouseEnter={(e) => { Object.assign(e.currentTarget.style, BTN_PRIMARY_HOVER); }}
+              onMouseLeave={(e) => { Object.assign(e.currentTarget.style, BTN_PRIMARY_LEAVE); }}
             >
               Start setup
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
