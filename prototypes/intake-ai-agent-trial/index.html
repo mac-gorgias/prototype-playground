@@ -405,30 +405,37 @@ const SUGGESTED_CHIPS = [
 const SCRIPTED_INTENTS = [
   {
     keywords: ["pause", "skip my subscription", "cancel my subscription", "subscription"],
+    label: "Looking up your subscription…",
     response: "You can pause your subscription anytime from your account page. Pause for as long as you’d like — your next charge resumes when you do. Want me to walk you through it or pause it for you now?",
   },
   {
     keywords: ["cancel", "modify", "change my order", "update my order", "stop my delivery"],
+    label: "Checking if it can be modified…",
     response: "I can help with that. Orders can be cancelled or modified up to 2 hours before the scheduled delivery. Could you share your order number or the email you used at checkout so I can look into it?",
   },
   {
-    keywords: ["damaged", "broken", "refund", "return", "wrong", "missing", "didn't arrive", "didn’t arrive"],
+    keywords: ["damaged", "broken", "refund", "return", "wrong", "missing", "didn’t arrive", "didn’t arrive"],
+    label: "Reviewing your recent order…",
     response: "I’m so sorry to hear that — that’s not the experience we want for you. If your arrangement arrived damaged, we’ll make it right. Could you send a photo of the bouquet to care@urbanstems.com? Our team will review it and arrange a replacement or full refund, usually within 24 hours.",
   },
   {
-    keywords: ["where is", "where's", "where’s", "my order", "order status", "tracking", "track my", "when will", "arrive", "shipping"],
+    keywords: ["where is", "where’s", "where’s", "my order", "order status", "tracking", "track my", "when will", "arrive", "shipping"],
+    label: "Looking up your order…",
     response: "Hi! I can look that up for you — could you share your order number or the email you used at checkout? Most UrbanStems orders arrive within 2–4 days, and same-day delivery is available in select cities if you ordered before noon. I’ll get you the exact status right away.",
   },
   {
-    keywords: ["what cities", "do you deliver to", "what's included", "what’s included", "what comes with", "vase", "care card"],
+    keywords: ["what cities", "do you deliver to", "what’s included", "what’s included", "what comes with", "vase", "care card"],
+    label: "Checking delivery areas…",
     response: "We deliver to most major US cities — same-day delivery is available in NYC, DC, LA, Chicago, and more if you order before noon local time. Each arrangement comes in a glass vase with a care card. Want me to help you find something for a specific occasion or budget?",
   },
   {
     keywords: ["promo", "discount", "code", "coupon", "sale"],
+    label: "Checking active promotions…",
     response: "We occasionally run promotions for new customers and around key holidays like Mother’s Day and Valentine’s Day. If you sign up for our emails at urbanstems.com you’ll get first access. Is there a specific occasion you’re shopping for? I might be able to help find the right arrangement at the right price.",
   },
   {
     keywords: ["recommend", "popular", "best seller", "what flowers", "what do you have", "gift", "occasion", "what should i get", "bouquet"],
+    label: "Browsing arrangements for you…",
     response: "Here are a few of our most-loved arrangements right now — perfect if you’re looking for something fresh and memorable:",
     products: [
       { name: "Margot", price: 88, originalPrice: 90, image: "urbanstems-margot.png" },
@@ -721,6 +728,7 @@ function ModalLiveChat({ preloadMessage }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [thinkingLabel, setThinkingLabel] = useState("");
   const [viewState, setViewState] = useState(preloadMessage ? "thread" : "home"); // home | transitioning | thread
   const threadRef = useRef(null);
   const preloadFiredRef = useRef(false);
@@ -749,14 +757,16 @@ function ModalLiveChat({ preloadMessage }) {
   };
 
   const doAssistantReply = useCallback((text) => {
-    setSending(true);
     const intent = matchScriptedIntent(text);
+    setThinkingLabel(intent ? intent.label : "Thinking…");
+    setSending(true);
     setTimeout(() => {
       const payload = intent === null
         ? { role: "assistant", isFallback: true, visible: false }
         : { role: "assistant", text: intent.response, products: intent.products || null, visible: false };
       setMessages((prev) => prev.concat([payload]));
       setSending(false);
+      setThinkingLabel("");
       setTimeout(appendVisible, 50);
     }, 700);
   }, []);
@@ -986,16 +996,14 @@ function ModalLiveChat({ preloadMessage }) {
         })}
 
         {sending && (
-          <div style={{ marginBottom: 12, padding: 4 }}>
-            <span style={{ display: "inline-flex", gap: 4 }}>
-              {[0, 1, 2].map((i) => (
-                <span key={i} style={{
-                  width: 6, height: 6, borderRadius: "50%",
-                  background: "rgba(30,36,46,0.3)",
-                  animation: "dotBounce 1s infinite",
-                  animationDelay: (i * 0.15) + "s",
-                }} />
-              ))}
+          <div style={{ marginBottom: 12, padding: "4px 0" }}>
+            <span style={{
+              fontSize: 13,
+              color: "rgba(30,36,46,0.45)",
+              fontStyle: "italic",
+              animation: "fadeInUp .35s ease both",
+            }}>
+              {thinkingLabel}
             </span>
           </div>
         )}
