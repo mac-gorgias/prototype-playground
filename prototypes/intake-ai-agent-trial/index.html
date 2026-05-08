@@ -2626,6 +2626,122 @@ function IntakePage() {
       setLandingClosing(false);
     }, 500);
   };
+  const [devMenuOpen, setDevMenuOpen] = useState(false);
+
+  const resetAllState = () => {
+    setCinematicPhase("playing");
+    setLandingClosing(false);
+    setChatMessages([]);
+    setCurrentMsgIndex(0);
+    setTypingText("");
+    setIsTypingMessage(false);
+    setResearchPhase("idle");
+    setResearchSources([]);
+    setResearchExpanded(true);
+    findingsStartedRef.current = false;
+    setFindingsText("");
+    setFindingsTyping(false);
+    setFindingsComplete(false);
+    setShowVoiceCard(false);
+    setShowVoiceConfirm(false);
+    setVoiceUserReply(null);
+    setVoiceEditHelp(null);
+    setSkillsPhase("idle");
+    setSkillsBatch1MsgIdx(-1);
+    setSkillsBatch2MsgIdx(-1);
+    setSkillsTypingText("");
+    setSkillsTypingActive(false);
+    setSkillsBatch1Messages([]);
+    setSkillsBatch2Messages([]);
+    setSkillsBatch1Choice(null);
+    setSkillsBatch2Choice(null);
+    setSkillsBatch1Reply(null);
+    setSkillsBatch2Reply(null);
+    setSkillPickerConfirmed(false);
+    setChannelsPhase("idle");
+    setChannelsTypingText("");
+    setChannelsTypingActive(false);
+    setChannelsCommittedMessages([]);
+    setChannelsMsgIdx(-1);
+    setChannelToggles({ email: true, chat: true });
+    setChannelsCardClosed(false);
+    setClosingPhase("idle");
+    setShowConfetti(false);
+    setChecklist({ tone: false, knowledge: false, skills: false, channels: false });
+    setActivePanel(null);
+    setActiveSkillIdx(null);
+    setPanelClosing(false);
+  };
+
+  const setIntroComplete = () => {
+    setCinematicPhase("done");
+    setLandingClosing(false);
+    setChatMessages(welcomeMessages.map(m => ({ role: "ai", text: m.text, bold: m.bold || null })));
+    setCurrentMsgIndex(welcomeMessages.length);
+    setTypingText("");
+    setIsTypingMessage(false);
+    setResearchPhase("done");
+    setResearchSources([...VOICE_RESEARCH_SOURCES]);
+    setResearchExpanded(false);
+    findingsStartedRef.current = true;
+    setFindingsText(findingsFullText);
+    setFindingsTyping(false);
+    setFindingsComplete(true);
+  };
+
+  const jumpTo = (section) => {
+    resetAllState();
+    setTimeout(() => {
+      if (section === "intro") return;
+
+      setIntroComplete();
+
+      if (section === "tov") {
+        setShowVoiceCard(true);
+        setShowVoiceConfirm(true);
+        return;
+      }
+
+      setShowVoiceCard(true);
+      setVoiceUserReply("Yes, looks good. I'll adjust it later if needed.");
+      completeChecklistItem("tone");
+      completeChecklistItem("knowledge");
+
+      if (section === "skills") {
+        setSkillsPhase("shown-batch1");
+        setSkillsBatch1Messages(SKILL_INTRO_MESSAGES_BATCH_1.map(m => ({ text: m.text, bold: m.bold || null })));
+        return;
+      }
+
+      setSkillsBatch1Messages(SKILL_INTRO_MESSAGES_BATCH_1.map(m => ({ text: m.text, bold: m.bold || null })));
+      setSkillsBatch1Choice("all");
+      setSkillsBatch1Reply("Enable all of these skills");
+      completeChecklistItem("skills");
+      setSkillsPhase("done");
+
+      if (batchMode) {
+        setSkillsBatch2Messages(SKILL_INTRO_MESSAGES_BATCH_2.map(m => ({ text: m.text, bold: m.bold || null })));
+        setSkillsBatch2Choice("all");
+        setSkillsBatch2Reply("Enable all of these skills");
+      }
+
+      if (section === "channels") {
+        setChannelsPhase("shown");
+        setChannelsCommittedMessages(CHANNEL_INTRO_MESSAGES.map(m => ({ text: m.text, bold: m.bold || null })));
+        return;
+      }
+
+      if (section === "end") {
+        setChannelsPhase("done");
+        setChannelsCommittedMessages(CHANNEL_INTRO_MESSAGES.map(m => ({ text: m.text, bold: m.bold || null })));
+        completeChecklistItem("channels");
+        setClosingPhase("shown");
+        return;
+      }
+    }, 0);
+    setDevMenuOpen(false);
+  };
+
   const cinematicRef = useRef(null);
 
   // Welcome typing
@@ -3158,6 +3274,42 @@ function IntakePage() {
           <div className="toggle-switch-knob" style={{ width: 14, height: 14 }} />
         </div>
         <span style={{ opacity: batchMode ? 1 : 0.5, transition: "opacity .15s" }}>Batched</span>
+        <div style={{ width: 1, height: 14, background: "rgba(255,255,255,0.2)", margin: "0 4px" }} />
+        <div style={{ position: "relative" }}>
+          <span
+            onClick={() => setDevMenuOpen((p) => !p)}
+            style={{ cursor: "pointer", opacity: devMenuOpen ? 1 : 0.7, transition: "opacity .15s" }}
+            onMouseEnter={(e) => { e.currentTarget.style.opacity = "1"; }}
+            onMouseLeave={(e) => { if (!devMenuOpen) e.currentTarget.style.opacity = "0.7"; }}
+          >Jump to ▾</span>
+          {devMenuOpen && (
+            <div style={{
+              position: "absolute", bottom: "calc(100% + 10px)", right: 0,
+              background: "rgba(30,36,46,0.96)", borderRadius: 10,
+              padding: "6px 0", minWidth: 200,
+              boxShadow: "0 8px 24px rgba(0,0,0,.35)",
+            }}>
+              {[
+                { key: "intro", label: "Intro" },
+                { key: "tov", label: "ToV / Knowledge" },
+                { key: "skills", label: "Skill Setup" },
+                { key: "channels", label: "Channel Mapping" },
+                { key: "end", label: "End" },
+              ].map((item) => (
+                <div
+                  key={item.key}
+                  onClick={() => jumpTo(item.key)}
+                  style={{
+                    padding: "8px 16px", cursor: "pointer", fontSize: 12,
+                    color: "#fff", transition: "background .1s",
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                >{item.label}</div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <SidebarNav
