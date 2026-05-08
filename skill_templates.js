@@ -94,7 +94,7 @@ var SKILLS = [
     thinkingSteps: [
       "Looking up the customer's order",
       "Checking cancellation eligibility",
-      "Processing cancellation request",
+      "Preparing some options",
     ],
   },
   {
@@ -110,8 +110,8 @@ var SKILLS = [
     actions: ["Cancel Subscription", "Cancel Order"], // Requires Recharge, Loop, Bold, etc.
     thinkingSteps: [
       "Locating the customer's subscription",
-      "Confirming cancellation intent",
-      "Processing the cancellation",
+      "Checking subscription status",
+      "Preparing some options",
     ],
   },
   {
@@ -142,7 +142,7 @@ var SKILLS = [
     thinkingSteps: [
       "Looking up the customer's order",
       "Checking if address change is still possible",
-      "Updating the shipping address",
+      "Preparing some options",
     ],
   },
   {
@@ -159,7 +159,7 @@ var SKILLS = [
     thinkingSteps: [
       "Looking up the customer's order",
       "Checking if the order is still editable",
-      "Applying the requested product change",
+      "Preparing some options",
     ],
   },
 ];

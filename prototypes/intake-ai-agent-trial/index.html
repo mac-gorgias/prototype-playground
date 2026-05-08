@@ -340,7 +340,7 @@ const SKILLS = [
     icon: SKILL_ICONS.refund,
     preload: "I need to cancel my order",
     edit: {
-      intents: ["Order / Cancel", "Order / Refund"],
+      intents: ["Order / Cancel"],
       sample: "I can help with that. Orders can be canceled up until the fulfillment cutoff in your delivery zone. Could you share your order number so I can take a look?",
     },
   },
@@ -404,12 +404,34 @@ const SKILL_PICKER_OPTIONS = [
   { key: "product-edits", label: "Product edits in an order" },
 ];
 
-/* ─── Stub follow-up question (shown once when any Edit panel is opened for the first time) ─── */
-const SAMPLE_FOLLOWUP = {
-  question: "What’s your return window?",
-  options: ["30 days", "60 days", "90 days"],
-  position: { current: 1, total: 4 },
+/* ─── Per-skill follow-up questions (driven by hardcodedValues from skill_templates.js) ─── */
+const SKILL_FOLLOWUPS = {
+  tracking: [
+    {
+      field: "return_window_days",
+      question: "What’s your return window?",
+      options: ["30 days", "60 days", "90 days"],
+      defaultOption: "60 days",
+      aiReply: (answer) => "Got it — I’ve updated the Instructions to reflect a " + answer + " return window.",
+    },
+  ],
+  cancellations: [
+    {
+      field: "cancellation_window_hours",
+      question: "How long after placing an order can a customer request a cancellation?",
+      options: ["30 minutes", "1 hour", "2 hours"],
+      defaultOption: "1 hour",
+      aiReply: (answer) => "Got it. I’ve updated the cancellation window to " + answer + ".",
+    },
+  ],
 };
+
+function getNextFollowUp(skillKey, answersMap) {
+  const followUps = SKILL_FOLLOWUPS[skillKey];
+  if (!followUps) return null;
+  const answers = answersMap[skillKey] || {};
+  return followUps.find(fu => !(fu.field in answers)) || null;
+}
 
 const EDIT_PLACEHOLDER_DEFAULT = "Tell us how you’d like AI Agent to handle this use case…";
 
@@ -437,6 +459,11 @@ const SCRIPTED_INTENTS = [
     keywords: ["damaged", "broken", "refund", "return", "wrong", "missing", "didn’t arrive", "didn’t arrive"],
     label: "Reviewing your recent order…",
     response: "I’m so sorry to hear that — that’s not the experience we want for you. If your arrangement arrived damaged, we’ll make it right. Could you send a photo of the bouquet to care@urbanstems.com? Our team will review it and arrange a replacement or full refund, usually within 24 hours.",
+  },
+  {
+    keywords: ["update my shipping", "change my address", "shipping address", "update my address", "change address"],
+    label: "Checking if the address can be updated…",
+    response: "Good news — your order #12847 is still within the window for address changes. Where would you like it sent instead? Just share the new address and I’ll update it for you right away.",
   },
   {
     keywords: ["where is", "where’s", "where’s", "my order", "order status", "tracking", "track my", "when will", "arrive", "shipping"],
@@ -1955,13 +1982,22 @@ function PreviewPanel({ skillIdx, onClose, closing, skipSlideIn }) {
 }
 
 /* ─── Edit panel: Intents pills + Sample message blockquote + Instructions block (per image 3) ─── */
-function EditPanel({ skillIdx, onClose, closing, skipSlideIn, postEditAnswer }) {
+function EditPanel({ skillIdx, onClose, closing, skipSlideIn, skillAnswers }) {
   const skill = SKILLS[skillIdx];
   const isOrderTracking = skill.key === "tracking";
-  const showPostEdit = !!postEditAnswer;
-  // Extract numeric value from answer ("60 days" → "60", or freeform raw text)
-  const answerLabel = postEditAnswer || "";
+  const isOrderCancellation = skill.key === "cancellations";
+  const returnAnswer = skillAnswers.return_window_days || "";
+  const showPostEdit = !!returnAnswer;
   const greenStyle = { background: "#DFF3E6", color: "#1F8A4C", padding: "1px 6px", borderRadius: 4, fontWeight: 500 };
+  const dataFieldStyle = { background: SURFACE, padding: "1px 6px", borderRadius: 4, fontSize: 13 };
+  const [isEditingInstructions, setIsEditingInstructions] = useState(false);
+
+  const cancellationWindow = skillAnswers.cancellation_window_hours;
+  const cancellationWindowDisplay = cancellationWindow || "1 hour";
+  const cancellationWindowStyle = cancellationWindow ? greenStyle : dataFieldStyle;
+
+  const cancellationInstructionsText = "Hard handover rule: IF the customer wants to cancel an order because of fraud, unauthorized purchases, or payment issues, THEN acknowledge the concern and hand over the ticket immediately.\n\n1. Order identification\nIF the customer doesn’t mention any specific order, assume they are referring to their last order. IF no order data is found, ask the customer for their order number, name, email, or shipping address and attempt to locate the order again.\n\n2. Cancellation eligibility\nIF the order fulfillment status contains Fulfilled, Shipped, Delivered, or Partially Fulfilled, THEN inform the customer that cancellation is no longer possible and let them know they may return the item once delivered.\nIF the order is Unfulfilled AND was placed more than " + cancellationWindowDisplay + " ago, THEN proceed to step 3.\n\n3. Cancellation execution\nIF the order is eligible for cancellation, cancel the order.";
+
   return (
     <div style={{
       position: "fixed", top: 0, right: 0, height: "100vh", width: "33vw", minWidth: 480,
@@ -1994,7 +2030,7 @@ function EditPanel({ skillIdx, onClose, closing, skipSlideIn, postEditAnswer }) 
       <div style={{ flex: 1, overflowY: "auto", padding: "32px 36px 24px" }}>
         {/* Title */}
         <h2 style={{
-          fontFamily: "'Inter', sans-serif",
+          fontFamily: "’Inter’, sans-serif",
           fontSize: 28, fontWeight: 700, color: TEXT,
           marginBottom: 6, paddingRight: 40,
         }}>{skill.title}</h2>
@@ -2022,8 +2058,58 @@ function EditPanel({ skillIdx, onClose, closing, skipSlideIn, postEditAnswer }) 
           letterSpacing: "normal", lineHeight: "20px",
           marginBottom: 12,
         }}>Instructions</h3>
-        {showPostEdit ? (
-          /* Post-edit Instructions: returns/exchange template with the answer highlighted in green (stub demonstration) */
+
+        {isOrderCancellation ? (
+          isEditingInstructions ? (
+            <textarea
+              defaultValue={cancellationInstructionsText}
+              style={{
+                width: "100%", minHeight: 320, padding: 16,
+                fontSize: 14, lineHeight: 1.6, fontFamily: "’Inter’, sans-serif",
+                color: TEXT, border: "1px solid " + BORDER, borderRadius: 8,
+                background: "#fff", resize: "vertical", outline: "none",
+              }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = "#8992A0"; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = BORDER; }}
+            />
+          ) : (
+            <div style={{ fontSize: 14, color: TEXT, lineHeight: 1.6 }}>
+              {/* Hard handover rule */}
+              <div style={{ paddingBottom: 18, borderBottom: "1px solid " + BORDER, marginBottom: 18 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8, color: "#B91C1C" }}>Hard handover rule</div>
+                <div><strong>IF</strong> the customer wants to cancel an order because of fraud, unauthorized purchases, or payment issues, <strong>THEN</strong> acknowledge the concern and hand over the ticket immediately.</div>
+              </div>
+
+              {/* 1. Order identification */}
+              <div style={{ paddingBottom: 18, borderBottom: "1px solid " + BORDER, marginBottom: 18 }}>
+                <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>1. Order identification</div>
+                <div><strong>IF</strong> the customer doesn’t mention any specific order, assume they are referring to their last order.</div>
+                <div style={{ marginTop: 6 }}><strong>IF</strong> no order data is found, <strong>THEN</strong>:</div>
+                <ul style={{ marginLeft: 22, marginTop: 4, listStyle: "disc" }}>
+                  <li>Ask the customer for their order number, name, email, or shipping address.</li>
+                  <li>Attempt to locate the order again.</li>
+                </ul>
+              </div>
+
+              {/* 2. Cancellation eligibility */}
+              <div style={{ paddingBottom: 18, borderBottom: "1px solid " + BORDER, marginBottom: 18 }}>
+                <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>2. Cancellation eligibility</div>
+                <div><strong>IF</strong> the order fulfillment status contains <span style={dataFieldStyle}>Fulfilled</span>, <span style={dataFieldStyle}>Shipped</span>, <span style={dataFieldStyle}>Delivered</span>, or <span style={dataFieldStyle}>Partially Fulfilled</span>, <strong>THEN</strong>:</div>
+                <ul style={{ marginLeft: 22, marginTop: 4, listStyle: "disc" }}>
+                  <li>Inform the customer that cancellation is no longer possible.</li>
+                  <li>Let them know they may return the item once delivered.</li>
+                </ul>
+                <div style={{ marginTop: 10 }}><strong>IF</strong> the order is <span style={dataFieldStyle}>Unfulfilled</span> <strong>AND</strong> was placed more than <span style={cancellationWindowStyle}>{cancellationWindowDisplay}</span> ago, <strong>THEN</strong> proceed to step 3.</div>
+              </div>
+
+              {/* 3. Cancellation execution */}
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>3. Cancellation execution</div>
+                <div><strong>IF</strong> the order is eligible for cancellation, cancel the order.</div>
+              </div>
+            </div>
+          )
+        ) : showPostEdit ? (
           <div style={{ fontSize: 14, color: TEXT, lineHeight: 1.6 }}>
             <div style={{ paddingBottom: 18, borderBottom: "1px solid " + BORDER, marginBottom: 18 }}>
               <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>1. Order identification</div>
@@ -2036,15 +2122,15 @@ function EditPanel({ skillIdx, onClose, closing, skipSlideIn, postEditAnswer }) 
             </div>
             <div style={{ paddingBottom: 18, borderBottom: "1px solid " + BORDER, marginBottom: 18 }}>
               <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>2. Return/exchange eligibility</div>
-              <div><strong>IF</strong> <span style={{ background: SURFACE, padding: "1px 6px", borderRadius: 4, fontSize: 13 }}>{"{{order.created_datetime}}"}</span> is <span style={greenStyle}>more than {answerLabel} ago</span>, <strong>THEN</strong>:</div>
+              <div><strong>IF</strong> <span style={dataFieldStyle}>{"{{order.created_datetime}}"}</span> is <span style={greenStyle}>more than {returnAnswer} ago</span>, <strong>THEN</strong>:</div>
               <ul style={{ marginLeft: 22, marginTop: 4, listStyle: "disc" }}>
-                <li>Inform the customer that returns and exchanges are only accepted within {answerLabel} of purchase.</li>
+                <li>Inform the customer that returns and exchanges are only accepted within {returnAnswer} of purchase.</li>
                 <li>Do not reference policies, links, or exceptions.</li>
               </ul>
             </div>
             <div>
               <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>3. Initiate return or exchange</div>
-              <div><strong>IF</strong> <span style={{ background: SURFACE, padding: "1px 6px", borderRadius: 4, fontSize: 13 }}>{"{{order.created_datetime}}"}</span> is <span style={greenStyle}>{answerLabel} ago or less</span>, <strong>THEN</strong>:</div>
+              <div><strong>IF</strong> <span style={dataFieldStyle}>{"{{order.created_datetime}}"}</span> is <span style={greenStyle}>{returnAnswer} ago or less</span>, <strong>THEN</strong>:</div>
               <ul style={{ marginLeft: 22, marginTop: 4, listStyle: "disc" }}>
                 <li>Provide the return portal link: URL / [Insert Action — Send return portal link].</li>
                 <li>Inform the customer they will receive a prepaid return shipping label via email once the request is authorized.</li>
@@ -2062,7 +2148,7 @@ function EditPanel({ skillIdx, onClose, closing, skipSlideIn, postEditAnswer }) 
             <div style={{ paddingBottom: 18, borderBottom: "1px solid " + BORDER, marginBottom: 18 }}>
               <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>1. Order identification</div>
               <div><strong>IF</strong> the customer doesn’t mention any specific order, <strong>THEN</strong> assume they are referring to their last order.</div>
-              <div style={{ marginTop: 6 }}><strong>IF</strong> <span style={{ background: SURFACE, padding: "1px 6px", borderRadius: 4, fontSize: 13 }}>🛒 Order: Name</span> is null, <strong>THEN</strong>:</div>
+              <div style={{ marginTop: 6 }}><strong>IF</strong> <span style={dataFieldStyle}>🛒 Order: Name</span> is null, <strong>THEN</strong>:</div>
               <ul style={{ marginLeft: 22, marginTop: 4, listStyle: "disc" }}>
                 <li>Ask the customer for their order number, name, email, or shipping address.</li>
                 <li>Attempt to locate the order again.</li>
@@ -2070,23 +2156,23 @@ function EditPanel({ skillIdx, onClose, closing, skipSlideIn, postEditAnswer }) 
             </div>
             <div style={{ paddingBottom: 18, borderBottom: "1px solid " + BORDER, marginBottom: 18 }}>
               <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>2. Unfulfilled orders</div>
-              <div><strong>IF</strong> <span style={{ background: SURFACE, padding: "1px 6px", borderRadius: 4, fontSize: 13 }}>🛒 Order: Fulfillment - Status</span> = ‘Unfulfilled’, <strong>THEN</strong>:</div>
+              <div><strong>IF</strong> <span style={dataFieldStyle}>🛒 Order: Fulfillment - Status</span> = ‘Unfulfilled’, <strong>THEN</strong>:</div>
               <ul style={{ marginLeft: 22, marginTop: 4, listStyle: "disc" }}>
-                <li><strong>IF</strong> <span style={{ background: SURFACE, padding: "1px 6px", borderRadius: 4, fontSize: 13 }}>🛒 Order: Created datetime</span> is 5 days ago or less, <strong>THEN:</strong> Inform the customer the order is being processed and they’ll receive a shipping confirmation email with a tracking link once it ships.</li>
-                <li><strong>IF</strong> <span style={{ background: SURFACE, padding: "1px 6px", borderRadius: 4, fontSize: 13 }}>🛒 Order: Created datetime</span> is more than 5 days ago, <strong>THEN:</strong> Acknowledge the delay and hand over the ticket for investigation.</li>
+                <li><strong>IF</strong> <span style={dataFieldStyle}>🛒 Order: Created datetime</span> is 5 days ago or less, <strong>THEN:</strong> Inform the customer the order is being processed and they’ll receive a shipping confirmation email with a tracking link once it ships.</li>
+                <li><strong>IF</strong> <span style={dataFieldStyle}>🛒 Order: Created datetime</span> is more than 5 days ago, <strong>THEN:</strong> Acknowledge the delay and hand over the ticket for investigation.</li>
               </ul>
             </div>
             <div>
               <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>3. Order fulfilled but not delivered</div>
               <div><strong>IF:</strong></div>
               <ul style={{ marginLeft: 22, marginTop: 4, listStyle: "disc" }}>
-                <li><span style={{ background: SURFACE, padding: "1px 6px", borderRadius: 4, fontSize: 13 }}>🛒 Order: Fulfillment - Status</span> = ‘Fulfilled’</li>
-                <li><strong>AND</strong> <span style={{ background: SURFACE, padding: "1px 6px", borderRadius: 4, fontSize: 13 }}>🛒 Order: Shipment - Status</span> is not ‘delivered’</li>
+                <li><span style={dataFieldStyle}>🛒 Order: Fulfillment - Status</span> = ‘Fulfilled’</li>
+                <li><strong>AND</strong> <span style={dataFieldStyle}>🛒 Order: Shipment - Status</span> is not ‘delivered’</li>
               </ul>
               <div style={{ marginTop: 6 }}><strong>THEN:</strong></div>
               <ul style={{ marginLeft: 22, marginTop: 4, listStyle: "disc" }}>
-                <li>Share <span style={{ background: SURFACE, padding: "1px 6px", borderRadius: 4, fontSize: 13 }}>🛒 Order: Fulfillment - Tracking URL</span> with the customer.</li>
-                <li>Explain the current shipment status based on <span style={{ background: SURFACE, padding: "1px 6px", borderRadius: 4, fontSize: 13 }}>🛒 Order: Shipment - Status</span> in plain, customer-friendly language.</li>
+                <li>Share <span style={dataFieldStyle}>🛒 Order: Fulfillment - Tracking URL</span> with the customer.</li>
+                <li>Explain the current shipment status based on <span style={dataFieldStyle}>🛒 Order: Shipment - Status</span> in plain, customer-friendly language.</li>
               </ul>
             </div>
           </div>
@@ -2110,6 +2196,29 @@ function EditPanel({ skillIdx, onClose, closing, skipSlideIn, postEditAnswer }) 
             <div style={{ fontSize: 13, color: TEXT_MUTED, lineHeight: 1.5 }}>
               Structured if-then logic for {skill.title} will live here.
             </div>
+          </div>
+        )}
+
+        {/* Edit instructions CTA */}
+        {(isOrderCancellation || isOrderTracking || showPostEdit) && !isEditingInstructions && (
+          <div style={{ marginTop: 20 }}>
+            <button
+              onClick={() => setIsEditingInstructions(true)}
+              style={{
+                ...BTN_SECONDARY,
+                fontSize: 13,
+                padding: "8px 16px",
+                display: "inline-flex", alignItems: "center", gap: 6,
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = SURFACE; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.5)"; }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <path d="M14 4l6 6-10 10H4v-6z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+                <path d="M11 7l6 6" stroke="currentColor" strokeWidth="1.6" />
+              </svg>
+              Edit instructions
+            </button>
           </div>
         )}
       </div>
@@ -2914,14 +3023,13 @@ function IntakePage() {
   const [channelsCardClosed, setChannelsCardClosed] = useState(false);
   const [channelsFreeform, setChannelsFreeform] = useState("");
 
-  // Edit panel follow-up state (one-shot stub: shows once when Edit is first opened)
-  const [followUpAnswered, setFollowUpAnswered] = useState(false);
-  const [followUpAnswer, setFollowUpAnswer] = useState(null);
-  const [followUpAnswerSkillKey, setFollowUpAnswerSkillKey] = useState(null);
+  // Edit panel follow-up state (per-skill)
+  const [skillFollowUpAnswers, setSkillFollowUpAnswers] = useState({}); // { [skillKey]: { [field]: answer } }
+  const [followUpDismissed, setFollowUpDismissed] = useState(new Set());
   const [answeredSkillKeys, setAnsweredSkillKeys] = useState(new Set());
   const [followUpFreeform, setFollowUpFreeform] = useState("");
-  const [editChatMessages, setEditChatMessages] = useState([]); // { role, text, phase } appended on follow-up answer + free-text sends while Edit is open
-  const [editAiTyping, setEditAiTyping] = useState(null); // { text, phase, cursor } for typewriter on AI reply
+  const [editChatMessages, setEditChatMessages] = useState([]);
+  const [editAiTyping, setEditAiTyping] = useState(null);
 
   // Closing
   const [closingPhase, setClosingPhase] = useState("idle"); // idle | shown
@@ -3240,19 +3348,20 @@ function IntakePage() {
   const onChannelClose = () => { setChannelsCardClosed(true); advanceAfterChannels(); };
   const onChannelFreeformSubmit = () => { if (!channelsFreeform.trim()) return; advanceAfterChannels(); };
 
-  /* Edit follow-up handlers */
-  const commitFollowUpAnswer = (answer) => {
+  /* Edit follow-up handlers (per-skill) */
+  const currentFollowUpRef = React.useRef(null);
+  const commitFollowUpAnswer = (answer, followUpConfig) => {
     const skillKey = activeSkillIdx !== null ? SKILLS[activeSkillIdx].key : null;
-    setFollowUpAnswered(true);
-    setFollowUpAnswer(answer);
-    setFollowUpAnswerSkillKey(skillKey);
-    if (skillKey) setAnsweredSkillKeys((prev) => new Set([...prev, skillKey]));
-    const phase = activeSkillIdx !== null && activeSkillIdx < 3 ? "batch1" : "batch2";
-    const aiText = "Got it — I’ve updated the Instructions to reflect a " + answer + " return window.";
-    setEditChatMessages((prev) => prev.concat([
-      { role: "user", text: answer, phase },
-    ]));
-    setEditAiTyping({ text: aiText, phase, cursor: 0 });
+    if (!skillKey || !followUpConfig) return;
+    setSkillFollowUpAnswers((prev) => ({
+      ...prev,
+      [skillKey]: { ...(prev[skillKey] || {}), [followUpConfig.field]: answer },
+    }));
+    setAnsweredSkillKeys((prev) => new Set([...prev, skillKey]));
+    const phase = batchMode ? (activeSkillIdx < 3 ? "batch1" : "batch2") : "batch1";
+    const aiText = followUpConfig.aiReply(answer);
+    setEditChatMessages((prev) => prev.concat([{ role: "user", text: answer, phase }]));
+    setEditAiTyping({ text: aiText, phase, cursor: 0, skillKey });
   };
   useEffect(() => {
     if (!editAiTyping) return;
@@ -3262,7 +3371,7 @@ function IntakePage() {
         const next = prev.cursor + 1;
         if (next >= prev.text.length) {
           clearInterval(interval);
-          setEditChatMessages((msgs) => msgs.concat([{ role: "ai", text: prev.text, phase: prev.phase }]));
+          setEditChatMessages((m) => m.concat([{ role: "ai", text: prev.text, phase: prev.phase }]));
           return null;
         }
         return { ...prev, cursor: next };
@@ -3271,15 +3380,33 @@ function IntakePage() {
     return () => clearInterval(interval);
   }, [editAiTyping && editAiTyping.text]);
 
-  const onFollowUpSelect = (option) => commitFollowUpAnswer(option);
+  const handleFollowUpCTA = (type) => {
+    if (type === "test") {
+      setActivePanel("preview");
+    } else if (type === "next") {
+      for (let i = (activeSkillIdx || 0) + 1; i < SKILLS.length; i++) {
+        const sk = SKILLS[i];
+        if (getNextFollowUp(sk.key, skillFollowUpAnswers)) {
+          setActiveSkillIdx(i);
+          setActivePanel("edit");
+          return;
+        }
+      }
+      closePanel();
+    }
+  };
+
+  const onFollowUpSelect = (option) => {
+    commitFollowUpAnswer(option, currentFollowUpRef.current);
+  };
   const onFollowUpFreeformSubmit = () => {
     if (!followUpFreeform.trim()) return;
-    commitFollowUpAnswer(followUpFreeform.trim());
+    commitFollowUpAnswer(followUpFreeform.trim(), currentFollowUpRef.current);
     setFollowUpFreeform("");
   };
   const onFollowUpSkip = () => {
-    // Skip = mark as seen but don't apply changes (no answer recorded)
-    setFollowUpAnswered(true);
+    const skillKey = activeSkillIdx !== null ? SKILLS[activeSkillIdx].key : null;
+    if (skillKey) setFollowUpDismissed((prev) => new Set([...prev, skillKey]));
   };
 
   /* Right margin for content area when a panel is open */
@@ -3671,7 +3798,23 @@ function IntakePage() {
                 alignItems: msg.role === "user" ? "flex-end" : "flex-start",
                 animation: "fadeInUp .35s ease-out",
               }}>
-                {msg.role === "user" ? (
+                {msg.role === "ai-ctas" ? (
+                  <div style={{ display: "flex", gap: 8 }}>
+                    {msg.actions.map((action, ai) => (
+                      <button key={ai} onClick={() => handleFollowUpCTA(action.type)}
+                        style={{
+                          ...BTN_MD,
+                          ...(action.type === "next"
+                            ? { color: "#fff", background: "#1E242E", border: "1px solid transparent", boxShadow: "0px 2px 3px 0px rgba(0,0,0,0.05)" }
+                            : { color: "#1E242E", background: "rgba(255,255,255,0.5)", border: "1px solid rgba(103,113,131,0.5)" }),
+                          fontSize: 13, padding: "8px 16px", cursor: "pointer",
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = action.type === "next" ? "#333" : SURFACE; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = action.type === "next" ? "#1E242E" : "rgba(255,255,255,0.5)"; }}
+                      >{action.label}</button>
+                    ))}
+                  </div>
+                ) : msg.role === "user" ? (
                   <div style={{
                     fontSize: 14, lineHeight: 1.45, color: TEXT,
                     maxWidth: "85%", padding: "11px 16px", borderRadius: 14,
@@ -3774,7 +3917,23 @@ function IntakePage() {
                 alignItems: msg.role === "user" ? "flex-end" : "flex-start",
                 animation: "fadeInUp .35s ease-out",
               }}>
-                {msg.role === "user" ? (
+                {msg.role === "ai-ctas" ? (
+                  <div style={{ display: "flex", gap: 8 }}>
+                    {msg.actions.map((action, ai) => (
+                      <button key={ai} onClick={() => handleFollowUpCTA(action.type)}
+                        style={{
+                          ...BTN_MD,
+                          ...(action.type === "next"
+                            ? { color: "#fff", background: "#1E242E", border: "1px solid transparent", boxShadow: "0px 2px 3px 0px rgba(0,0,0,0.05)" }
+                            : { color: "#1E242E", background: "rgba(255,255,255,0.5)", border: "1px solid rgba(103,113,131,0.5)" }),
+                          fontSize: 13, padding: "8px 16px", cursor: "pointer",
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = action.type === "next" ? "#333" : SURFACE; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = action.type === "next" ? "#1E242E" : "rgba(255,255,255,0.5)"; }}
+                      >{action.label}</button>
+                    ))}
+                  </div>
+                ) : msg.role === "user" ? (
                   <div style={{
                     fontSize: 14, lineHeight: 1.45, color: TEXT,
                     maxWidth: "85%", padding: "11px 16px", borderRadius: 14,
@@ -3886,11 +4045,14 @@ function IntakePage() {
               background: "linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.85) 30%, #ffffff 100%)",
             }}>
               <div style={{ maxWidth: 740, margin: "0 auto" }}>
-                {activePanel === "edit" ? (
-                  /* Edit-mode bottom area: only the follow-up card OR the edit-mode textarea. No other pickers leak through. */
-                  !followUpAnswered ? (
+                {activePanel === "edit" ? (() => {
+                  const _skillKey = activeSkillIdx !== null ? SKILLS[activeSkillIdx].key : null;
+                  const _followUp = _skillKey ? getNextFollowUp(_skillKey, skillFollowUpAnswers) : null;
+                  const _dismissed = _skillKey && followUpDismissed.has(_skillKey);
+                  currentFollowUpRef.current = _followUp;
+                  return _followUp && !_dismissed ? (
                     <SkillFollowUpCard
-                      followUp={SAMPLE_FOLLOWUP}
+                      followUp={_followUp}
                       onSelect={onFollowUpSelect}
                       onSkip={onFollowUpSkip}
                       freeformValue={followUpFreeform}
@@ -3907,8 +4069,9 @@ function IntakePage() {
                       sendDisabled={sendDisabled}
                       thinking={narrating}
                     />
-                  )
-                ) : channelsPhase === "shown" && !channelsCardClosed ? (
+                  );
+                })()
+                : channelsPhase === "shown" && !channelsCardClosed ? (
                   <ChannelsCard
                     toggles={channelToggles}
                     onToggle={onChannelToggle}
@@ -4114,7 +4277,7 @@ function IntakePage() {
           onClose={closePanel}
           closing={panelClosing}
           skipSlideIn={skipSlideIn}
-          postEditAnswer={(activeSkillIdx !== null && SKILLS[activeSkillIdx].key === followUpAnswerSkillKey) ? followUpAnswer : null}
+          skillAnswers={activeSkillIdx !== null ? (skillFollowUpAnswers[SKILLS[activeSkillIdx].key] || {}) : {}}
         />
       )}
 
