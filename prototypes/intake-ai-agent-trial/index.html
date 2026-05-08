@@ -384,6 +384,18 @@ const SKILLS = [
   },
 ];
 
+const SKILL_PICKER_OPTIONS = [
+  { key: "tracking", label: "Order status, tracking or delivery timing" },
+  { key: "returns", label: "Returns and exchanges" },
+  { key: "damaged", label: "Items damaged, defective, broken or not working as expected" },
+  { key: "items-missing", label: "One or more items missing from an order" },
+  { key: "cancellations", label: "Order cancellation" },
+  { key: "subscription", label: "Subscription cancellations" },
+  { key: "promo", label: "Promo codes and free shipping" },
+  { key: "modifications", label: "Shipping address updates or edits in an order" },
+  { key: "product-edits", label: "Product edits in an order" },
+];
+
 /* ─── Stub follow-up question (shown once when any Edit panel is opened for the first time) ─── */
 const SAMPLE_FOLLOWUP = {
   question: "What’s your return window?",
@@ -458,22 +470,21 @@ function matchScriptedIntent(text) {
 
 /* Render plain text with one substring bolded (used for the "9 skills" inline bold) */
 const GLOSSARY_TERMS_BASE = [
-  { term: "automation rate", tip: "The percentage of customer requests the AI agent handles without human intervention." },
-  { term: "tone of voice", tip: "The communication style the AI agent uses when responding to customers." },
-  { term: "knowledge sources", tip: "The sources the AI agent searches to find information — like your website, help center, or uploaded documents." },
-  { term: "instructions", tip: "The step-by-step behavior the AI agent follows when handling a specific intent." },
-  { term: "instruction", tip: "The step-by-step behavior the AI agent follows when handling a specific intent." },
-  { term: "knowledge", tip: "The sources the AI agent searches to find information — like your website, help center, or uploaded documents." },
-  { term: "channels", tip: "The support surfaces where the AI agent is active, such as email or chat." },
-  { term: "channel", tip: "The support surface where the AI agent is active, such as email or chat." },
-  { term: "intents", tip: "The types of requests customers make (e.g. asking about an order, requesting a return). They determine which skill the AI agent applies." },
-  { term: "intent", tip: "The type of request a customer is making (e.g. asking about an order, requesting a return). It determines which skill the AI agent applies." },
-  { term: "skills", tip: "Ways to tell your AI agent exactly how to handle specific types of customer requests — with precise instructions it follows every time." },
-  { term: "skill", tip: "A way to tell your AI agent exactly how to handle a specific type of customer request — with precise instructions it follows every time." },
+  { term: "automation rate", group: "automation-rate", tip: "The % of requests AI Agent resolves without a human." },
+  { term: "tone of voice", group: "tov", tip: "The style and personality AI Agent uses in replies." },
+  { term: "knowledge sources", group: "knowledge", tip: "Content AI Agent searches, like your website, help center, or uploaded docs." },
+  { term: "knowledge", group: "knowledge", tip: "Content AI Agent searches, like your website, help center, or uploaded docs." },
+  { term: "channels", group: "channel", tip: "Where AI Agent talks to customers, like email or chat." },
+  { term: "channel", group: "channel", tip: "Where AI Agent talks to customers, like email or chat." },
+  { term: "intents", group: "intent", tip: "The type of request a customer is making, like an order question or return." },
+  { term: "intent", group: "intent", tip: "The type of request a customer is making, like an order question or return." },
+  { term: "skills", group: "skill", tip: "Step-by-step instructions AI Agent follows for a specific intent." },
+  { term: "skill", group: "skill", tip: "Step-by-step instructions AI Agent follows for a specific intent." },
 ];
 
 function GlossaryTip({ tip, children }) {
   const [show, setShow] = React.useState(false);
+  const [visible, setVisible] = React.useState(false);
   const ref = React.useRef(null);
   const [pos, setPos] = React.useState({ top: 0, left: 0 });
 
@@ -481,6 +492,9 @@ function GlossaryTip({ tip, children }) {
     if (show && ref.current) {
       const r = ref.current.getBoundingClientRect();
       setPos({ top: r.top - 8, left: r.left + r.width / 2 });
+      requestAnimationFrame(() => setVisible(true));
+    } else {
+      setVisible(false);
     }
   }, [show]);
 
@@ -495,7 +509,9 @@ function GlossaryTip({ tip, children }) {
       {show && ReactDOM.createPortal(
         <div style={{
           position: "fixed", top: pos.top, left: pos.left,
-          transform: "translate(-50%, -100%)",
+          transform: "translate(-50%, " + (visible ? "-100%" : "calc(-100% + 4px)") + ")",
+          opacity: visible ? 1 : 0,
+          transition: "opacity .15s ease, transform .15s ease",
           background: "#1E242E", color: "#fff",
           fontSize: 12, lineHeight: 1.4, fontWeight: 450,
           padding: "6px 10px", borderRadius: 8,
@@ -514,14 +530,15 @@ function renderThreadText(text, seenTerms) {
   const lower = text.toLowerCase();
   const matches = [];
   GLOSSARY_TERMS_BASE.forEach((g) => {
-    if (seenTerms && seenTerms.has(g.term)) return;
+    const key = g.group || g.term;
+    if (seenTerms && seenTerms.has(key)) return;
     const idx = lower.indexOf(g.term);
     if (idx < 0) return;
     const end = idx + g.term.length;
     const before = idx === 0 ? " " : text[idx - 1];
     const after = end >= text.length ? " " : text[end];
     if (/\W/.test(before) && /\W|$/.test(after)) {
-      matches.push({ start: idx, end: end, tip: g.tip, term: g.term });
+      matches.push({ start: idx, end: end, tip: g.tip, term: g.term, group: key });
     }
   });
   if (matches.length === 0) return text;
@@ -530,7 +547,7 @@ function renderThreadText(text, seenTerms) {
   for (const m of matches) {
     if (filtered.length === 0 || m.start >= filtered[filtered.length - 1].end) {
       filtered.push(m);
-      if (seenTerms) seenTerms.add(m.term);
+      if (seenTerms) seenTerms.add(m.group);
     }
   }
   const out = [];
@@ -602,20 +619,19 @@ function VoiceCardPanel() {
 
   const sectionHeading = (text) => (
     <h3 style={{
-      fontFamily: "'Inter', sans-serif",
-      fontSize: 13, fontWeight: 600, color: TEXT_MUTED,
-      textTransform: "uppercase", letterSpacing: "0.04em",
+      fontFamily: "’Inter’, sans-serif",
+      fontSize: 14, fontWeight: 600, color: "#000000",
+      letterSpacing: "normal", lineHeight: "20px",
       marginBottom: 12, marginTop: 24,
     }}>{text}</h3>
   );
 
   return (
-    <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, lineHeight: 1.6, color: TEXT }}>
-      <h2 style={{ fontFamily: "'Inter', sans-serif", fontSize: 26, fontWeight: 700, letterSpacing: "-0.5px", color: "#1A1918", marginBottom: 4, marginTop: 0, paddingRight: 40 }}>Your brand’s tone of voice</h2>
+    <div style={{ fontFamily: "’Inter’, sans-serif", fontSize: 14, lineHeight: 1.6, color: TEXT }}>
+      <h2 style={{ fontFamily: "’Inter’, sans-serif", fontSize: 26, fontWeight: 700, letterSpacing: "-0.5px", color: "#1A1918", marginBottom: 4, marginTop: 0, paddingRight: 40 }}>Your brand’s tone of voice</h2>
       <p style={{ fontSize: 13, color: TEXT_MUTED, marginBottom: 8 }}>Warm, playful, never transactional</p>
 
-      {sectionHeading("Your voice in 3 traits")}
-      <div style={{ border: "1px solid " + BORDER, borderRadius: 10, overflow: "hidden" }}>
+      <div style={{ border: "1px solid " + BORDER, borderRadius: 10, overflow: "hidden", marginTop: 24 }}>
         {traits.map((t, ti) => (
           <div key={ti} style={{
             padding: "12px 16px",
@@ -680,8 +696,8 @@ function KnowledgeCardPanel() {
   const sectionHeading = (text) => (
     <h3 style={{
       fontFamily: "'Inter', sans-serif",
-      fontSize: 13, fontWeight: 600, color: TEXT_MUTED,
-      textTransform: "uppercase", letterSpacing: "0.04em",
+      fontSize: 14, fontWeight: 600, color: "#000000",
+      letterSpacing: "normal", lineHeight: "20px",
       marginBottom: 12, marginTop: 24,
     }}>{text}</h3>
   );
@@ -691,8 +707,7 @@ function KnowledgeCardPanel() {
       <h2 style={{ fontFamily: "'Inter', sans-serif", fontSize: 26, fontWeight: 700, letterSpacing: "-0.5px", color: "#1A1918", marginBottom: 4, marginTop: 0, paddingRight: 40 }}>Your knowledge sources</h2>
       <p style={{ fontSize: 13, color: TEXT_MUTED, marginBottom: 8 }}>Website, help center, connected apps</p>
 
-      {sectionHeading("Your knowledge sources")}
-      <div style={{ border: "1px solid " + BORDER, borderRadius: 10, overflow: "hidden" }}>
+      <div style={{ border: "1px solid " + BORDER, borderRadius: 10, overflow: "hidden", marginTop: 24 }}>
         {sources.map((s, si) => {
           const isFound = s.status === "found";
           return (
@@ -1508,12 +1523,12 @@ function SkillCard({ skill, index, isActive, onPreview, onEdit, needsInfo, answe
 
 /* ─── Skill list: separate cards + inline "N more skills" expander (matches research "4 more" pattern) ─── */
 function SkillListCard({ skills = SKILLS, startIndex = 0, visibleCount = 3, needsInfo = false, answeredSkillKeys, activeSkillIdx, expanded, onToggleExpanded, onPreview, onEdit }) {
-  const visibleSkills = expanded ? skills : skills.slice(0, visibleCount);
   const hiddenCount = skills.length - visibleCount;
+  const peekSkill = !expanded && hiddenCount > 0 ? skills[visibleCount] : null;
 
   return (
     <div style={{ marginTop: 8 }}>
-      {visibleSkills.map((skill, i) => (
+      {(expanded ? skills : skills.slice(0, visibleCount)).map((skill, i) => (
         <SkillCard
           key={skill.key}
           skill={skill}
@@ -1525,27 +1540,46 @@ function SkillListCard({ skills = SKILLS, startIndex = 0, visibleCount = 3, need
           answeredSkillKeys={answeredSkillKeys}
         />
       ))}
+      {peekSkill && (
+        <div style={{ position: "relative", maxHeight: 28, overflow: "hidden" }}>
+          <div style={{ pointerEvents: "none", opacity: 0.7 }}>
+            <SkillCard
+              skill={peekSkill}
+              index={startIndex + visibleCount}
+              isActive={false}
+              onPreview={() => {}}
+              onEdit={() => {}}
+              needsInfo={needsInfo}
+              answeredSkillKeys={answeredSkillKeys}
+            />
+          </div>
+          <div style={{
+            position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+            background: "linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 100%)",
+            pointerEvents: "none",
+          }} />
+        </div>
+      )}
       {hiddenCount > 0 && (
         <div
           onClick={onToggleExpanded}
           style={{
             display: "inline-flex", alignSelf: "flex-start",
-            alignItems: "center", gap: 6,
-            padding: "5px 8px", cursor: "pointer", borderRadius: 8,
+            alignItems: "center", gap: 6, padding: "5px 8px",
+            cursor: "pointer", borderRadius: 8,
             marginTop: 2, marginBottom: 8,
             width: "fit-content",
           }}
           onMouseEnter={(e) => { e.currentTarget.style.background = SURFACE; }}
           onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
         >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{
-            transition: "transform .2s",
-            transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
-          }}>
-            <path d="M4 5.5l3 3 3-3" stroke={TEXT_MUTED} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+          {!expanded && (
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M4 5.5l3 3 3-3" stroke={TEXT_MUTED} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
           <span style={{ fontSize: 12, color: TEXT_MUTED }}>
-            {expanded ? "Show less" : hiddenCount + " more skills"}
+            {expanded ? "Show less" : "Show " + hiddenCount + " more skills"}
           </span>
         </div>
       )}
@@ -1929,8 +1963,8 @@ function EditPanel({ skillIdx, onClose, closing, skipSlideIn, postEditAnswer }) 
 
         {/* Intents */}
         <h3 style={{
-          fontSize: 11, fontWeight: 600, color: TEXT_MUTED,
-          textTransform: "uppercase", letterSpacing: "0.06em",
+          fontSize: 14, fontWeight: 600, color: "#000000",
+          letterSpacing: "normal", lineHeight: "20px",
           marginBottom: 10,
         }}>Intents this skill handles</h3>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 28 }}>
@@ -1945,8 +1979,8 @@ function EditPanel({ skillIdx, onClose, closing, skipSlideIn, postEditAnswer }) 
 
         {/* Instructions */}
         <h3 style={{
-          fontSize: 11, fontWeight: 600, color: TEXT_MUTED,
-          textTransform: "uppercase", letterSpacing: "0.06em",
+          fontSize: 14, fontWeight: 600, color: "#000000",
+          letterSpacing: "normal", lineHeight: "20px",
           marginBottom: 12,
         }}>Instructions</h3>
         {showPostEdit ? (
@@ -2149,6 +2183,123 @@ function ChannelsCard({ toggles, onToggle, onConfirm, onSkip, onClose, freeformV
       }}>
         <span style={{ fontSize: 13, color: "#8992A0", fontFamily: "'Inter', sans-serif" }}>
           {hasSelection ? selectedCount + " selected" : "Pick one option or skip question"}
+        </span>
+        <button
+          onClick={handleSubmit}
+          disabled={frozen || !hasSelection}
+          style={{
+            width: 32, height: 32, borderRadius: 8, border: "none",
+            background: (frozen || !hasSelection) ? "#E0E0E0" : "#1E242E",
+            cursor: (frozen || !hasSelection) ? "default" : "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            transition: "background .15s", flexShrink: 0, padding: 0,
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M7.193 8.807l3.09-3.09M13.443 3.832l-2.608 8.476c-.234.759-.35 1.14-.55 1.265a.667.667 0 01-.581.049c-.22-.091-.398-.447-.753-1.158l-1.652-3.303a1.335 1.335 0 00-.122-.218.668.668 0 00-.115-.116 1.34 1.34 0 00-.227-.119L3.536 7.052c-.71-.355-.89-.533-.98-.753a.667.667 0 01.048-.582c.126-.201.506-.318 1.265-.552l8.475-2.608c.597-.183.896-.275 1.098-.201a.667.667 0 01.379.379c.074.201-.018.501-.201 1.097z" stroke="white" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Skill Picker Card — multi-select for "Let me choose" ─── */
+function SkillPickerCard({ toggles, onToggle, onConfirm, onClose, freeformValue, onFreeformChange, onFreeformSubmit, frozen }) {
+  const selectedCount = Object.values(toggles).filter(Boolean).length;
+  const hasSelection = selectedCount > 0;
+  const handleSubmit = () => { if (frozen) return; onConfirm(); };
+  return (
+    <div style={{
+      animation: "fadeInUp .35s ease-out",
+      border: "1px solid " + BORDER, borderRadius: 8, background: "#ffffff",
+      overflow: "hidden", padding: "12px 0 0",
+    }}>
+      <div style={{
+        padding: "0 16px 12px",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+      }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: "#1E242E" }}>
+          Which skills would you like to enable?
+        </div>
+        {onClose && (
+          <div onClick={() => { if (!frozen) onClose(); }} style={{
+            width: 24, height: 24, borderRadius: 6, marginLeft: 16,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: "pointer", flexShrink: 0,
+          }}>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M11.98 11.99L7.99 8M7.99 8L4 4.01M7.99 8l3.99-3.99M7.99 8L4 11.99" stroke="#1E242E" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+        )}
+      </div>
+
+      {SKILL_PICKER_OPTIONS.map((s) => {
+        const checked = !!toggles[s.key];
+        return (
+          <div key={s.key}
+            onClick={() => { if (!frozen) onToggle(s.key); }}
+            style={{
+              padding: "16px 16px",
+              cursor: frozen ? "default" : "pointer",
+              display: "flex", alignItems: "center", gap: 12,
+              transition: "background .15s",
+              borderTop: "1px solid " + BORDER,
+              background: "#ffffff",
+            }}
+            onMouseEnter={(e) => { if (!frozen) e.currentTarget.style.background = SURFACE; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "#ffffff"; }}
+          >
+            <div style={{
+              width: 24, height: 24, borderRadius: 6, flexShrink: 0,
+              border: checked ? "none" : "1.5px solid #C9CDD4",
+              background: checked ? ACCENT : "transparent",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              transition: "all .15s",
+            }}>
+              {checked && (
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <path d="M3.5 8.5l3 3 6-6.5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+            </div>
+            <span style={{ fontSize: 14, color: "#1E242E", lineHeight: 1.4, flex: 1, minWidth: 0 }}>{s.label}</span>
+          </div>
+        );
+      })}
+
+      <div style={{ padding: "16px 16px", display: "flex", alignItems: "center", gap: 12, borderTop: "1px solid " + BORDER }}>
+        <div style={{
+          width: 26, height: 26, borderRadius: 6,
+          background: "transparent", border: "1px solid " + BORDER,
+          display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+        }}>
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+            <path d="M11.2 1.8a1.6 1.6 0 0 1 2.3 0l.7.7a1.6 1.6 0 0 1 0 2.3L5.7 13.3l-3.4.9.9-3.4Z" stroke={TEXT_MUTED} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+            <path d="M9.5 3.5l3 3" stroke={TEXT_MUTED} strokeWidth="1.2" strokeLinecap="round" />
+          </svg>
+        </div>
+        <input
+          value={freeformValue || ""}
+          onChange={(e) => { if (!frozen) onFreeformChange && onFreeformChange(e.target.value); }}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); if (!frozen && (freeformValue || "").trim() && onFreeformSubmit) onFreeformSubmit(); } }}
+          placeholder="Something else..."
+          disabled={frozen}
+          style={{
+            flex: 1, border: "none", outline: "none", background: "transparent",
+            fontSize: 14, fontFamily: "'Inter', sans-serif", color: "#1E242E",
+            fontStyle: (freeformValue || "").trim() ? "normal" : "italic",
+          }}
+        />
+      </div>
+
+      <div style={{
+        padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between",
+        borderTop: "1px solid " + BORDER,
+      }}>
+        <span style={{ fontSize: 13, color: "#8992A0", fontFamily: "'Inter', sans-serif" }}>
+          {hasSelection ? selectedCount + " selected" : "Select at least one skill"}
         </span>
         <button
           onClick={handleSubmit}
@@ -2555,16 +2706,22 @@ function IntakePage() {
   const [skillsTypingActive, setSkillsTypingActive] = useState(false);
   const [skillsBatch1Messages, setSkillsBatch1Messages] = useState([]); // batch 1 committed messages
   const [skillsBatch2Messages, setSkillsBatch2Messages] = useState([]); // batch 2 committed messages
-  const SKILL_INTRO_MESSAGES_BATCH_1 = [
+  const [batchMode, setBatchMode] = useState(true);
+  const SKILL_INTRO_MESSAGES_BATCH_1 = batchMode ? [
     { text: "With your tone of voice and knowledge sources, AI Agent now knows how to sound like your brand and answer general questions.", bold: ["tone of voice", "knowledge sources"] },
     { text: "Now it needs skills to act on your most common customer requests. When a request comes in, AI Agent detects the intent, matches it to a skill, and follows its instructions to respond.", bold: "skills" },
     { text: "I’ve already set up 3 to get you started. Try them out and let me know what needs adjusting.", bold: "3" },
+  ] : [
+    { text: "With your tone of voice and knowledge sources, AI Agent now knows how to sound like your brand and answer general questions.", bold: ["tone of voice", "knowledge sources"] },
+    { text: "Now it needs skills to act on your most common customer requests. When a request comes in, AI Agent detects the intent, matches it to a skill, and follows its instructions to respond.", bold: "skills" },
+    { text: "I’ve already drafted some starter skills to cover X% of your incoming tickets. Most of them are ready to go, but some need a few additional details to get your policy right.", bold: "X%" },
   ];
   const SKILL_INTRO_MESSAGES_BATCH_2 = [
     { text: "Great work! You’re now covering X% of your incoming tickets automatically.", bold: "X% of your incoming tickets automatically" },
     { text: "The next X skills allow AI Agent to perform actions with your 3rd party apps to fully automate requests, not just answer questions.", bold: "X skills" },
     { text: "Let’s make sure they’ll work with your current workflows." },
   ];
+  const [skillsBatch1Expanded, setSkillsBatch1Expanded] = useState(false);
   const [skillsBatch2Expanded, setSkillsBatch2Expanded] = useState(false);
   const [skillsBatch1Choice, setSkillsBatch1Choice] = useState(null); // null | "all" | "pick" | "freeform"
   const [skillsBatch2Choice, setSkillsBatch2Choice] = useState(null);
@@ -2582,6 +2739,11 @@ function IntakePage() {
     all: "Enable all of these skills",
     pick: "Let me choose",
   };
+  const defaultSkillToggles = {};
+  SKILL_PICKER_OPTIONS.forEach((s) => { defaultSkillToggles[s.key] = true; });
+  const [skillPickerToggles, setSkillPickerToggles] = useState(defaultSkillToggles);
+  const [skillPickerFreeform, setSkillPickerFreeform] = useState("");
+  const [skillPickerConfirmed, setSkillPickerConfirmed] = useState(false);
 
   // Channels phase
   const [channelsPhase, setChannelsPhase] = useState("idle"); // idle | typing-intro | shown | done
@@ -2766,10 +2928,36 @@ function IntakePage() {
     if (skillsBatch1Choice) return;
     setSkillsBatch1Choice(key);
     setSkillsBatch1Reply(key === "freeform" ? freeformText : SKILL_ENABLE_REPLY_TEXT[key]);
-    setTimeout(() => {
-      setSkillsPhase("typing-batch2");
-      setSkillsBatch2MsgIdx(0);
-    }, 600);
+    if (key === "pick") return;
+    if (batchMode) {
+      setTimeout(() => {
+        setSkillsPhase("typing-batch2");
+        setSkillsBatch2MsgIdx(0);
+      }, 600);
+    } else {
+      setTimeout(() => {
+        completeChecklistItem("skills");
+        setSkillsPhase("done");
+        setChannelsPhase("typing-intro");
+        setChannelsMsgIdx(0);
+      }, 600);
+    }
+  };
+  const onSkillPickerConfirm = () => {
+    setSkillPickerConfirmed(true);
+    if (batchMode) {
+      setTimeout(() => {
+        setSkillsPhase("typing-batch2");
+        setSkillsBatch2MsgIdx(0);
+      }, 600);
+    } else {
+      setTimeout(() => {
+        completeChecklistItem("skills");
+        setSkillsPhase("done");
+        setChannelsPhase("typing-intro");
+        setChannelsMsgIdx(0);
+      }, 600);
+    }
   };
 
   /* Skills intro typing — batch 2 (3 messages) */
@@ -2950,6 +3138,27 @@ function IntakePage() {
       width: "100vw", height: "100vh", display: "flex",
       background: "#fafafa", overflow: "hidden",
     }}>
+      {/* Designer toggle — floating pill for switching batch mode */}
+      <div style={{
+        position: "fixed", bottom: 16, right: 16, zIndex: 9999,
+        display: "flex", alignItems: "center", gap: 8,
+        background: "rgba(30,36,46,0.92)", color: "#fff",
+        fontSize: 12, fontWeight: 500, fontFamily: "'Inter', sans-serif",
+        padding: "8px 14px", borderRadius: 999,
+        boxShadow: "0 4px 16px rgba(0,0,0,.25)",
+        userSelect: "none",
+      }}>
+        <span style={{ opacity: batchMode ? 0.5 : 1, transition: "opacity .15s" }}>Flat</span>
+        <div
+          className={"toggle-switch" + (batchMode ? " on" : "")}
+          onClick={() => setBatchMode((p) => !p)}
+          style={{ width: 32, height: 18 }}
+        >
+          <div className="toggle-switch-knob" style={{ width: 14, height: 14 }} />
+        </div>
+        <span style={{ opacity: batchMode ? 1 : 0.5, transition: "opacity .15s" }}>Batched</span>
+      </div>
+
       <SidebarNav
         collapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed((p) => !p)}
@@ -3245,18 +3454,18 @@ function IntakePage() {
               </div>
             )}
 
-            {/* Batch 1: 3 informational skills, all visible */}
+            {/* Batch 1 skills (batchMode: first 3; flat mode: all 9) */}
             {(skillsPhase === "shown-batch1" || skillsPhase === "typing-batch2" || skillsPhase === "shown-batch2" || skillsPhase === "done") && (
               <div style={{ marginBottom: 4 }}>
                 <SkillListCard
-                  skills={SKILLS.slice(0, 3)}
+                  skills={batchMode ? SKILLS.slice(0, 3) : SKILLS}
                   startIndex={0}
                   visibleCount={3}
                   needsInfo={true}
                   answeredSkillKeys={new Set(SKILLS.slice(0, 3).map(s => s.key))}
                   activeSkillIdx={activePanel ? activeSkillIdx : null}
-                  expanded={true}
-                  onToggleExpanded={() => {}}
+                  expanded={batchMode ? true : skillsBatch1Expanded}
+                  onToggleExpanded={() => setSkillsBatch1Expanded((p) => !p)}
                   onPreview={(idx) => { setActiveSkillIdx(idx); setActivePanel("preview"); }}
                   onEdit={(idx) => { setActiveSkillIdx(idx); setActivePanel("edit"); }}
                 />
@@ -3308,16 +3517,23 @@ function IntakePage() {
               </div>
             )}
 
-            {/* Enabled 3 skills pill — only after user picks in batch 1 QuestionCard */}
-            {skillsBatch1Choice && (
-              <ConfirmationRow
-                label={"Enabled " + skillEnabledCountBatch1 + " skills"}
-                items={SKILLS.slice(0, 3).map((s) => s.title)}
-              />
-            )}
+            {/* Enabled skills pill — only after user picks in batch 1 QuestionCard */}
+            {skillsBatch1Choice && (skillsBatch1Choice !== "pick" || skillPickerConfirmed) && (() => {
+              const pickerSelected = SKILL_PICKER_OPTIONS.filter((s) => skillPickerToggles[s.key]);
+              const enabledLabels = skillsBatch1Choice === "pick"
+                ? pickerSelected.map((s) => s.label)
+                : (batchMode ? SKILLS.slice(0, 3) : SKILLS).map((s) => s.title);
+              const enabledCount = enabledLabels.length;
+              return (
+                <ConfirmationRow
+                  label={"Enabled " + enabledCount + " skill" + (enabledCount !== 1 ? "s" : "")}
+                  items={enabledLabels}
+                />
+              );
+            })()}
 
-            {/* Skills batch 2 intro — committed messages */}
-            {skillsBatch2Messages.map((msg, i) => (
+            {/* Skills batch 2 — only in batchMode */}
+            {batchMode && skillsBatch2Messages.map((msg, i) => (
               <div key={"sk2m-" + i} style={{ marginBottom: 16 }}>
                 <div style={{
                   fontSize: 14, lineHeight: 1.55, color: "#1E242E",
@@ -3327,8 +3543,7 @@ function IntakePage() {
                 </div>
               </div>
             ))}
-            {/* Currently typing batch 2 message */}
-            {skillsTypingText && skillsPhase === "typing-batch2" && (
+            {batchMode && skillsTypingText && skillsPhase === "typing-batch2" && (
               <div style={{ marginBottom: 16 }}>
                 <div style={{
                   fontSize: 14, lineHeight: 1.55, color: "#1E242E",
@@ -3344,8 +3559,7 @@ function IntakePage() {
               </div>
             )}
 
-            {/* Batch 2: 6 action skills (3 visible + 3 expandable), with Needs info badge */}
-            {(skillsPhase === "shown-batch2" || skillsPhase === "done") && (
+            {batchMode && (skillsPhase === "shown-batch2" || skillsPhase === "done") && (
               <div style={{ marginBottom: 4 }}>
                 <SkillListCard
                   skills={SKILLS.slice(3)}
@@ -3362,8 +3576,7 @@ function IntakePage() {
               </div>
             )}
 
-            {/* Edit chat messages from batch 2 skills */}
-            {editChatMessages.filter(m => m.phase === "batch2").map((msg, i) => (
+            {batchMode && editChatMessages.filter(m => m.phase === "batch2").map((msg, i) => (
               <div key={"edm2-" + i} style={{
                 marginBottom: 12, marginTop: i === 0 ? 12 : 0,
                 display: "flex", flexDirection: "column",
@@ -3384,7 +3597,7 @@ function IntakePage() {
                 )}
               </div>
             ))}
-            {editAiTyping && editAiTyping.phase === "batch2" && (
+            {batchMode && editAiTyping && editAiTyping.phase === "batch2" && (
               <div style={{ marginBottom: 12, animation: "fadeInUp .35s ease-out" }}>
                 <div style={{
                   fontSize: 14, lineHeight: 1.55, color: "#1E242E",
@@ -3393,8 +3606,7 @@ function IntakePage() {
               </div>
             )}
 
-            {/* User reply bubble for batch 2 choice */}
-            {skillsBatch2Reply && (
+            {batchMode && skillsBatch2Reply && (
               <div style={{
                 marginBottom: 16, display: "flex", flexDirection: "column",
                 alignItems: "flex-end", animation: "fadeInUp .35s ease-out",
@@ -3407,8 +3619,7 @@ function IntakePage() {
               </div>
             )}
 
-            {/* Enabled 6 skills pill — only after user picks in batch 2 QuestionCard */}
-            {skillsBatch2Choice && (
+            {batchMode && skillsBatch2Choice && (
               <ConfirmationRow
                 label={"Enabled " + skillEnabledCountBatch2 + " skills"}
                 items={SKILLS.map((s) => s.title)}
@@ -3528,7 +3739,18 @@ function IntakePage() {
                     onFreeformChange={setSkillsBatch1Freeform}
                     onFreeformSubmit={() => { if (skillsBatch1Freeform.trim()) advanceFromBatch1("freeform", skillsBatch1Freeform.trim()); }}
                   />
-                ) : (skillsPhase === "shown-batch2" && !skillsBatch2Choice) ? (
+                ) : (skillsBatch1Choice === "pick" && !skillPickerConfirmed) ? (
+                  <SkillPickerCard
+                    toggles={skillPickerToggles}
+                    onToggle={(key) => setSkillPickerToggles((prev) => ({ ...prev, [key]: !prev[key] }))}
+                    onConfirm={onSkillPickerConfirm}
+                    onClose={onSkillPickerConfirm}
+                    freeformValue={skillPickerFreeform}
+                    onFreeformChange={setSkillPickerFreeform}
+                    onFreeformSubmit={() => {}}
+                    frozen={false}
+                  />
+                ) : (batchMode && skillsPhase === "shown-batch2" && !skillsBatch2Choice) ? (
                   <QuestionCard
                     title="Do you want to enable these skills?"
                     options={SKILL_ENABLE_OPTIONS}
