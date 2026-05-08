@@ -286,6 +286,7 @@ const SKILL_ICONS = {
 const SKILLS = [
   {
     key: "tracking",
+    skillId: "order-status",
     title: "Order status, tracking or delivery timing",
     subtitle: "Real-time delivery status updates from Shopify",
     icon: SKILL_ICONS.tracking,
@@ -297,6 +298,7 @@ const SKILLS = [
   },
   {
     key: "items-missing",
+    skillId: "missing-items",
     title: "One or more items missing from an order",
     subtitle: "Lorem ipsum",
     icon: SKILL_ICONS.calendar,
@@ -308,6 +310,7 @@ const SKILLS = [
   },
   {
     key: "promo",
+    skillId: "promo-codes",
     title: "Promo codes and free shipping",
     subtitle: "Lorem ipsum",
     icon: SKILL_ICONS.promo,
@@ -319,6 +322,7 @@ const SKILLS = [
   },
   {
     key: "modifications",
+    skillId: "shipping-address",
     title: "Shipping address updates or edits in an order",
     subtitle: "Lorem ipsum",
     icon: SKILL_ICONS.modify,
@@ -330,6 +334,7 @@ const SKILLS = [
   },
   {
     key: "cancellations",
+    skillId: "order-cancellation",
     title: "Order cancellations",
     subtitle: "Lorem ipsum",
     icon: SKILL_ICONS.refund,
@@ -341,6 +346,7 @@ const SKILLS = [
   },
   {
     key: "damaged",
+    skillId: "damaged-defective",
     title: "Item damaged, defective, broken or not working...",
     subtitle: "Lorem ipsum",
     icon: SKILL_ICONS.damaged,
@@ -374,6 +380,7 @@ const SKILLS = [
   },
   {
     key: "subscription",
+    skillId: "subscription-cancellations",
     title: "Subscription & recurring orders",
     subtitle: "Pause, skip, change frequency, or cancel",
     icon: SKILL_ICONS.subscription,
@@ -434,7 +441,7 @@ const SCRIPTED_INTENTS = [
   {
     keywords: ["where is", "where’s", "where’s", "my order", "order status", "tracking", "track my", "when will", "arrive", "shipping"],
     label: "Looking up your order…",
-    response: "Hi! I can look that up for you — could you share your order number or the email you used at checkout? Most UrbanStems orders arrive within 2–4 days, and same-day delivery is available in select cities if you ordered before noon. I’ll get you the exact status right away.",
+    response: "Hi Sarah! I looked up your order #12847. It shipped on March 21st via USPS. Your estimated delivery is March 25th. You can track it here: usps.com/track/12847. Let me know if you have any other questions!",
   },
   {
     keywords: ["what cities", "do you deliver to", "what’s included", "what’s included", "what comes with", "vase", "care card"],
@@ -740,11 +747,13 @@ function KnowledgeCardPanel() {
 }
 
 /* ─── Live chat widget (Chat 2.0) — accepts an optional preloaded shopper message ─── */
-function ModalLiveChat({ preloadMessage }) {
+function ModalLiveChat({ preloadMessage, skillId }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
-  const [thinkingLabel, setThinkingLabel] = useState("");
+  const [thinkingSteps, setThinkingSteps] = useState([]);
+  const [thinkingStepIdx, setThinkingStepIdx] = useState(0);
+  const pendingIntentRef = useRef(null);
   const [viewState, setViewState] = useState(preloadMessage ? "thread" : "home"); // home | transitioning | thread
   const threadRef = useRef(null);
   const preloadFiredRef = useRef(false);
@@ -774,18 +783,36 @@ function ModalLiveChat({ preloadMessage }) {
 
   const doAssistantReply = useCallback((text) => {
     const intent = matchScriptedIntent(text);
-    setThinkingLabel(intent ? intent.label : "Thinking…");
+    pendingIntentRef.current = intent;
+    const skill = typeof getSkill === "function" && skillId ? getSkill(skillId) : null;
+    const steps = skill && skill.thinkingSteps && skill.thinkingSteps.length
+      ? skill.thinkingSteps
+      : ["Thinking…"];
+    setThinkingSteps(steps);
+    setThinkingStepIdx(0);
     setSending(true);
-    setTimeout(() => {
-      const payload = intent === null
-        ? { role: "assistant", isFallback: true, visible: false }
-        : { role: "assistant", text: intent.response, products: intent.products || null, visible: false };
-      setMessages((prev) => prev.concat([payload]));
-      setSending(false);
-      setThinkingLabel("");
-      setTimeout(appendVisible, 50);
-    }, 700);
-  }, []);
+  }, [skillId]);
+
+  useEffect(() => {
+    if (!sending || thinkingSteps.length === 0) return;
+    const timer = setTimeout(() => {
+      if (thinkingStepIdx < thinkingSteps.length - 1) {
+        setThinkingStepIdx((i) => i + 1);
+      } else {
+        const intent = pendingIntentRef.current;
+        const payload = intent === null
+          ? { role: "assistant", isFallback: true, visible: false }
+          : { role: "assistant", text: intent.response, products: intent.products || null, visible: false };
+        setMessages((prev) => prev.concat([payload]));
+        setSending(false);
+        setThinkingSteps([]);
+        setThinkingStepIdx(0);
+        pendingIntentRef.current = null;
+        setTimeout(appendVisible, 50);
+      }
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [sending, thinkingStepIdx, thinkingSteps]);
 
   const sendMessage = useCallback((text) => {
     if (!text || sending) return;
@@ -1011,15 +1038,26 @@ function ModalLiveChat({ preloadMessage }) {
           );
         })}
 
-        {sending && (
+        {sending && thinkingSteps.length > 0 && (
           <div style={{ marginBottom: 12, padding: "4px 0" }}>
-            <span style={{
+            <span key={thinkingStepIdx} style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
               fontSize: 13,
-              color: "rgba(30,36,46,0.45)",
               fontStyle: "italic",
               animation: "fadeInUp .35s ease both",
+              background: "linear-gradient(90deg, rgba(30,36,46,0.45) 40%, rgba(30,36,46,0.15) 50%, rgba(30,36,46,0.45) 60%)",
+              backgroundSize: "200% 100%",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              animationName: "fadeInUp, shimmerSlide",
+              animationDuration: ".35s, 2s",
+              animationTimingFunction: "ease, linear",
+              animationFillMode: "both, none",
+              animationIterationCount: "1, infinite",
             }}>
-              {thinkingLabel}
+              {thinkingSteps[thinkingStepIdx]}
             </span>
           </div>
         )}
@@ -1910,7 +1948,7 @@ function PreviewPanel({ skillIdx, onClose, closing, skipSlideIn }) {
         transformOrigin: "bottom right",
         transform: "scale(0.864)",
       }}>
-        <ModalLiveChat key={skillIdx} preloadMessage={skill.preload} />
+        <ModalLiveChat key={skillIdx} preloadMessage={skill.preload} skillId={skill.skillId} />
       </div>
     </div>
   );
