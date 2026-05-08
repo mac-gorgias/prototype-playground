@@ -293,7 +293,6 @@ const SKILLS = [
     preload: "Where is my order?",
     edit: {
       intents: ["Order / Status", "Shipping / Delay", "Shipping / Delivered not received"],
-      sample: "Hi Sarah! I looked up your most recent order (#12847) — it shipped on March 21st via USPS. Your estimated delivery is March 25th. You can track it here: usps.com/track/12847. Let me know if you have any other questions!",
     },
   },
   {
@@ -305,7 +304,6 @@ const SKILLS = [
     preload: "An item is missing from my order",
     edit: {
       intents: ["Order / Missing item", "Order / Incomplete shipment"],
-      sample: "I’m sorry about that. Could you share your order number and let me know which item is missing? I’ll get a replacement out to you as soon as possible.",
     },
   },
   {
@@ -317,7 +315,6 @@ const SKILLS = [
     preload: "Do you have a promo code?",
     edit: {
       intents: ["Promo / Code request", "Promo / Eligibility", "Shipping / Free shipping"],
-      sample: "We occasionally run promotions for new customers and around key holidays like Mother’s Day. Sign up for our emails at urbanstems.com to get first access. Any specific occasion you’re shopping for?",
     },
   },
   {
@@ -329,7 +326,6 @@ const SKILLS = [
     preload: "I need to update my shipping address",
     edit: {
       intents: ["Order / Modify", "Order / Address change", "Order / Gift note"],
-      sample: "Of course — address updates can be made up to 2 hours before fulfillment. Send me the new address and your order number and I’ll update it right away.",
     },
   },
   {
@@ -341,7 +337,6 @@ const SKILLS = [
     preload: "I need to cancel my order",
     edit: {
       intents: ["Order / Cancel"],
-      sample: "I can help with that. Orders can be canceled up until the fulfillment cutoff in your delivery zone. Could you share your order number so I can take a look?",
     },
   },
   {
@@ -353,7 +348,6 @@ const SKILLS = [
     preload: "My bouquet arrived damaged",
     edit: {
       intents: ["Order / Damaged", "Order / Quality issue", "Order / Defective"],
-      sample: "I’m so sorry to hear that — that’s not the experience we want for you. Could you send a photo of the bouquet to care@urbanstems.com? We’ll review it and arrange a replacement or full refund, usually within 24 hours.",
     },
   },
   {
@@ -364,7 +358,6 @@ const SKILLS = [
     preload: "What flowers do you recommend for a birthday?",
     edit: {
       intents: ["Discovery / Occasion", "Discovery / Recipient", "Discovery / Budget"],
-      sample: "Here are a few of our most-loved arrangements — perfect for a birthday surprise:",
     },
   },
   {
@@ -375,7 +368,6 @@ const SKILLS = [
     preload: "What cities do you deliver to?",
     edit: {
       intents: ["Shipping / Coverage", "Shipping / Cutoff", "Shipping / Speed"],
-      sample: "We deliver to most major US cities — same-day delivery is available in NYC, DC, LA, Chicago, and more if you order before noon local time. Want me to check a specific zip?",
     },
   },
   {
@@ -387,7 +379,6 @@ const SKILLS = [
     preload: "How do I pause my subscription?",
     edit: {
       intents: ["Subscription / Pause", "Subscription / Skip", "Subscription / Cancel"],
-      sample: "You can pause your subscription anytime from your account page. Pause for as long as you’d like — your next charge resumes when you do. Want me to walk you through it or pause it for you now?",
     },
   },
 ];
@@ -448,17 +439,22 @@ const SCRIPTED_INTENTS = [
   {
     keywords: ["pause", "skip my subscription", "cancel my subscription", "subscription"],
     label: "Looking up your subscription…",
-    response: "You can pause your subscription anytime from your account page. Pause for as long as you’d like — your next charge resumes when you do. Want me to walk you through it or pause it for you now?",
+    response: "I pulled up your subscription, Sarah. You’re on the bi-weekly Classic Rose arrangement, and your next delivery is April 2nd. I can pause it, skip the next delivery, or change the frequency — what would you prefer?",
   },
   {
-    keywords: ["cancel", "modify", "change my order", "update my order", "stop my delivery"],
-    label: "Checking if it can be modified…",
-    response: "I can help with that. Orders can be cancelled or modified up to 2 hours before the scheduled delivery. Could you share your order number or the email you used at checkout so I can look into it?",
+    keywords: ["cancel", "stop my delivery"],
+    label: "Pulling up order #12847…",
+    response: "I pulled up your order #12847, Sarah — it was placed on March 20th and is still within the cancellation window. I can cancel it right now and issue a full refund to your card on file. Would you like me to go ahead?",
+  },
+  {
+    keywords: ["modify", "change my order", "update my order", "update my address", "change address"],
+    label: "Pulling up order #12847…",
+    response: "Of course, Sarah! I’ve pulled up order #12847 — it’s currently set to deliver to 142 W 57th St, New York, NY. The order is still within the modification window. What’s the new address? I’ll update it right away.",
   },
   {
     keywords: ["damaged", "broken", "refund", "return", "wrong", "missing", "didn’t arrive", "didn’t arrive"],
     label: "Reviewing your recent order…",
-    response: "I’m so sorry to hear that — that’s not the experience we want for you. If your arrangement arrived damaged, we’ll make it right. Could you send a photo of the bouquet to care@urbanstems.com? Our team will review it and arrange a replacement or full refund, usually within 24 hours.",
+    response: "I’m so sorry to hear that, Sarah — that’s not the experience we want for you. I’ve pulled up your order #12847 (The Margot, delivered March 25th). You can share a photo right here in this chat and I’ll arrange a replacement or full refund right away.",
   },
   {
     keywords: ["update my shipping", "change my address", "shipping address", "update my address", "change address"],
@@ -468,22 +464,22 @@ const SCRIPTED_INTENTS = [
   {
     keywords: ["where is", "where’s", "where’s", "my order", "order status", "tracking", "track my", "when will", "arrive", "shipping"],
     label: "Looking up your order…",
-    response: "Hi Sarah! I looked up your order #12847. It shipped on March 21st via USPS. Your estimated delivery is March 25th. You can track it here: usps.com/track/12847. Let me know if you have any other questions!",
+    response: "Hi Sarah! I looked up your most recent order (#12847) — it shipped on March 21st via USPS. Your estimated delivery is March 25th. You can track it here: usps.com/track/12847. Let me know if you have any other questions!",
   },
   {
     keywords: ["what cities", "do you deliver to", "what’s included", "what’s included", "what comes with", "vase", "care card"],
     label: "Checking delivery areas…",
-    response: "We deliver to most major US cities — same-day delivery is available in NYC, DC, LA, Chicago, and more if you order before noon local time. Each arrangement comes in a glass vase with a care card. Want me to help you find something for a specific occasion or budget?",
+    response: "We deliver to most major US cities — same-day delivery is available in NYC, DC, LA, Chicago, and more if you order before noon local time. Want me to check a specific zip?",
   },
   {
     keywords: ["promo", "discount", "code", "coupon", "sale"],
-    label: "Checking active promotions…",
-    response: "We occasionally run promotions for new customers and around key holidays like Mother’s Day and Valentine’s Day. If you sign up for our emails at urbanstems.com you’ll get first access. Is there a specific occasion you’re shopping for? I might be able to help find the right arrangement at the right price.",
+    label: "Checking promotions for your account…",
+    response: "I checked your account, Sarah — you’re eligible for 15% off your next order as a returning customer. The code WELCOME15 will apply at checkout. Mother’s Day arrangements go live next week with early access for existing customers. Want me to help you find the perfect arrangement?",
   },
   {
     keywords: ["recommend", "popular", "best seller", "what flowers", "what do you have", "gift", "occasion", "what should i get", "bouquet"],
     label: "Browsing arrangements for you…",
-    response: "Here are a few of our most-loved arrangements right now — perfect if you’re looking for something fresh and memorable:",
+    response: "Here are a few of our most-loved arrangements — perfect for a birthday surprise:",
     products: [
       { name: "Margot", price: 88, originalPrice: 90, image: "urbanstems-margot.png" },
       { name: "Sorbet", price: 68, image: "urbanstems-sorbet.png" },
