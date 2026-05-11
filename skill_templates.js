@@ -68,8 +68,8 @@ var SKILLS = [
     title: "One or more items missing from an order",
     subtitle: "Handled automatically",
     intents: ["Order / Missing Item"],
-    batch: 1, // Batch 1 if Gaia finds 30-day value in knowledge, else Batch 2
-    tags: ["needs-review"],
+    batch: 1,
+    tags: [],
     hardcodedValues: [
       { field: "report_window_days", default: 30, label: "Days after delivery within which missing item claims are accepted" },
     ],
@@ -169,12 +169,22 @@ var SKILLS_BY_VOLUME = [
   "order-status",
   "returns-exchanges",
   "damaged-defective",
-  "missing-items",
   "order-cancellation",
-  "subscription-cancellations",
+  "missing-items",
   "promo-codes",
   "shipping-address",
   "product-edits",
+];
+
+// Top skills shown during onboarding (volume-ordered, includes batch 2 skills like returns-exchanges)
+// Ready-to-enable first, then needs-review (progression of effort + value)
+var ONBOARDING_SKILLS = [
+  "order-status",
+  "missing-items",
+  "promo-codes",
+  "returns-exchanges",
+  "damaged-defective",
+  "order-cancellation",
 ];
 
 // Helper: get skill by id
@@ -190,5 +200,7 @@ var getBatch1Skills = function () {
   return getSkillsOrdered().filter(function (s) { return s.batch === 1; });
 };
 
-// Helper: get skills shown during onboarding (batch 1 only for M1)
-var getOnboardingSkills = function () { return getBatch1Skills(); };
+// Helper: get skills shown during onboarding
+var getOnboardingSkills = function () {
+  return ONBOARDING_SKILLS.map(function (id) { return getSkill(id); }).filter(Boolean);
+};
