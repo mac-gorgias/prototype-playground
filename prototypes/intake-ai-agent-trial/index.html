@@ -302,19 +302,7 @@ const SKILL_ICONS = {
 
 /* ─── Skills: ready-to-enable first (no actions), then needs-review (has actions) ─── */
 const SKILLS = [
-  /* ── Batch 1: No actions — needs review first, then ready ── */
-  {
-    key: "items-missing",
-    skillId: "missing-items",
-    title: "One or more items missing from an order",
-    subtitle: "Verify delivery status, identify missing items, and escalate",
-    icon: SKILL_ICONS.calendar,
-    ready: false,
-    preload: "An item is missing from my order",
-    edit: {
-      intents: ["Order / Missing item", "Order / Incomplete shipment"],
-    },
-  },
+  /* ── Batch 1: Ready to enable (no actions) ── */
   {
     key: "tracking",
     skillId: "order-status",
@@ -375,7 +363,19 @@ const SKILLS = [
       intents: ["Feedback / Positive", "Feedback / Negative", "Feedback / Suggestion"],
     },
   },
-  /* ── Batch 2: Has actions (3rd-party app integrations) ── */
+  /* ── Batch 2: Needs review (policy details and/or Shopify actions) ── */
+  {
+    key: "items-missing",
+    skillId: "missing-items",
+    title: "One or more items missing from an order",
+    subtitle: "Verify delivery status, identify missing items, and escalate",
+    icon: SKILL_ICONS.calendar,
+    ready: false,
+    preload: "An item is missing from my order",
+    edit: {
+      intents: ["Order / Missing item", "Order / Incomplete shipment"],
+    },
+  },
   {
     key: "product-edits",
     skillId: "product-edits",
@@ -383,6 +383,8 @@ const SKILLS = [
     subtitle: "Remove or replace products in an order via Shopify",
     icon: SKILL_ICONS.modify,
     ready: false,
+    takesAction: true,
+    actions: ["Remove item", "Replace item"],
     preload: "I want to swap an item in my order",
     edit: {
       intents: ["Order / Remove item", "Order / Replace item"],
@@ -395,6 +397,8 @@ const SKILLS = [
     subtitle: "Reship the order for free via Shopify",
     icon: SKILL_ICONS.damaged,
     ready: false,
+    takesAction: true,
+    actions: ["Reship order for free"],
     preload: "My bouquet arrived damaged",
     edit: {
       intents: ["Order / Damaged", "Product / Quality Issues"],
@@ -402,7 +406,7 @@ const SKILLS = [
   },
 ];
 
-const SKILL_PICKER_OPTIONS = SKILLS.slice(0, 6).map(s => ({ key: s.key, label: s.title }));
+const SKILL_PICKER_OPTIONS = SKILLS.slice(0, 5).map(s => ({ key: s.key, label: s.title }));
 
 /* ─── Per-skill follow-up questions (driven by hardcodedValues from skill_templates.js) ─── */
 const SKILL_FOLLOWUPS = {
@@ -421,6 +425,14 @@ const SKILL_FOLLOWUPS = {
       options: ["1 hour", "2 hours", "Until fulfillment"],
       aiDetectedOption: "1 hour",
     },
+    {
+      field: "shopify_action",
+      question: "Do you want to allow AI Agent to take action in Shopify?",
+      options: [
+        { label: "Yes, turn on the ability to remove and replace items", sublabel: "AI Agent will not take actions until you enable the skill", icon: "check" },
+        { label: "No, not right now", sublabel: "AI Agent will hand over tickets to a representative to fully resolve the request", icon: "cross" },
+      ],
+    },
   ],
   damaged: [
     {
@@ -434,6 +446,14 @@ const SKILL_FOLLOWUPS = {
       question: "What’s your preferred resolution for a confirmed damaged item?",
       options: ["Reship the order for free", "Issue a refund", "Let the customer choose"],
       aiDetectedOption: "Reship the order for free",
+    },
+    {
+      field: "shopify_action",
+      question: "Do you want to allow AI Agent to take action in Shopify?",
+      options: [
+        { label: "Yes, turn on the ability to reship order for free", sublabel: "AI Agent will not take actions until you enable the skill", icon: "check" },
+        { label: "No, not right now", sublabel: "AI Agent will hand over tickets to a representative to fully resolve the request", icon: "cross" },
+      ],
     },
   ],
 };
@@ -461,6 +481,11 @@ const SCRIPTED_INTENTS = [
     keywords: ["cancel", "stop my delivery"],
     label: "Pulling up order #12847…",
     response: "I pulled up your order #12847, Sarah — it was placed on March 20th and is still within the cancellation window. I can cancel it right now and issue a full refund to your card on file. Would you like me to go ahead?",
+  },
+  {
+    keywords: ["swap", "replace", "switch item", "remove item", "change item", "different item", "swap an item"],
+    label: "Pulling up order #12847…",
+    response: "I’ve pulled up your order #12847, Sarah — it was placed on March 20th and is still within the edit window. I can see you ordered The Margot bouquet. Would you like to swap it for a different arrangement, or remove an item? Just let me know what you’d like and I’ll update the order.",
   },
   {
     keywords: ["modify", "change my order", "update my order", "update my address", "change address"],
@@ -1450,7 +1475,7 @@ function SidebarNav({ collapsed, onToggleCollapse, checklist, cinematicDone, sho
       <div style={{ flex: 1 }} />
 
       {/* Collapsed checklist icon with hover popup */}
-      {collapsed && cinematicDone && (() => {
+      {collapsed && cinematicDone && !showSkillsScreen && (() => {
         const total = checklistItems.length;
         const r = 9;
         const circumference = 2 * Math.PI * r;
@@ -1529,7 +1554,7 @@ function SidebarNav({ collapsed, onToggleCollapse, checklist, cinematicDone, sho
           </div>
         );
       })()}
-      {!collapsed && cinematicDone && (() => {
+      {!collapsed && cinematicDone && !showSkillsScreen && (() => {
         const total = checklistItems.length;
         const r = 7;
         const circumference = 2 * Math.PI * r;
@@ -1718,8 +1743,9 @@ function SidebarNav({ collapsed, onToggleCollapse, checklist, cinematicDone, sho
 }
 
 /* ─── Skill card (each skill is its own card, matches the Voice card visual style) ─── */
-function SkillCard({ skill, index, isActive, onPreview, onEdit, needsInfo, answeredSkillKeys }) {
+function SkillCard({ skill, index, isActive, onPreview, onEdit, needsInfo, answeredSkillKeys, actionDeclinedKeys }) {
   const isAnswered = answeredSkillKeys && answeredSkillKeys.has(skill.key);
+  const isActionDeclined = actionDeclinedKeys && actionDeclinedKeys.has(skill.key);
   return (
     <div style={{
       border: isActive ? "1px solid " + ACCENT : "1px solid " + BORDER,
@@ -1737,7 +1763,7 @@ function SkillCard({ skill, index, isActive, onPreview, onEdit, needsInfo, answe
       }}>{skill.icon}</div>
       <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-          <div style={{ minWidth: 0 }}>
+          <div style={{ minWidth: 0, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
             {needsInfo && (
               isAnswered ? (
                 <span style={{
@@ -1759,16 +1785,29 @@ function SkillCard({ skill, index, isActive, onPreview, onEdit, needsInfo, answe
                 </span>
               )
             )}
+            {skill.takesAction && !isActionDeclined && (
+              <span style={{
+                fontSize: 11, fontWeight: 500, color: "#555",
+                border: "1px solid " + BORDER, padding: "2px 8px 2px 5px", borderRadius: 6,
+                lineHeight: 1.3, whiteSpace: "nowrap",
+                display: "inline-flex", alignItems: "center", gap: 4,
+              }}>
+                <span style={{ width: 14, height: 14, borderRadius: 3, background: "#E8F5E9", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <svg width="9" height="10" viewBox="0 0 11 12" fill="none"><path d="M7.5 2.5C7.5 2.5 7 2 6 2S4.5 2.8 4.5 2.8L4 4H3L2 11h7l-1-7H7l-.5-1.5z" fill="#95BF47" /><path d="M7 4L7.5 2.5C7.5 2.5 7 2 6 2v9l3 0-1-7H7z" fill="#5E8E3E" /></svg>
+                </span>
+                Takes action
+              </span>
+            )}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
             <button
-              onClick={() => onEdit(index)}
+              onClick={(e) => { e.stopPropagation(); onEdit(index); }}
               style={BTN_TERTIARY_SM}
               onMouseEnter={(e) => { Object.assign(e.currentTarget.style, BTN_TERTIARY_HOVER); }}
               onMouseLeave={(e) => { Object.assign(e.currentTarget.style, BTN_TERTIARY_LEAVE); }}
             >View</button>
             <button
-              onClick={() => { if (!needsInfo || isAnswered) onPreview(index); }}
+              onClick={(e) => { e.stopPropagation(); if (!needsInfo || isAnswered) onPreview(index); }}
               disabled={needsInfo && !isAnswered}
               style={{ ...BTN_SECONDARY_SM, opacity: (needsInfo && !isAnswered) ? 0.4 : 1, cursor: (needsInfo && !isAnswered) ? "default" : "pointer" }}
               onMouseEnter={(e) => { if (!needsInfo || isAnswered) Object.assign(e.currentTarget.style, BTN_SECONDARY_HOVER); }}
@@ -1783,7 +1822,7 @@ function SkillCard({ skill, index, isActive, onPreview, onEdit, needsInfo, answe
 }
 
 /* ─── Skill list: separate cards + inline "N more skills" expander (matches research "4 more" pattern) ─── */
-function SkillListCard({ skills = SKILLS, startIndex = 0, visibleCount = 3, needsInfo = false, answeredSkillKeys, activeSkillIdx, expanded, onToggleExpanded, onPreview, onEdit }) {
+function SkillListCard({ skills = SKILLS, startIndex = 0, visibleCount = 3, needsInfo = false, answeredSkillKeys, actionDeclinedKeys, activeSkillIdx, expanded, onToggleExpanded, onPreview, onEdit }) {
   const hiddenCount = skills.length - visibleCount;
   const peekSkill = !expanded && hiddenCount > 0 ? skills[visibleCount] : null;
 
@@ -1799,6 +1838,7 @@ function SkillListCard({ skills = SKILLS, startIndex = 0, visibleCount = 3, need
           onEdit={onEdit}
           needsInfo={needsInfo}
           answeredSkillKeys={answeredSkillKeys}
+          actionDeclinedKeys={actionDeclinedKeys}
         />
       ))}
       {peekSkill && (
@@ -1812,6 +1852,7 @@ function SkillListCard({ skills = SKILLS, startIndex = 0, visibleCount = 3, need
               onEdit={() => {}}
               needsInfo={needsInfo}
               answeredSkillKeys={answeredSkillKeys}
+              actionDeclinedKeys={actionDeclinedKeys}
             />
           </div>
           <div style={{
@@ -1929,7 +1970,7 @@ function ChatInputBar({ value, onChange, onSend, onKeyDown, placeholder, sendDis
 }
 
 /* ─── Question card: numbered options (optional badge) + freeform input + X close ─── */
-function QuestionCard({ title, options, onSelect, onClose, freeformValue, onFreeformChange, onFreeformSubmit }) {
+function QuestionCard({ title, options, onSelect, onClose, freeformValue, onFreeformChange, onFreeformSubmit, hideFreeform }) {
   const opts = options || [
     { key: "all", title: "Turn on all ready to enable skills", desc: "AI Agent will follow skills in the same way, every time." },
     { key: "pick", title: "Let me pick", desc: "The rest will rely on background knowledge." },
@@ -1996,6 +2037,7 @@ function QuestionCard({ title, options, onSelect, onClose, freeformValue, onFree
         </div>
       ))}
       {/* Freeform */}
+      {!hideFreeform && (
       <div style={{ padding: "16px 16px", display: "flex", alignItems: "center", gap: 12, borderTop: "1px solid " + BORDER }}>
         <div style={{
           width: 26, height: 26, borderRadius: 6,
@@ -2019,6 +2061,7 @@ function QuestionCard({ title, options, onSelect, onClose, freeformValue, onFree
           }}
         />
       </div>
+      )}
     </div>
   );
 }
@@ -2111,13 +2154,16 @@ function SkillFollowUpCard({ followUps, onComplete, onDismiss, onAnswerChange })
 
       {/* Numbered options */}
       {current.options.map((opt, oi) => {
-        const isSelected = selectedAnswer === opt;
+        const optLabel = typeof opt === "string" ? opt : opt.label;
+        const optSublabel = typeof opt === "string" ? null : opt.sublabel;
+        const optIcon = typeof opt === "string" ? null : opt.icon;
+        const isSelected = selectedAnswer === optLabel;
         return (
           <div key={oi}
-            onClick={() => selectOption(opt)}
+            onClick={() => selectOption(optLabel)}
             style={{
               padding: "14px 16px", cursor: "pointer",
-              display: "flex", alignItems: "center", gap: 12,
+              display: "flex", alignItems: "flex-start", gap: 12,
               transition: "background .15s",
               borderTop: "1px solid " + BORDER,
               background: isSelected ? "#F0F5FF" : "#ffffff",
@@ -2126,21 +2172,34 @@ function SkillFollowUpCard({ followUps, onComplete, onDismiss, onAnswerChange })
             onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = isSelected ? "#F0F5FF" : "#ffffff"; }}
           >
             <div style={{
-              width: 26, height: 26, borderRadius: 6,
+              width: 26, height: 26, borderRadius: 6, marginTop: 1,
               background: isSelected ? ACCENT : "transparent",
               border: isSelected ? "1px solid " + ACCENT : "1px solid " + BORDER,
               display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
               fontSize: 12, fontWeight: 600, color: isSelected ? "#fff" : TEXT_MUTED,
-            }}>{oi + 1}</div>
-            <span style={{ fontSize: 14, color: "#1E242E", fontFamily: "'Inter', sans-serif" }}>{opt}</span>
-            {current.aiDetectedOption === opt && (
-              <span style={{
-                fontSize: 11, fontWeight: 500,
-                color: ACCENT, background: ACCENT_LIGHT,
-                padding: "2px 8px", borderRadius: 6,
-                whiteSpace: "nowrap",
-              }}>AI detected</span>
-            )}
+            }}>
+              {optIcon === "check" ? (
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3.5 8.5l3 3 6-6.5" stroke={isSelected ? "#fff" : TEXT_MUTED} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              ) : optIcon === "cross" ? (
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke={isSelected ? "#fff" : TEXT_MUTED} strokeWidth="1.4" strokeLinecap="round" /></svg>
+              ) : (oi + 1)}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 14, color: "#1E242E", fontFamily: "'Inter', sans-serif" }}>{optLabel}</span>
+                {current.aiDetectedOption === optLabel && (
+                  <span style={{
+                    fontSize: 11, fontWeight: 500,
+                    color: ACCENT, background: ACCENT_LIGHT,
+                    padding: "2px 8px", borderRadius: 6,
+                    whiteSpace: "nowrap",
+                  }}>AI detected</span>
+                )}
+              </div>
+              {optSublabel && (
+                <span style={{ fontSize: 13, color: "#8992A0", lineHeight: 1.4, marginTop: 2, display: "block" }}>{optSublabel}</span>
+              )}
+            </div>
           </div>
         );
       })}
@@ -2218,9 +2277,9 @@ function PreviewPanel({ skillIdx, onClose, closing, skipSlideIn }) {
   const skill = SKILLS[skillIdx];
   return (
     <div style={{
-      position: "fixed", top: 0, right: 0, height: "100vh", width: "33vw", minWidth: 480,
+      position: "fixed", top: 16, right: 16, bottom: 16, width: "33vw", minWidth: 480,
       zIndex: 1000, overflow: "hidden",
-      borderLeft: "1px solid rgba(0,0,0,0.1)",
+      borderRadius: 16, border: "1px solid #EBECEF",
       animation: closing
         ? "slideOutRight .2s ease forwards"
         : (skipSlideIn ? "none" : "slideInRight .2s ease-out forwards"),
@@ -2234,6 +2293,7 @@ function PreviewPanel({ skillIdx, onClose, closing, skipSlideIn }) {
         backgroundRepeat: "no-repeat",
         filter: "blur(2px)",
         transform: "scale(1.02)",
+        borderRadius: 16,
       }} />
 
       {/* Close button */}
@@ -2338,11 +2398,11 @@ function EditPanel({ skillIdx, onClose, closing, skipSlideIn, skillAnswers }) {
 
   return (
     <div style={{
-      position: "fixed", top: 0, right: 0, height: "100vh", width: "33vw", minWidth: 480,
+      position: "fixed", top: 16, right: 16, bottom: 16, width: "33vw", minWidth: 480,
       zIndex: 1000,
       background: "#ffffff",
-      borderLeft: "1px solid #EBECEF",
-      boxShadow: "-8px 0 32px rgba(0,0,0,.06)",
+      border: "1px solid #EBECEF",
+      borderRadius: 16,
       animation: closing
         ? "slideOutRight .2s ease forwards"
         : (skipSlideIn ? "none" : "slideInRight .2s ease-out forwards"),
@@ -2402,6 +2462,57 @@ function EditPanel({ skillIdx, onClose, closing, skipSlideIn, skillAnswers }) {
             }}>{intent}</span>
           ))}
         </div>
+
+        {/* Actions — only for skills with takesAction */}
+        {skill.takesAction && skill.actions && skill.actions.length > 0 && (
+          <div style={{ marginBottom: 28 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12, position: "relative" }}>
+              <h3 style={{
+                fontSize: 14, fontWeight: 600, color: "#000000",
+                letterSpacing: "normal", lineHeight: "20px",
+                margin: 0,
+              }}>Actions inserted in this skill's instructions</h3>
+              <span
+                style={{ cursor: "pointer", display: "inline-flex", position: "relative" }}
+                onMouseEnter={(e) => { e.currentTarget.querySelector('[data-tooltip]').style.opacity = "1"; e.currentTarget.querySelector('[data-tooltip]').style.pointerEvents = "auto"; }}
+                onMouseLeave={(e) => { e.currentTarget.querySelector('[data-tooltip]').style.opacity = "0"; e.currentTarget.querySelector('[data-tooltip]').style.pointerEvents = "none"; }}
+              >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ opacity: 0.4 }}>
+                  <circle cx="8" cy="8" r="6.5" stroke="#6B7280" strokeWidth="1.2" />
+                  <path d="M8 7v3.5M8 5.5v.01" stroke="#6B7280" strokeWidth="1.2" strokeLinecap="round" />
+                </svg>
+                <div data-tooltip style={{
+                  position: "absolute", bottom: "calc(100% + 8px)", left: "50%", transform: "translateX(-50%)",
+                  background: "#1E242E", color: "#fff", fontSize: 12, fontWeight: 400, lineHeight: 1.45,
+                  padding: "8px 12px", borderRadius: 8, width: 240,
+                  boxShadow: "0 4px 12px rgba(0,0,0,.2)",
+                  opacity: 0, pointerEvents: "none", transition: "opacity .15s",
+                  fontFamily: "'Inter', sans-serif",
+                }}>Actions are operations AI Agent performs in connected apps (e.g. Shopify) to fulfill a customer request.</div>
+              </span>
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {skill.actions.map((action, i) => (
+                <span key={i} style={{
+                  display: "inline-flex", alignItems: "center", gap: 5,
+                  fontSize: 13, fontWeight: 500, color: TEXT,
+                  padding: "5px 10px 5px 6px", borderRadius: 999,
+                  background: SURFACE, border: "1px solid " + BORDER,
+                }}>
+                  <span style={{ width: 18, height: 18, borderRadius: 4, background: "#E8F5E9", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <svg width="11" height="12" viewBox="0 0 11 12" fill="none"><path d="M7.5 2.5C7.5 2.5 7 2 6 2S4.5 2.8 4.5 2.8L4 4H3L2 11h7l-1-7H7l-.5-1.5z" fill="#95BF47" /><path d="M7 4L7.5 2.5C7.5 2.5 7 2 6 2v9l3 0-1-7H7z" fill="#5E8E3E" /></svg>
+                  </span>
+                  {action}
+                  <span style={{ fontSize: 12, color: TEXT_MUTED, fontWeight: 400, marginLeft: 2 }}>in</span>
+                  <span style={{ width: 16, height: 16, borderRadius: 3, background: "#E8F5E9", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <svg width="9" height="10" viewBox="0 0 11 12" fill="none"><path d="M7.5 2.5C7.5 2.5 7 2 6 2S4.5 2.8 4.5 2.8L4 4H3L2 11h7l-1-7H7l-.5-1.5z" fill="#95BF47" /><path d="M7 4L7.5 2.5C7.5 2.5 7 2 6 2v9l3 0-1-7H7z" fill="#5E8E3E" /></svg>
+                  </span>
+                  <span style={{ fontSize: 13, fontWeight: 500 }}>Shopify</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Instructions header with pencil toggle */}
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
@@ -3509,11 +3620,12 @@ function IntakePage() {
   // Right-side panels (Voice card / Preview / Edit)
   const [activePanel, setActivePanel] = useState(null); // null | "voice" | "knowledge" | "preview" | "edit"
   const prevPanelRef = useRef(null);
-  const skipSlideIn = !!(activePanel && prevPanelRef.current && prevPanelRef.current !== activePanel);
+  const skipSlideIn = !!(activePanel && prevPanelRef.current);
   useEffect(() => { prevPanelRef.current = activePanel; }, [activePanel]);
   const [activeSkillIdx, setActiveSkillIdx] = useState(null);
   const [panelClosing, setPanelClosing] = useState(false);
-  const closePanel = () => {
+  const closePanel = (keepGuidedMode) => {
+    if (!keepGuidedMode && b2GuidedMode) setB2GuidedMode(false);
     setPanelClosing(true);
     setTimeout(() => {
       setActivePanel(null);
@@ -3534,16 +3646,15 @@ function IntakePage() {
   const [batchMode, setBatchMode] = useState(true);
   const SKILL_INTRO_MESSAGES_BATCH_1 = batchMode ? [
     { text: "With your tone of voice and knowledge sources, AI Agent now knows how to sound like your brand and answer general questions.", bold: ["tone of voice", "knowledge sources"] },
-    { text: "Now it needs skills to act on your most common customer requests. When a request comes in, AI Agent detects the intent, matches it to a skill, and follows its instructions to respond.", bold: "skills", learnMore: true },
-    { text: "I’ve already set up a few to get you started." },
+    { text: "Now it needs skills to address your most common customer requests. When a request comes in, AI Agent detects the intent, matches it to a skill, and follows its instructions to respond.", bold: "skills", learnMore: true },
+    { text: "I’ve already set up a few skills which will cover 44% of your incoming tickets from day one.", bold: "44%" },
   ] : [
     { text: "With your tone of voice and knowledge sources, AI Agent now knows how to sound like your brand and answer general questions.", bold: ["tone of voice", "knowledge sources"] },
-    { text: "Now it needs skills to act on your most common customer requests. When a request comes in, AI Agent detects the intent, matches it to a skill, and follows its instructions to respond.", bold: "skills", learnMore: true },
+    { text: "Now it needs skills to address your most common customer requests. When a request comes in, AI Agent detects the intent, matches it to a skill, and follows its instructions to respond.", bold: "skills", learnMore: true },
     { text: "I’ve already drafted some starter skills to cover X% of your incoming tickets. Most of them are ready to go, but some need a few additional details to get your policy right.", bold: "X%" },
   ];
   const SKILL_INTRO_MESSAGES_BATCH_2 = [
-    { text: "Great work! You’re now covering 44% of your common questions automatically.", bold: "44%" },
-    { text: "The next 2 skills allow AI Agent to perform actions with your 3rd party apps to fully automate requests.", bold: "2 skills" },
+    { text: "Great work! The next 3 skills need a few more details to get your policy right.", bold: "3 skills" },
     { text: "Let’s make sure they’ll work with your current workflows." },
   ];
   const [skillsBatch1Expanded, setSkillsBatch1Expanded] = useState(false);
@@ -3554,15 +3665,26 @@ function IntakePage() {
   const [skillsBatch2Reply, setSkillsBatch2Reply] = useState(null);
   const [skillsBatch1Freeform, setSkillsBatch1Freeform] = useState("");
   const [skillsBatch2Freeform, setSkillsBatch2Freeform] = useState("");
-  const batch1Skills = batchMode ? SKILLS.slice(0, 6) : SKILLS;
-  const batch2Skills = SKILLS.slice(6);
+  const [b2GuidedMode, setB2GuidedMode] = useState(false);
+  const [b2EnableChoice, setB2EnableChoice] = useState(null); // null | "all" | "pick" | "freeform"
+  const [b2EnableFreeform, setB2EnableFreeform] = useState("");
+  const [b2EnablePickerToggles, setB2EnablePickerToggles] = useState({});
+  const [b2EnablePickerConfirmed, setB2EnablePickerConfirmed] = useState(false);
+  const batch1Skills = batchMode ? SKILLS.slice(0, 5) : SKILLS;
+  const batch2Skills = SKILLS.slice(5);
   const SKILL_ENABLE_OPTIONS = [
     { key: "all", title: "Turn on all ready to enable skills", desc: "AI Agent will always follow skill instructions when matching intent is detected", badge: "Recommended" },
     { key: "pick", title: "Let me choose", desc: "Pick which skills to enable — the rest will rely on knowledge alone" },
   ];
+  const SKILL_ENABLE_OPTIONS_B2 = [
+    { key: "guided", title: "Let's do it", desc: "Takes about 2 minutes — we'll walk you through each one", badge: "Recommended" },
+    { key: "skip", title: "Skip for now", desc: "These skills will be saved as a draft to edit later" },
+  ];
   const SKILL_ENABLE_REPLY_TEXT = {
     all: "Turn on all ready to enable skills",
     pick: "Let me choose",
+    guided: "Let's do it",
+    skip: "Skip for now",
   };
   const defaultSkillToggles = {};
   SKILL_PICKER_OPTIONS.forEach((s) => {
@@ -3601,6 +3723,8 @@ function IntakePage() {
   const [skillFollowUpAnswers, setSkillFollowUpAnswers] = useState({}); // { [skillKey]: { [field]: answer } }
   const [followUpDismissed, setFollowUpDismissed] = useState(new Set());
   const [answeredSkillKeys, setAnsweredSkillKeys] = useState(new Set());
+  const [actionDeclinedKeys, setActionDeclinedKeys] = useState(new Set());
+  const allB2Complete = batch2Skills.every(s => answeredSkillKeys.has(s.key));
   const [editChatMessages, setEditChatMessages] = useState([]);
   const [editAiTyping, setEditAiTyping] = useState(null);
   const [connectOverlay, setConnectOverlay] = useState(null); // null or { platform: "Loop Returns" }
@@ -3845,27 +3969,47 @@ function IntakePage() {
     return () => clearInterval(interval);
   }, [skillsPhase, skillsBatch2MsgIdx]);
 
-  /* Advance from shown-batch2 → done → channels once the user picks an option */
-  const advanceFromBatch2 = (key, freeformText) => {
+  /* Advance from shown-batch2 → guided walkthrough or skip to channels */
+  const advanceFromBatch2 = (key) => {
     if (skillsBatch2Choice) return;
     setSkillsBatch2Choice(key);
-    setSkillsBatch2Reply(key === "freeform" ? freeformText : SKILL_ENABLE_REPLY_TEXT[key]);
-    if (key === "pick") return;
-    setTimeout(() => {
-      completeChecklistItem("skills");
-      setSkillsPhase("done");
-      setChannelsPhase("typing-intro");
-      setChannelsMsgIdx(0);
-    }, 600);
+    setSkillsBatch2Reply(SKILL_ENABLE_REPLY_TEXT[key]);
+    if (key === "skip") {
+      setTimeout(() => {
+        completeChecklistItem("skills");
+        setSkillsPhase("done");
+        setChannelsPhase("typing-intro");
+        setChannelsMsgIdx(0);
+      }, 600);
+    } else if (key === "guided") {
+      setB2GuidedMode(true);
+      setTimeout(() => {
+        for (let i = batch1Skills.length; i < SKILLS.length; i++) {
+          if (getNextFollowUp(SKILLS[i].key, skillFollowUpAnswers)) {
+            setActiveSkillIdx(i);
+            setActivePanel("edit");
+            return;
+          }
+        }
+      }, 600);
+    }
   };
-  const onSkillPickerConfirmB2 = () => {
-    setSkillPickerConfirmedB2(true);
-    setTimeout(() => {
-      completeChecklistItem("skills");
-      setSkillsPhase("done");
-      setChannelsPhase("typing-intro");
-      setChannelsMsgIdx(0);
-    }, 600);
+  const enableAllB2 = () => {
+    completeChecklistItem("skills");
+    setSkillsPhase("done");
+    setChannelsPhase("typing-intro");
+    setChannelsMsgIdx(0);
+  };
+  const handleB2EnableChoice = (key, freeformText) => {
+    if (b2EnableChoice) return;
+    setB2EnableChoice(key);
+    if (key === "pick") {
+      const toggles = {};
+      batch2Skills.forEach(s => { toggles[s.key] = true; });
+      setB2EnablePickerToggles(toggles);
+      return;
+    }
+    setTimeout(enableAllB2, 600);
   };
 
   /* Channels intro typing — 2 sequential messages */
@@ -3971,6 +4115,11 @@ function IntakePage() {
       return updated;
     });
     setAnsweredSkillKeys((prev) => new Set([...prev, skillKey]));
+    if (answersMap.shopify_action && answersMap.shopify_action.startsWith("No")) {
+      setActionDeclinedKeys((prev) => new Set([...prev, skillKey]));
+    } else if (answersMap.shopify_action && !answersMap.shopify_action.startsWith("No")) {
+      setActionDeclinedKeys((prev) => { const next = new Set(prev); next.delete(skillKey); return next; });
+    }
     const phase = batchMode ? (activeSkillIdx < batch1Skills.length ? "batch1" : "batch2") : "batch1";
     const skillTitle = SKILLS[activeSkillIdx].title;
     setEditChatMessages((prev) => prev.concat([{ role: "confirmation", label: "Updated " + skillTitle, phase }]));
@@ -4011,6 +4160,25 @@ function IntakePage() {
 
   const onFollowUpComplete = (answersMap) => {
     commitAllFollowUpAnswers(answersMap);
+    if (activeSkillIdx !== null && activeSkillIdx >= batch1Skills.length) {
+      const currentKey = SKILLS[activeSkillIdx].key;
+      const merged = { ...skillFollowUpAnswers, [currentKey]: { ...(skillFollowUpAnswers[currentKey] || {}), ...answersMap } };
+      if (currentKey === "items-missing" && answersMap.claim_window_days) {
+        merged.damaged = { ...(merged.damaged || {}), claim_window_days: answersMap.claim_window_days };
+      }
+      let nextIdx = null;
+      for (let i = batch1Skills.length; i < SKILLS.length; i++) {
+        if (i !== activeSkillIdx && getNextFollowUp(SKILLS[i].key, merged)) {
+          nextIdx = i;
+          break;
+        }
+      }
+      if (nextIdx !== null) {
+        setTimeout(() => { setActiveSkillIdx(nextIdx); setActivePanel("edit"); }, 800);
+      } else {
+        setTimeout(() => { closePanel(true); }, 800);
+      }
+    }
   };
   const onFollowUpAnswerChange = (field, value) => {
     const skillKey = activeSkillIdx !== null ? SKILLS[activeSkillIdx].key : null;
@@ -4030,7 +4198,7 @@ function IntakePage() {
 
   /* Right margin for content area when a panel is open */
   const panelOpen = !!activePanel && !panelClosing;
-  const contentRightMargin = panelOpen ? "496px" : "16px";
+  const contentRightMargin = panelOpen ? "512px" : "16px";
 
   const seenTerms = new Set();
 
@@ -4049,16 +4217,6 @@ function IntakePage() {
         boxShadow: "0 4px 16px rgba(0,0,0,.25)",
         userSelect: "none",
       }}>
-        <span style={{ opacity: batchMode ? 0.5 : 1, transition: "opacity .15s" }}>Flat</span>
-        <div
-          className={"toggle-switch" + (batchMode ? " on" : "")}
-          onClick={() => setBatchMode((p) => !p)}
-          style={{ width: 32, height: 18 }}
-        >
-          <div className="toggle-switch-knob" style={{ width: 14, height: 14 }} />
-        </div>
-        <span style={{ opacity: batchMode ? 1 : 0.5, transition: "opacity .15s" }}>Batched</span>
-        <div style={{ width: 1, height: 14, background: "rgba(255,255,255,0.2)", margin: "0 4px" }} />
         <div style={{ position: "relative" }}>
           <span
             onClick={() => setDevMenuOpen((p) => !p)}
@@ -4106,7 +4264,7 @@ function IntakePage() {
 
       {/* Page content (with right-margin when a panel is open) */}
       <div
-        onClick={() => { if (activePanel && !panelClosing && activePanel !== "preview" && activePanel !== "edit") closePanel(); }}
+        onClick={() => { if (activePanel && !panelClosing) closePanel(); }}
         style={{
           flex: 1, display: "flex", flexDirection: "column", overflow: "hidden",
           background: "#ffffff", borderRadius: 16,
@@ -4121,16 +4279,15 @@ function IntakePage() {
 
         {showSkillsScreen && (() => {
           const enabledKeys = new Set();
-          answeredSkillKeys.forEach(k => enabledKeys.add(k));
           if (skillsBatch1Choice === "all") {
             batch1Skills.filter(s => s.ready || answeredSkillKeys.has(s.key)).forEach(s => enabledKeys.add(s.key));
           } else if (skillsBatch1Choice === "pick") {
             SKILL_PICKER_OPTIONS.forEach(s => { if (skillPickerToggles[s.key]) enabledKeys.add(s.key); });
           }
-          if (skillsBatch2Choice === "all") {
-            batch2Skills.filter(s => s.ready || answeredSkillKeys.has(s.key)).forEach(s => enabledKeys.add(s.key));
-          } else if (skillsBatch2Choice === "pick") {
-            SKILL_PICKER_OPTIONS_B2.forEach(s => { if (skillPickerTogglesB2[s.key]) enabledKeys.add(s.key); });
+          if (b2EnableChoice === "pick") {
+            batch2Skills.forEach(s => { if (b2EnablePickerToggles[s.key]) enabledKeys.add(s.key); });
+          } else if (b2EnableChoice === "all" || b2EnableChoice === "freeform") {
+            batch2Skills.filter(s => answeredSkillKeys.has(s.key)).forEach(s => enabledKeys.add(s.key));
           }
           return <SkillsScreen skills={SKILLS} enabledKeys={enabledKeys} />;
         })()}
@@ -4392,12 +4549,13 @@ function IntakePage() {
                 }}>
                   {renderThreadText(msg.text, seenTerms)}
                   {msg.learnMore && (
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, marginLeft: 6, cursor: "pointer" }}>
-                      <span style={{ fontSize: 14, fontWeight: 500, color: ACCENT }}>Learn more</span>
-                      <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style={{ marginTop: 1 }}>
-                        <path d="M5.5 2.5H3a1 1 0 00-1 1v8a1 1 0 001 1h8a1 1 0 001-1V9" stroke={ACCENT} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                        <path d="M8 2h4v4M12 2L6.5 7.5" stroke={ACCENT} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 5, marginLeft: 6, cursor: "pointer" }}>
+                      <span style={{ width: 18, height: 18, borderRadius: "50%", background: ACCENT, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <svg width="8" height="9" viewBox="0 0 8 9" fill="none">
+                          <path d="M1.5 1.5v6l5.5-3z" fill="#fff" />
+                        </svg>
+                      </span>
+                      <span style={{ fontSize: 14, fontWeight: 500, color: ACCENT }}>How skills work (2 min)</span>
                     </span>
                   )}
                 </div>
@@ -4429,6 +4587,7 @@ function IntakePage() {
                   visibleCount={3}
                   needsInfo={true}
                   answeredSkillKeys={new Set([...SKILLS.filter(s => s.ready).map(s => s.key), ...answeredSkillKeys])}
+                  actionDeclinedKeys={actionDeclinedKeys}
                   activeSkillIdx={activePanel ? activeSkillIdx : null}
                   expanded={skillsBatch1Expanded}
                   onToggleExpanded={() => setSkillsBatch1Expanded((p) => !p)}
@@ -4550,15 +4709,29 @@ function IntakePage() {
                 <SkillListCard
                   skills={batch2Skills}
                   startIndex={batch1Skills.length}
-                  visibleCount={2}
+                  visibleCount={3}
                   needsInfo={true}
                   answeredSkillKeys={answeredSkillKeys}
+                  actionDeclinedKeys={actionDeclinedKeys}
                   activeSkillIdx={activePanel ? activeSkillIdx : null}
                   expanded={skillsBatch2Expanded}
                   onToggleExpanded={() => setSkillsBatch2Expanded((p) => !p)}
                   onPreview={(idx) => { setActiveSkillIdx(idx); setActivePanel("preview"); }}
                   onEdit={(idx) => { setActiveSkillIdx(idx); setActivePanel("edit"); }}
                 />
+              </div>
+            )}
+
+            {batchMode && skillsBatch2Reply && (
+              <div style={{
+                marginBottom: 16, display: "flex", flexDirection: "column",
+                alignItems: "flex-end", animation: "fadeInUp .35s ease-out",
+              }}>
+                <div style={{
+                  fontSize: 14, lineHeight: 1.45, color: TEXT,
+                  maxWidth: "85%", padding: "11px 16px", borderRadius: 14,
+                  background: SURFACE, fontFamily: "'Inter', sans-serif",
+                }}>{skillsBatch2Reply}</div>
               </div>
             )}
 
@@ -4612,22 +4785,10 @@ function IntakePage() {
               </div>
             )}
 
-            {batchMode && skillsBatch2Reply && (
-              <div style={{
-                marginBottom: 16, display: "flex", flexDirection: "column",
-                alignItems: "flex-end", animation: "fadeInUp .35s ease-out",
-              }}>
-                <div style={{
-                  fontSize: 14, lineHeight: 1.45, color: TEXT,
-                  maxWidth: "85%", padding: "11px 16px", borderRadius: 14,
-                  background: SURFACE, fontFamily: "'Inter', sans-serif",
-                }}>{skillsBatch2Reply}</div>
-              </div>
-            )}
-
-            {batchMode && skillsBatch2Choice && (skillsBatch2Choice !== "pick" || skillPickerConfirmedB2) && (() => {
-              const b2PickerSelected = SKILL_PICKER_OPTIONS_B2.filter((s) => skillPickerTogglesB2[s.key]);
-              const b2EnabledCount = skillsBatch2Choice === "pick" ? b2PickerSelected.length : batch2Skills.filter(s => s.ready || answeredSkillKeys.has(s.key)).length;
+            {batchMode && skillsPhase === "done" && skillsBatch2Choice !== "skip" && (() => {
+              const b2EnabledCount = b2EnableChoice === "pick"
+                ? Object.values(b2EnablePickerToggles).filter(Boolean).length
+                : batch2Skills.filter(s => answeredSkillKeys.has(s.key)).length;
               return (
                 <ConfirmationRow
                   label={"Enabled " + b2EnabledCount + " skill" + (b2EnabledCount !== 1 ? "s" : "")}
@@ -4709,7 +4870,7 @@ function IntakePage() {
             || channelsPhase === "typing-intro";
           const sendDisabled = narrating || !chatInput.trim();
           return (
-            <div style={{
+            <div onClick={(e) => e.stopPropagation()} style={{
               padding: "8px 24px 24px", position: "relative",
               background: "#ffffff",
             }}>
@@ -4773,27 +4934,35 @@ function IntakePage() {
                     onFreeformSubmit={() => {}}
                     frozen={false}
                   />
-                ) : (batchMode && skillsPhase === "shown-batch2" && !skillsBatch2Choice) ? (
+                ) : (batchMode && skillsPhase === "shown-batch2" && allB2Complete && !b2EnableChoice) ? (
                   <QuestionCard
                     title="Do you want to enable these skills?"
                     options={SKILL_ENABLE_OPTIONS}
-                    onSelect={(key) => advanceFromBatch2(key)}
-                    onClose={() => advanceFromBatch2("all")}
-                    freeformValue={skillsBatch2Freeform}
-                    onFreeformChange={setSkillsBatch2Freeform}
-                    onFreeformSubmit={() => { if (skillsBatch2Freeform.trim()) advanceFromBatch2("freeform", skillsBatch2Freeform.trim()); }}
+                    onSelect={(key) => handleB2EnableChoice(key)}
+                    onClose={() => handleB2EnableChoice("all")}
+                    freeformValue={b2EnableFreeform}
+                    onFreeformChange={setB2EnableFreeform}
+                    onFreeformSubmit={() => { if (b2EnableFreeform.trim()) handleB2EnableChoice("freeform", b2EnableFreeform.trim()); }}
                   />
-                ) : (batchMode && skillsBatch2Choice === "pick" && !skillPickerConfirmedB2) ? (
+                ) : (batchMode && b2EnableChoice === "pick" && !b2EnablePickerConfirmed) ? (
                   <SkillPickerCard
-                    toggles={skillPickerTogglesB2}
-                    onToggle={(key) => setSkillPickerTogglesB2((prev) => ({ ...prev, [key]: !prev[key] }))}
-                    onConfirm={onSkillPickerConfirmB2}
-                    onClose={onSkillPickerConfirmB2}
-                    freeformValue={skillPickerFreeformB2}
-                    onFreeformChange={setSkillPickerFreeformB2}
+                    toggles={b2EnablePickerToggles}
+                    onToggle={(key) => setB2EnablePickerToggles((prev) => ({ ...prev, [key]: !prev[key] }))}
+                    onConfirm={() => { setB2EnablePickerConfirmed(true); enableAllB2(); }}
+                    onClose={() => { setB2EnablePickerConfirmed(true); enableAllB2(); }}
+                    freeformValue=""
+                    onFreeformChange={() => {}}
                     onFreeformSubmit={() => {}}
                     frozen={false}
                     options={SKILL_PICKER_OPTIONS_B2}
+                  />
+                ) : (batchMode && skillsPhase === "shown-batch2" && !skillsBatch2Choice && !allB2Complete) ? (
+                  <QuestionCard
+                    title="Ready to fill in the missing details so these skills can be enabled?"
+                    options={SKILL_ENABLE_OPTIONS_B2}
+                    onSelect={(key) => advanceFromBatch2(key)}
+                    onClose={null}
+                    hideFreeform
                   />
                 ) : showVoiceConfirm ? (
                   <div style={{
@@ -4893,12 +5062,12 @@ function IntakePage() {
       {/* Voice card panel */}
       {activePanel === "voice" && (
         <div style={{
-          position: "fixed", top: 0, right: 0, height: "100vh", width: 480,
+          position: "fixed", top: 16, right: 16, bottom: 16, width: 480,
           zIndex: 1000,
           background: "#ffffff",
-          borderLeft: "1px solid #EBECEF",
-          boxShadow: "-8px 0 32px rgba(0,0,0,.06)",
-          animation: panelClosing ? "slideOutRight .2s ease forwards" : (skipSlideIn ? "none" : "slideInRight .2s ease-out forwards"),
+          border: "1px solid #EBECEF",
+          borderRadius: 16,
+              animation: panelClosing ? "slideOutRight .2s ease forwards" : (skipSlideIn ? "none" : "slideInRight .2s ease-out forwards"),
           display: "flex", flexDirection: "column",
         }}>
           <div onClick={closePanel}
@@ -4924,12 +5093,12 @@ function IntakePage() {
       {/* Knowledge card panel */}
       {activePanel === "knowledge" && (
         <div style={{
-          position: "fixed", top: 0, right: 0, height: "100vh", width: 480,
+          position: "fixed", top: 16, right: 16, bottom: 16, width: 480,
           zIndex: 1000,
           background: "#ffffff",
-          borderLeft: "1px solid #EBECEF",
-          boxShadow: "-8px 0 32px rgba(0,0,0,.06)",
-          animation: panelClosing ? "slideOutRight .2s ease forwards" : (skipSlideIn ? "none" : "slideInRight .2s ease-out forwards"),
+          border: "1px solid #EBECEF",
+          borderRadius: 16,
+              animation: panelClosing ? "slideOutRight .2s ease forwards" : (skipSlideIn ? "none" : "slideInRight .2s ease-out forwards"),
           display: "flex", flexDirection: "column",
         }}>
           <div onClick={closePanel}

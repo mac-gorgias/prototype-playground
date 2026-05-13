@@ -50,7 +50,7 @@ var SKILLS = [
     title: "Item is damaged, defective, broken or not working as expected",
     subtitle: "Handled automatically",
     intents: ["Order / Damaged", "Product / Quality Issues"],
-    batch: 1,
+    batch: 2,
     tags: ["needs-review"],
     hardcodedValues: [
       { field: "claim_window_days", default: 30, label: "Days after delivery within which damage claims are accepted" },
@@ -68,8 +68,8 @@ var SKILLS = [
     title: "One or more items missing from an order",
     subtitle: "Handled automatically",
     intents: ["Order / Missing Item"],
-    batch: 1,
-    tags: [],
+    batch: 2,
+    tags: ["needs-review"],
     hardcodedValues: [
       { field: "report_window_days", default: 30, label: "Days after delivery within which missing item claims are accepted" },
     ],
@@ -150,7 +150,7 @@ var SKILLS = [
     title: "Product edits in an order (replace product, remove product)",
     subtitle: "Handled automatically",
     intents: ["Order / Edit"],
-    batch: 1,
+    batch: 2,
     tags: ["needs-review"],
     hardcodedValues: [
       { field: "edit_window_hours", default: 2, label: "Hours after order placement within which product edits are allowed" },
