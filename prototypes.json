@@ -37,6 +37,14 @@
     "date": "2026-04-29",
     "description": "Streamlined intake variant scoped to AI Agent trial users — landing page → tone-of-voice voice card → 9-skill setup with Edit/Preview right panels (UrbanStems Chat 2.0 widget preloaded per skill) → 2-channel selection (Email + Chat) → cinematic closing scoped to the content area. Reuses the existing intake prototype's component patterns. Self-contained, no API keys required.",
     "file": "intake-ai-agent-trial/index.html",
-    "image": "intake-ai-agent-trial-new.png"
+    "image": "intake-ai-agent-trial-user.png"
+  },
+  {
+    "name": "Intake — Gorgias Trial",
+    "author": "Mac",
+    "date": "2026-05-18",
+    "description": "Gorgias trial intake variant — identical to AI Agent Trial, ready for independent customization. Self-contained, no API keys required.",
+    "file": "intake-gorgias-trial/index.html",
+    "image": "intake-gorgias-trial-user.png"
   }
 ]
