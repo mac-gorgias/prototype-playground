@@ -758,9 +758,9 @@ function KnowledgeCardPanel() {
   const QUESTION_BG = "#FFF3E6";
 
   const sources = [
-    { name: "Store website", desc: "urbanstems.com", icon: "sync" },
+    { name: "Store website", desc: "urbanstems.com", icon: "check" },
     { name: "Help Center articles", desc: "help.urbanstems.com", icon: "check" },
-    { name: "URLs", desc: "3 additional pages indexed", icon: "sync" },
+    { name: "URLs", desc: "None", icon: "question" },
     { name: "Integrations", desc: "Shopify store", icon: "check" },
     { name: "Documents", desc: "None", icon: "question" },
   ];
@@ -5006,7 +5006,7 @@ function IntakePage({ initialJump }) {
           const sendDisabled = narrating || !chatInput.trim();
           return (
             <div onClick={(e) => e.stopPropagation()} style={{
-              padding: "8px 24px 24px", position: "relative",
+              padding: "16px 24px 24px", position: "relative",
               background: "#ffffff",
             }}>
               <div style={{ maxWidth: 740, margin: "0 auto" }}>
