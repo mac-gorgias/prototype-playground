@@ -1270,13 +1270,12 @@ function SidebarNav({ collapsed, onToggleCollapse, checklist, cinematicDone, sho
   ];
 
   const checklistItems = [
-    { key: "tone", label: "Review tone of voice" },
-    { key: "knowledge", label: "Confirm knowledge sources" },
+    { key: "tone_knowledge", label: "Review tone of voice and knowledge", checkKeys: ["tone", "knowledge"] },
     { key: "platform", label: "Connect e-commerce platform" },
     { key: "skills", label: "Configure skills" },
     { key: "channels", label: "Connect support channel(s)" },
   ];
-  const completedCount = checklistItems.filter((i) => checklist[i.key]).length;
+  const completedCount = checklistItems.filter((i) => { const keys = i.checkKeys || [i.key]; return keys.every(k => checklist[k]); }).length;
 
   return (
     <div style={{
@@ -1511,7 +1510,7 @@ function SidebarNav({ collapsed, onToggleCollapse, checklist, cinematicDone, sho
                 <div style={{ fontSize: 14, fontWeight: 700, color: "#1A1918", marginBottom: 14, fontFamily: "'Inter', sans-serif" }}>Get started</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   {checklistItems.map((item, idx) => {
-                    const checked = checklist[item.key];
+                    const checked = item.checkKeys ? item.checkKeys.every(k => checklist[k]) : checklist[item.key];
                     const firstUnchecked = checklistItems.findIndex(ci => !checklist[ci.key]);
                     const isInProgress = !checked && idx === firstUnchecked;
                     return (
@@ -1617,7 +1616,7 @@ function SidebarNav({ collapsed, onToggleCollapse, checklist, cinematicDone, sho
                   padding: "14px 16px 16px",
                 }}>
                   {checklistItems.map((item) => {
-                    const checked = checklist[item.key];
+                    const checked = item.checkKeys ? item.checkKeys.every(k => checklist[k]) : checklist[item.key];
                     return (
                       <div key={item.key} style={{
                         display: "flex", alignItems: "center", gap: 10,
@@ -3831,6 +3830,7 @@ function IntakePage() {
 
   // Closing
   const [closingPhase, setClosingPhase] = useState("idle"); // idle | shown
+  const [checklistExpanded, setChecklistExpanded] = useState(true);
   const [showSkillsScreen, setShowSkillsScreen] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
 
@@ -5311,7 +5311,6 @@ function IntakePage() {
                     options={CHANNEL_CONNECT_OPTIONS}
                     onSelect={handleChannelSelect}
                     onClose={null}
-                    hideFreeform
                   />
                 ) : (skillsPhase === "shown-batch1" && !skillsBatch1Choice) ? (
                   <QuestionCard
@@ -5475,6 +5474,100 @@ function IntakePage() {
         )}
 
       </div>
+
+      {/* Floating setup checklist — bottom left */}
+      {cinematicPhase === "done" && closingPhase !== "shown" && !activePanel && (() => {
+        const checklistItems = [
+          { key: "tone_knowledge", label: "Review tone of voice and knowledge", checkKeys: ["tone", "knowledge"] },
+          { key: "platform", label: "Connect e-commerce platform" },
+          { key: "skills", label: "Configure skills" },
+          { key: "channels", label: "Connect support channel(s)" },
+        ];
+        const total = checklistItems.length;
+        const completedCount = checklistItems.filter(i => { const keys = i.checkKeys || [i.key]; return keys.every(k => checklist[k]); }).length;
+        const r = 7;
+        const circumference = 2 * Math.PI * r;
+        const dashLength = (completedCount / total) * circumference;
+        const allDone = completedCount === total;
+        const ringTrackColor = allDone ? "#DFF3E6" : "#EDE8F8";
+        const ringFillColor = allDone ? "#1F8A4C" : "#7E55F6";
+        return (
+          <div style={{
+            position: "fixed", bottom: 40, left: 40, zIndex: 900,
+            width: 280,
+          }}>
+            <div style={{
+              background: "#ffffff",
+              border: "1px solid #EBECEF",
+              borderRadius: 14,
+              boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06)",
+              overflow: "hidden",
+            }}>
+              <div
+                onClick={() => setChecklistExpanded(p => !p)}
+                style={{
+                  display: "flex", alignItems: "center", gap: 10,
+                  padding: checklistExpanded ? "14px 16px 12px" : "10px 14px",
+                  cursor: "pointer", userSelect: "none",
+                  borderBottom: checklistExpanded ? "1px solid #EBECEF" : "none",
+                }}
+              >
+                <svg width="20" height="20" viewBox="0 0 20 20" style={{ flexShrink: 0 }}>
+                  <circle cx="10" cy="10" r={r} fill="none" stroke={ringTrackColor} strokeWidth="2.2" />
+                  <circle cx="10" cy="10" r={r} fill="none" stroke={ringFillColor} strokeWidth="2.2"
+                    strokeDasharray={dashLength + " " + circumference}
+                    strokeLinecap="round"
+                    transform="rotate(-90 10 10)"
+                    style={{ transition: "stroke-dasharray .35s ease, stroke .25s ease" }}
+                  />
+                </svg>
+                <span style={{ fontSize: 13, fontWeight: 600, color: "#1A1918", fontFamily: "'Inter', sans-serif", flex: 1 }}>Get started</span>
+                <span style={{ fontSize: 12, fontWeight: 400, color: "#8A8A8A", fontFamily: "'Inter', sans-serif", whiteSpace: "nowrap" }}>{completedCount} of {total}</span>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{
+                  flexShrink: 0, transition: "transform .2s ease",
+                  transform: checklistExpanded ? "rotate(0deg)" : "rotate(-90deg)",
+                }}>
+                  <path d="M3.5 5l3.5 3.5 3.5-3.5" stroke="#8A8A8A" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+              <div style={{
+                maxHeight: checklistExpanded ? 400 : 0,
+                opacity: checklistExpanded ? 1 : 0,
+                overflow: "hidden",
+                transition: checklistExpanded
+                  ? "max-height .32s cubic-bezier(.16,1,.3,1), opacity .22s ease .06s"
+                  : "max-height .26s cubic-bezier(.7,0,.84,0), opacity .14s ease",
+              }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 14, padding: "14px 16px 16px" }}>
+                  {checklistItems.map(item => {
+                    const checked = item.checkKeys ? item.checkKeys.every(k => checklist[k]) : checklist[item.key];
+                    return (
+                      <div key={item.key} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        {checked ? (
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+                            <circle cx="8" cy="8" r="7" fill="#7E55F6" />
+                            <path d="M5 8.2l2 2 4-4.4" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        ) : (
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+                            <circle cx="8" cy="8" r="7" fill="none" stroke="#C4C7CD" strokeWidth="1.4" />
+                          </svg>
+                        )}
+                        <span style={{
+                          fontSize: 13, fontWeight: 400, lineHeight: 1.4,
+                          fontFamily: "'Inter', sans-serif",
+                          color: checked ? "#8A8A8A" : "#1E242E",
+                          textDecoration: checked ? "line-through" : "none",
+                        }}>{item.label}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Voice card panel */}
       {activePanel === "voice" && (
