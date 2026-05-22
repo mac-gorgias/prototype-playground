@@ -3169,7 +3169,7 @@ function ClosingScreen({ onTakeMeToInbox, onInviteTeammate, completedSteps, aiAg
     animation: "cinematicWordIn .8s cubic-bezier(.16,1,.3,1) " + delay + "s forwards",
   });
 
-  const doneIcon = (<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7.5l3 3 5-5.5" stroke="#4ade80" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>);
+  const doneIcon = (<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7.5l3 3 5-5.5" stroke="#7E55F6" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>);
   const pendingIcon = (<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" strokeWidth="1.2" strokeDasharray="3 3" /></svg>);
 
   const bullets = [];
@@ -3205,10 +3205,10 @@ function ClosingScreen({ onTakeMeToInbox, onInviteTeammate, completedSteps, aiAg
   }
 
   const headline = aiAgentEnabled
-    ? "Your Gorgias account is ready"
+    ? "Great work!"
     : "Your Gorgias account is ready";
   const subtitle = aiAgentEnabled
-    ? "Gorgias and AI Agent are both set up. Your AI Agent will start handling conversations right away."
+    ? "In just a couple minutes you've set up your helpdesk and built an AI Agent that can handle your most common conversations."
     : "Your account is set up and ready to use. You can set up AI Agent anytime to start automating support.";
   const sectionTitle = "Here's what you've set up:";
 
@@ -3616,9 +3616,12 @@ function IntakePage() {
       }
 
       if (section === "end") {
+        setChecklist({ tone: true, knowledge: true, platform: true, skills: true, channels: true });
+        setSelectedPlatform("shopify");
+        setSkillsBatch1Choice("all");
+        setChannelConnected(true);
         setChannelsPhase("done");
         setChannelsCommittedMessages(CHANNEL_INTRO_MESSAGES.map(m => ({ text: m.text, bold: m.bold || null })));
-        completeChecklistItem("channels");
         setClosingPhase("shown");
         return;
       }
