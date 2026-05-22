@@ -1271,12 +1271,14 @@ function SidebarNav({ collapsed, onToggleCollapse, checklist, cinematicDone, sho
   ];
 
   const checklistItems = [
-    { key: "tone", label: "Review tone of voice" },
-    { key: "knowledge", label: "Confirm knowledge sources" },
+    { key: "tone_knowledge", label: "Review tone of voice and knowledge", checkKeys: ["tone", "knowledge"] },
     { key: "skills", label: "Configure skills" },
     { key: "channels", label: "Connect support channel(s)" },
   ];
-  const completedCount = checklistItems.filter((i) => checklist[i.key]).length;
+  const completedCount = checklistItems.filter((i) => {
+    const keys = i.checkKeys || [i.key];
+    return keys.every(k => checklist[k]);
+  }).length;
 
   return (
     <div style={{
@@ -1511,7 +1513,7 @@ function SidebarNav({ collapsed, onToggleCollapse, checklist, cinematicDone, sho
                 <div style={{ fontSize: 14, fontWeight: 700, color: "#1A1918", marginBottom: 14, fontFamily: "'Inter', sans-serif" }}>Get started</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   {checklistItems.map((item, idx) => {
-                    const checked = checklist[item.key];
+                    const checked = item.checkKeys ? item.checkKeys.every(k => checklist[k]) : checklist[item.key];
                     const firstUnchecked = checklistItems.findIndex(ci => !checklist[ci.key]);
                     const isInProgress = !checked && idx === firstUnchecked;
                     return (
@@ -1617,7 +1619,7 @@ function SidebarNav({ collapsed, onToggleCollapse, checklist, cinematicDone, sho
                   padding: "14px 16px 16px",
                 }}>
                   {checklistItems.map((item) => {
-                    const checked = checklist[item.key];
+                    const checked = item.checkKeys ? item.checkKeys.every(k => checklist[k]) : checklist[item.key];
                     return (
                       <div key={item.key} style={{
                         display: "flex", alignItems: "center", gap: 10,
@@ -3531,6 +3533,12 @@ function IntakePage({ initialJump }) {
     setChannelsMsgIdx(-1);
     setChannelToggles({ email1: true, email2: true, chat: true });
     setChannelsCardClosed(false);
+    setTrialPhase("idle");
+    setTrialTypingText("");
+    setTrialTypingActive(false);
+    setTrialCommittedMessages([]);
+    setTrialMsgIdx(-1);
+    setTrialChoice(null);
     setClosingPhase("idle");
     setShowConfetti(false);
     setChecklist({ tone: false, knowledge: false, skills: false, channels: false });
@@ -3601,10 +3609,20 @@ function IntakePage({ initialJump }) {
         return;
       }
 
+      setChannelsPhase("done");
+      setChannelsCommittedMessages(CHANNEL_INTRO_MESSAGES.map(m => ({ text: m.text, bold: m.bold || null })));
+      completeChecklistItem("channels");
+
+      if (section === "trial") {
+        setTrialPhase("shown");
+        setTrialCommittedMessages(TRIAL_INTRO_MESSAGES.map(m => ({ text: m.text, link: m.link || null })));
+        return;
+      }
+
       if (section === "end") {
-        setChannelsPhase("done");
-        setChannelsCommittedMessages(CHANNEL_INTRO_MESSAGES.map(m => ({ text: m.text, bold: m.bold || null })));
-        completeChecklistItem("channels");
+        setTrialPhase("done");
+        setTrialChoice("accept");
+        setTrialCommittedMessages(TRIAL_INTRO_MESSAGES.map(m => ({ text: m.text, link: m.link || null })));
         setClosingPhase("shown");
         return;
       }
@@ -3782,6 +3800,20 @@ function IntakePage({ initialJump }) {
   const [channelToggles, setChannelToggles] = useState({ email1: true, email2: true, chat: true });
   const [channelsCardClosed, setChannelsCardClosed] = useState(false);
   const [channelsFreeform, setChannelsFreeform] = useState("");
+
+  // Trial opt-in phase
+  const TRIAL_INTRO_MESSAGES = [
+    { text: "The last step is to activate your free 14-day AI Agent trial." },
+    { text: "Here's how it works: your trial starts today and it's completely free. All AI Agent features are unlocked so you can start seeing impact right away." },
+    { text: "On day 7, we'll send you a reminder that you're halfway through. After 14 days, your plan automatically converts to $30/month — unless you cancel during the trial." },
+    { text: "You can review the full trial terms here.", link: { text: "trial terms here", href: "#" } },
+  ];
+  const [trialPhase, setTrialPhase] = useState("idle");
+  const [trialTypingText, setTrialTypingText] = useState("");
+  const [trialTypingActive, setTrialTypingActive] = useState(false);
+  const [trialCommittedMessages, setTrialCommittedMessages] = useState([]);
+  const [trialMsgIdx, setTrialMsgIdx] = useState(-1);
+  const [trialChoice, setTrialChoice] = useState(null);
 
   // Edit panel follow-up state (per-skill)
   const [skillFollowUpAnswers, setSkillFollowUpAnswers] = useState({}); // { [skillKey]: { [field]: answer } }
@@ -4167,6 +4199,33 @@ function IntakePage({ initialJump }) {
     return () => clearInterval(interval);
   }, [channelsPhase, channelsMsgIdx]);
 
+  /* Trial opt-in intro typing — sequential messages */
+  useEffect(() => {
+    if (trialPhase !== "typing-intro") return;
+    if (trialMsgIdx < 0 || trialMsgIdx >= TRIAL_INTRO_MESSAGES.length) return;
+    const msg = TRIAL_INTRO_MESSAGES[trialMsgIdx];
+    const fullText = msg.text;
+    let charIdx = 0;
+    setTrialTypingActive(true);
+    setTrialTypingText("");
+    const interval = setInterval(() => {
+      charIdx++;
+      setTrialTypingText(fullText.substring(0, charIdx));
+      if (charIdx >= fullText.length) {
+        clearInterval(interval);
+        setTrialTypingActive(false);
+        setTrialCommittedMessages((prev) => prev.concat([{ text: fullText, link: msg.link || null }]));
+        setTrialTypingText("");
+        if (trialMsgIdx < TRIAL_INTRO_MESSAGES.length - 1) {
+          setTimeout(() => setTrialMsgIdx(trialMsgIdx + 1), 500);
+        } else {
+          setTimeout(() => setTrialPhase("shown"), 500);
+        }
+      }
+    }, 10);
+    return () => clearInterval(interval);
+  }, [trialPhase, trialMsgIdx]);
+
   /* Auto-scroll — only when the user hasn't manually scrolled up */
   useEffect(() => {
     if (userScrolledUp) return;
@@ -4213,12 +4272,14 @@ function IntakePage({ initialJump }) {
   const onChannelToggle = (key) => {
     setChannelToggles((prev) => ({ ...prev, [key]: !prev[key] }));
   };
+  const startTrialTyping = () => {
+    setTrialPhase("typing-intro");
+    setTrialMsgIdx(0);
+  };
   const advanceAfterChannels = () => {
     completeChecklistItem("channels");
     setChannelsPhase("done");
-    setShowConfetti(true);
-    setTimeout(() => setShowConfetti(false), 4500);
-    setTimeout(() => setClosingPhase("shown"), 600);
+    setTimeout(startTrialTyping, 900);
   };
   const onChannelConfirm = () => advanceAfterChannels();
   const [channelsSkipped, setChannelsSkipped] = useState(false);
@@ -4226,10 +4287,24 @@ function IntakePage({ initialJump }) {
     setChannelsSkipped(true);
     completeChecklistItem("channels");
     setChannelsPhase("done");
-    setTimeout(() => setClosingPhase("shown"), 600);
+    setTimeout(startTrialTyping, 900);
   };
   const onChannelClose = () => { setChannelsCardClosed(true); };
   const onChannelFreeformSubmit = () => { if (!channelsFreeform.trim()) return; advanceAfterChannels(); };
+
+  /* Trial opt-in handlers */
+  const handleTrialAccept = () => {
+    setTrialChoice("accept");
+    setTrialPhase("done");
+    setShowConfetti(true);
+    setTimeout(() => setShowConfetti(false), 4500);
+    setTimeout(() => setClosingPhase("shown"), 600);
+  };
+  const handleTrialDecline = () => {
+    setTrialChoice("decline");
+    setTrialPhase("done");
+    setTimeout(() => setClosingPhase("shown"), 600);
+  };
 
   /* Edit follow-up handlers (per-skill, batched) */
   const commitAllFollowUpAnswers = (answersMap) => {
@@ -4994,6 +5069,55 @@ function IntakePage({ initialJump }) {
               />
             )}
 
+            {/* Trial opt-in — committed messages */}
+            {trialCommittedMessages.map((msg, i) => (
+              <div key={"trm-" + i} style={{ marginBottom: 16 }}>
+                <div style={{
+                  fontSize: 14, lineHeight: 1.55, color: "#1E242E",
+                  fontFamily: "'Inter', sans-serif", fontWeight: 450, whiteSpace: "pre-wrap",
+                }}>
+                  {msg.link ? (() => {
+                    const idx = msg.text.indexOf(msg.link.text);
+                    if (idx === -1) return msg.text;
+                    return React.createElement(React.Fragment, null,
+                      msg.text.substring(0, idx),
+                      React.createElement("a", {
+                        href: msg.link.href,
+                        target: "_blank",
+                        rel: "noopener noreferrer",
+                        style: { color: ACCENT, textDecoration: "underline", cursor: "pointer" },
+                      }, msg.link.text),
+                      msg.text.substring(idx + msg.link.text.length)
+                    );
+                  })() : msg.text}
+                </div>
+              </div>
+            ))}
+
+            {/* Currently typing trial message */}
+            {trialTypingText && trialPhase === "typing-intro" && (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{
+                  fontSize: 14, lineHeight: 1.55, color: "#1E242E",
+                  fontFamily: "'Inter', sans-serif", fontWeight: 450, whiteSpace: "pre-wrap",
+                }}>
+                  {trialTypingText}
+                  <span style={{
+                    opacity: trialTypingActive ? 0.3 : 0,
+                    animation: trialTypingActive ? "pulse 1s infinite" : "none",
+                    display: "inline-block", width: "0.5ch",
+                  }}>|</span>
+                </div>
+              </div>
+            )}
+
+            {/* Trial confirmation row */}
+            {trialPhase === "done" && (
+              <ConfirmationRow
+                label={trialChoice === "accept" ? "Started 14-day free trial" : "Skipped trial activation"}
+              />
+            )}
+
             <div ref={chatEndRef} />
           </div>
         </div>
@@ -5030,7 +5154,9 @@ function IntakePage({ initialJump }) {
             || skillsPhase === "typing-batch1"
             || skillsPhase === "typing-batch2"
             || channelsTypingActive
-            || channelsPhase === "typing-intro";
+            || channelsPhase === "typing-intro"
+            || trialTypingActive
+            || trialPhase === "typing-intro";
           const sendDisabled = narrating || !chatInput.trim();
           return (
             <div onClick={(e) => e.stopPropagation()} style={{
@@ -5064,6 +5190,46 @@ function IntakePage({ initialJump }) {
                     />
                   );
                 })()
+                : trialPhase === "shown" && !trialChoice ? (
+                  <div style={{
+                    animation: "fadeInUp .35s ease-out",
+                    border: "1px solid " + BORDER, borderRadius: 8, background: "#ffffff",
+                    overflow: "hidden",
+                  }}>
+                    <div style={{ padding: "14px 18px 12px", fontSize: 14, fontWeight: 600, color: TEXT, borderBottom: "1px solid " + BORDER }}>
+                      Ready to activate your free 14-day trial?
+                    </div>
+                    {[
+                      { label: "Yes, start my free trial", icon: "check", onClick: handleTrialAccept },
+                      { label: "Not now, I'll decide later", icon: "cross", onClick: handleTrialDecline },
+                    ].map((opt, oi) => (
+                      <div key={oi}
+                        onClick={opt.onClick}
+                        style={{
+                          padding: "12px 18px", cursor: "pointer", display: "flex", alignItems: "center", gap: 12,
+                          transition: "background .15s",
+                          borderBottom: oi === 0 ? "1px solid " + BORDER : "none",
+                          background: CARD_BG,
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = SURFACE; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = CARD_BG; }}
+                      >
+                        <div style={{
+                          width: 26, height: 26, borderRadius: 6,
+                          background: "transparent", border: "1px solid " + BORDER,
+                          display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                        }}>
+                          {opt.icon === "check" ? (
+                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3.5 8.5l3 3 6-6.5" stroke={TEXT_MUTED} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                          ) : (
+                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke={TEXT_MUTED} strokeWidth="1.4" strokeLinecap="round" /></svg>
+                          )}
+                        </div>
+                        <span style={{ fontSize: 14, color: TEXT, fontFamily: "'Inter', sans-serif" }}>{opt.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                )
                 : channelsPhase === "shown" && !channelsCardClosed ? (
                   <ChannelsCard
                     toggles={channelToggles}
@@ -6237,6 +6403,7 @@ const __default__ = function App() {
     { key: "tov", label: "ToV / Knowledge" },
     { key: "skills", label: "Skill Setup" },
     { key: "channels", label: "Channel Mapping" },
+    { key: "trial", label: "Trial Opt-in" },
     { key: "end", label: "End" },
   ];
 
