@@ -1,3 +1,126 @@
+# Prototype Playground
+
+A static HTML prototype gallery for the Gorgias Design team, hosted on GitHub Pages. No build step, no backend — just files, a JSON manifest, and git.
+
+**Live dashboard:** https://mac-gorgias.github.io/prototype-playground
+**Local repo:** `/Users/mac/Dev/prototype-playground`
+**GitHub repo:** https://github.com/mac-gorgias/prototype-playground
+
+---
+
+## File structure
+
+```
+prototype-playground/
+├── index.html          ← Dashboard (fetches prototypes.json, renders gallery)
+├── viewer.html         ← iframe wrapper with "Back to projects" button
+├── prototypes.json     ← Single source of truth for all prototype metadata
+├── publish.md          ← /publish slash command definition
+├── skill_templates.js  ← Shared browser script for skill template UI patterns
+├── prototypes/         ← One subfolder per prototype
+│   └── <slug>/index.html
+└── images/             ← Preview thumbnails, named <slug>.png (or .jpg/.webp)
+```
+
+## How publishing works
+
+Use the `/publish` slash command. Claude will:
+1. Generate a slug from the prototype name (lowercase, hyphens, no special chars)
+2. `mkdir -p prototypes/<slug>` and copy the HTML file in as `index.html`
+3. Copy the screenshot to `images/<slug>.png` (if provided)
+4. Append an entry to `prototypes.json`
+5. `git pull --rebase && git add -A && git commit -m "add: <name>" && git push`
+6. Return both the prototype viewer link and the dashboard link
+
+If no screenshot is provided, ask the user — or auto-find the latest from `~/Desktop/Screenshot*.png`.
+
+## prototypes.json schema
+
+```json
+{
+  "name": "Human-readable name",
+  "author": "Mac",
+  "date": "YYYY-MM-DD",
+  "description": "One or two sentences shown on the dashboard card.",
+  "file": "<slug>/index.html",
+  "image": "<slug>.png"
+}
+```
+
+- `file` is used for local prototypes (served via `viewer.html?file=<slug>/index.html`)
+- `url` replaces `file` for externally hosted prototypes (e.g. Lovable apps) — opens in a new tab
+- `image` is optional; omit if no screenshot
+
+## Updating an existing prototype
+
+Match by slug. Replace `prototypes/<slug>/index.html` (and optionally `images/<slug>.*`), update the `prototypes.json` entry in place, then commit and push.
+
+## Dashboard design tokens
+
+The `index.html` dashboard uses these CSS variables — keep any dashboard edits consistent:
+
+```css
+--accent: #683FCF           /* Gorgias purple */
+--bg: #F8F7F6
+--surface: #FFFFFF
+--font: 'DM Sans'
+--mono: 'DM Mono'
+--text-primary: #1A1A1A
+--text-secondary: #6B6B6B
+--text-tertiary: #9A9A9A
+```
+
+## Git workflow
+
+```bash
+cd /Users/mac/Dev/prototype-playground
+git pull --rebase
+git add -A
+git commit -m "add: Prototype Name"   # or "update: ..." / "fix: ..."
+git push
+```
+
+GitHub Pages deploys automatically from the `main` branch root. Takes ~1–2 minutes to go live.
+
+## Current prototypes
+
+| Name | Slug | Notes |
+|------|------|-------|
+| Test | `onboarding-test` | Conversational onboarding flow |
+| Conversational Onboarding Lovable | — | External URL (lovable.app) |
+| Voice Onboarding | `voice-onboarding` | TTS-guided onboarding |
+| Conversational Intake | `conversational-intake` | Cinematic multi-step intake |
+| Intake — AI Agent Trial | `intake-ai-agent-trial` | Scoped to AI Agent trial users, uses UrbanStems brand |
+
+## Password-protecting a prototype
+
+`password_template.html` is a custom-styled [StatiCrypt](https://robinmoisson.github.io/staticrypt/) template. It matches the dashboard design (DM Sans, `--accent` purple, same card/input styling).
+
+To password-protect a prototype:
+1. Install StatiCrypt: `npm install -g staticrypt`
+2. Run it against the prototype, pointing at this template:
+   ```bash
+   staticrypt prototypes/<slug>/index.html --password <password> \
+     --template password_template.html \
+     --template-title "Prototype Name" \
+     --template-instructions "Enter the password to view this prototype." \
+     -o prototypes/<slug>/index.html
+   ```
+3. Commit and push — the output file is self-contained (no external dependencies).
+
+## Viewer
+
+`viewer.html` accepts a `?file=<slug>/index.html` query param and iframes the prototype. The iframe uses `sandbox="allow-scripts allow-same-origin allow-popups allow-forms"`.
+
+## Troubleshooting
+
+- **Merge conflict on prototypes.json** → `git pull`, resolve manually, push again
+- **Card shows broken image** → confirm `images/<slug>.png` exists and the `image` field in prototypes.json matches exactly (no folder prefix)
+- **Prototype 404s in viewer** → confirm `file` field is `<slug>/index.html` and the file exists at `prototypes/<slug>/index.html`
+- **Changes not live** → check the Actions tab on GitHub; Pages takes 1–2 min to deploy
+
+---
+
 # Intake Prototypes — Workspace Guide
 
 ## What this is

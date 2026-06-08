@@ -24,10 +24,10 @@ If the user says something like "use the latest screenshot" or "grab my screensh
 
 ## Playground location
 
-- Repo: `~/Documents/prototype-playground`
-- Prototypes folder: `~/Documents/prototype-playground/prototypes/`
-- Images folder: `~/Documents/prototype-playground/images/`
-- Manifest: `~/Documents/prototype-playground/prototypes.json`
+- Repo: `/Users/mac/Dev/prototype-playground`
+- Prototypes folder: `/Users/mac/Dev/prototype-playground/prototypes/`
+- Images folder: `/Users/mac/Dev/prototype-playground/images/`
+- Manifest: `/Users/mac/Dev/prototype-playground/prototypes.json`
 - Live dashboard: `https://mac-gorgias.github.io/prototype-playground`
 
 ## Steps to publish
@@ -37,13 +37,13 @@ If the user says something like "use the latest screenshot" or "grab my screensh
 
 2. **Create the prototype folder and copy the HTML file**:
 ```bash
-   mkdir -p ~/Documents/prototype-playground/prototypes/<slug>
-   cp "<SOURCE_FILE>" ~/Documents/prototype-playground/prototypes/<slug>/index.html
+   mkdir -p /Users/mac/Dev/prototype-playground/prototypes/<slug>
+   cp "<SOURCE_FILE>" /Users/mac/Dev/prototype-playground/prototypes/<slug>/index.html
 ```
 
 3. **If a screenshot is provided or found**, copy it to the images folder:
 ```bash
-   cp "<SCREENSHOT_PATH>" ~/Documents/prototype-playground/images/<slug>.png
+   cp "<SCREENSHOT_PATH>" /Users/mac/Dev/prototype-playground/images/<slug>.png
 ```
    If the source image is .jpg, .jpeg, or .webp, keep that extension instead.
 
@@ -63,7 +63,7 @@ If the user says something like "use the latest screenshot" or "grab my screensh
 
 5. **Push to GitHub**:
 ```bash
-   cd ~/Documents/prototype-playground
+   cd /Users/mac/Dev/prototype-playground
    git pull --rebase
    git add -A
    git commit -m "add: <PROTOTYPE_NAME>"

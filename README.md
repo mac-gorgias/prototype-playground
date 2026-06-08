@@ -2,25 +2,13 @@
 
 A lightweight, self-hosted prototype gallery for the design team. Publish HTML prototypes from Claude Code (or anywhere) and share them with a link.
 
-**Live dashboard:** `https://YOUR_USERNAME.github.io/prototype-playground`
+**Live dashboard:** `https://mac-gorgias.github.io/prototype-playground`
 
 ---
 
-## Quick Start
+## Deployment
 
-### 1. Create the GitHub repo
-
-Go to [github.com/new](https://github.com/new) and create a new **public** repo called `prototype-playground`.
-
-```bash
-# Clone it locally
-git clone https://github.com/YOUR_USERNAME/prototype-playground.git
-cd prototype-playground
-```
-
-### 2. Copy these files in
-
-Copy all the files from this package into your repo:
+Hosted on GitHub Pages, deployed automatically from the `main` branch root. Push to `main` and the live site updates within ~1–2 minutes.
 
 ```
 prototype-playground/
@@ -29,22 +17,9 @@ prototype-playground/
 ├── prototypes.json     ← Manifest (tracks all prototypes)
 ├── publish.md          ← Claude Code slash command for publishing
 ├── prototypes/         ← Each prototype lives in its own subfolder
-│   ├── my-prototype/
-│   │   └── index.html
-│   └── .gitkeep
-├── images/             ← Preview images (one per prototype, named by slug)
-└── README.md
+│   └── <slug>/index.html
+└── images/             ← Preview thumbnails, named <slug>.png
 ```
-
-### 3. Enable GitHub Pages
-
-1. Push your code: `git add -A && git commit -m "init" && git push`
-2. Go to your repo on GitHub → **Settings** → **Pages**
-3. Under "Source", select **Deploy from a branch**
-4. Choose `main` branch, `/ (root)` folder
-5. Click **Save**
-
-Your dashboard will be live at `https://YOUR_USERNAME.github.io/prototype-playground` within a minute.
 
 ---
 
@@ -88,10 +63,10 @@ Claude matches by slug, replaces the file (and/or image), and pushes the update.
 
 Just share the dashboard link. No GitHub account needed to view prototypes.
 
-**Dashboard:** `https://YOUR_USERNAME.github.io/prototype-playground`
+**Dashboard:** `https://mac-gorgias.github.io/prototype-playground`
 
 Each prototype also has a direct link like:
-`https://YOUR_USERNAME.github.io/prototype-playground/viewer.html?file=my-prototype/index.html`
+`https://mac-gorgias.github.io/prototype-playground/viewer.html?file=my-prototype/index.html`
 
 ---
 
@@ -104,7 +79,7 @@ If other designers want to publish too:
 3. **Get repo access** — Ask the repo owner to add you as a collaborator
 4. **Clone the repo:**
    ```bash
-   git clone https://github.com/YOUR_USERNAME/prototype-playground.git
+   git clone https://github.com/mac-gorgias/prototype-playground.git
    ```
 5. **Open the repo in Claude Code and run `/publish`** with your HTML file.
 
@@ -139,5 +114,4 @@ The system is intentionally simple — no build step, no backend, no database.
 Future ideas:
 - Slack integration to auto-post new prototype links
 - Thumbnail screenshots via Puppeteer
-- Password protection via Cloudflare Access
 - Drag-and-drop web uploader (no terminal needed)
