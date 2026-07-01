@@ -618,6 +618,7 @@ function renderTextWithBold(text, boldPart, seenTerms) {
 
 /* ─── Research sources covering brand + knowledge ─── */
 const VOICE_RESEARCH_SOURCES = [
+  { favicon: "shopify.com", title: "Reviewing Shopify store • UrbanStems" },
   { favicon: "urbanstems.com", title: "Looking up urbanstems.com" },
   { favicon: "urbanstems.com", title: "Learning about your products" },
   { favicon: "urbanstems.com", title: "Understanding your brand aesthetics" },
@@ -3329,29 +3330,12 @@ function IntakePage() {
     setAllB2DraftTyping("");
     setPlatformPhase("idle");
     setSelectedPlatform(null);
-    setPlatformBridgeMsgIdx(0);
-    setPlatformBridgeCommitted([]);
-    setPlatformBridgeTypingText("");
+    setShopifyAckText("");
+    setShopifyAckComplete(false);
     setPlatformConnectedShown(false);
     setPlatformOtherText("");
     setPlatformOtherComplete(false);
     setPlatformFreeformValue("");
-  };
-
-  const setIntroComplete = () => {
-    setCinematicPhase("done");
-    setLandingClosing(false);
-    setChatMessages(welcomeMessages.map(m => ({ role: "ai", text: m.text, bold: m.bold || null })));
-    setCurrentMsgIndex(welcomeMessages.length);
-    setTypingText("");
-    setIsTypingMessage(false);
-    setResearchPhase("done");
-    setResearchSources([...VOICE_RESEARCH_SOURCES]);
-    setResearchExpanded(false);
-    findingsStartedRef.current = true;
-    setFindingsText(findingsFullText);
-    setFindingsTyping(false);
-    setFindingsComplete(true);
   };
 
   const jumpTo = (section) => {
@@ -3362,7 +3346,31 @@ function IntakePage() {
       if (section === "signup") return;
       if (section === "intro") return;
 
-      setIntroComplete();
+      setCinematicPhase("done");
+      setLandingClosing(false);
+      setChatMessages(welcomeMessages.map(m => ({ role: "ai", text: m.text, bold: m.bold || null })));
+      setCurrentMsgIndex(welcomeMessages.length);
+      setTypingText("");
+      setIsTypingMessage(false);
+
+      if (section === "platform") {
+        setPlatformPhase("selecting");
+        return;
+      }
+
+      setSelectedPlatform("Shopify");
+      setPlatformConnectedShown(true);
+      completeChecklistItem("platform");
+      setPlatformPhase("connected");
+      setShopifyAckComplete(true);
+
+      setResearchPhase("done");
+      setResearchSources([...VOICE_RESEARCH_SOURCES]);
+      setResearchExpanded(false);
+      findingsStartedRef.current = true;
+      setFindingsText(findingsFullText);
+      setFindingsTyping(false);
+      setFindingsComplete(true);
 
       if (section === "tov") {
         setShowVoiceCard(true);
@@ -3373,17 +3381,6 @@ function IntakePage() {
       setShowVoiceCard(true);
       setVoiceUserReply("Yes, looks good. I'll adjust it later if needed.");
       completeChecklistItem("tone");
-
-      if (section === "platform") {
-        setPlatformPhase("selecting");
-        setPlatformBridgeCommitted(PLATFORM_BRIDGE_MESSAGES.map(m => m.text));
-        return;
-      }
-
-      setSelectedPlatform("Shopify");
-      setPlatformConnectedShown(true);
-      completeChecklistItem("platform");
-      setPlatformPhase("connected");
 
       if (section === "skills") {
         setSkillsPhase("shown-batch1");
@@ -3397,11 +3394,9 @@ function IntakePage() {
       completeChecklistItem("skills");
       setSkillsPhase("done");
 
-      if (batchMode) {
-        setSkillsBatch2Messages(SKILL_INTRO_MESSAGES_BATCH_2.map(m => ({ text: m.text, bold: m.bold || null })));
-        setSkillsBatch2Choice("all");
-        setSkillsBatch2Reply("Turn on all ready to enable skills");
-      }
+      setSkillsBatch2Messages(SKILL_INTRO_MESSAGES_BATCH_2.map(m => ({ text: m.text, bold: m.bold || null })));
+      setSkillsBatch2Choice("all");
+      setSkillsBatch2Reply("Turn on all ready to enable skills");
 
       if (section === "channels") {
         setChannelsPhase("shown");
@@ -3411,7 +3406,6 @@ function IntakePage() {
 
       if (section === "end") {
         setChecklist({ tone: true, platform: true, skills: true, channels: true });
-        setSelectedPlatform("shopify");
         setSkillsBatch1Choice("all");
         setChannelConnected(true);
         setChannelsPhase("done");
@@ -3455,7 +3449,7 @@ function IntakePage() {
   const welcomeMessages = [
     { text: "I'm Gaia, your Gorgias AI assistant, and I will work alongside you to learn about UrbanStems' shoppers, priorities, and challenges.", bold: "I'm Gaia" },
     { text: "By the end of this conversation, you'll be live and ready to support UrbanStems's shoppers." },
-    { text: "I'll start by pulling up some information about your business to make sure I've got your brand right." },
+    { text: "First things first, I'll need access to your store so everything we set up is built around how your business actually works." },
   ];
 
   // Research
@@ -3483,18 +3477,13 @@ function IntakePage() {
   const findingsBold = "UrbanStems";
 
   // Platform selector (after ToV confirmation)
-  const [platformPhase, setPlatformPhase] = useState("idle"); // idle | bridge-typing | selecting | oauth | connected | other-typing | other-path
+  const [platformPhase, setPlatformPhase] = useState("idle"); // idle | selecting | oauth | shopify-ack | connected | other-typing | other-path
   const [selectedPlatform, setSelectedPlatform] = useState(null);
-  const [platformBridgeMsgIdx, setPlatformBridgeMsgIdx] = useState(0);
-  const [platformBridgeCommitted, setPlatformBridgeCommitted] = useState([]);
-  const [platformBridgeTypingText, setPlatformBridgeTypingText] = useState("");
+  const [shopifyAckText, setShopifyAckText] = useState("");
+  const [shopifyAckComplete, setShopifyAckComplete] = useState(false);
   const [platformConnectedShown, setPlatformConnectedShown] = useState(false);
   const [platformOtherText, setPlatformOtherText] = useState("");
   const [platformOtherComplete, setPlatformOtherComplete] = useState(false);
-  const PLATFORM_BRIDGE_MESSAGES = [
-    { text: "Before we go further, connecting your ecommerce platform will make a real difference in what comes next." },
-    { text: "It connects Gorgias to your orders, products, and customer data — so your support tools can work with real store information." },
-  ];
   const PLATFORM_OPTIONS = [
     { key: "shopify", title: "Shopify", badge: "AI detected" },
     { key: "woocommerce", title: "WooCommerce" },
@@ -3528,15 +3517,10 @@ function IntakePage() {
   const [skillsTypingActive, setSkillsTypingActive] = useState(false);
   const [skillsBatch1Messages, setSkillsBatch1Messages] = useState([]); // batch 1 committed messages
   const [skillsBatch2Messages, setSkillsBatch2Messages] = useState([]); // batch 2 committed messages
-  const [batchMode, setBatchMode] = useState(true);
-  const SKILL_INTRO_MESSAGES_BATCH_1 = batchMode ? [
-    { text: "With your tone of voice and store data, AI Agent now knows how to sound like your brand and has the context it needs to handle real requests.", bold: ["tone of voice", "store data"] },
+  const SKILL_INTRO_MESSAGES_BATCH_1 = [
+    { text: "With your tone of voice set and your store connected, AI Agent knows how to sound like UrbanStems and has the context it needs to handle real requests.", bold: ["tone of voice", "store connected"] },
     { text: "Now it needs skills to address your most common customer requests. When a request comes in, AI Agent detects the intent, matches it to a skill, and follows its instructions to respond.", bold: "skills", learnMore: true },
-    { text: "I've already set up a few skills that cover around 40% of incoming support tickets for merchants from day one, on average.", bold: "40%" },
-  ] : [
-    { text: "With your tone of voice and store data, AI Agent now knows how to sound like your brand and has the context it needs to handle real requests.", bold: ["tone of voice", "store data"] },
-    { text: "Now it needs skills to address your most common customer requests. When a request comes in, AI Agent detects the intent, matches it to a skill, and follows its instructions to respond.", bold: "skills", learnMore: true },
-    { text: "I've already drafted some starter skills to cover X% of your incoming tickets. Most of them are ready to go, but some need a few additional details to get your policy right.", bold: "X%" },
+    { text: "I've already set up a few skills that cover a meaningful share of incoming support tickets from day one." },
   ];
   const SKILL_INTRO_MESSAGES_BATCH_2 = [
     { text: "Great work! The next 3 skills need a few more details to get your policy right.", bold: "3 skills" },
@@ -3555,7 +3539,7 @@ function IntakePage() {
   const [b2EnableFreeform, setB2EnableFreeform] = useState("");
   const [b2EnablePickerToggles, setB2EnablePickerToggles] = useState({});
   const [b2EnablePickerConfirmed, setB2EnablePickerConfirmed] = useState(false);
-  const batch1Skills = batchMode ? SKILLS.filter(s => s.ready) : SKILLS;
+  const batch1Skills = SKILLS.filter(s => s.ready);
   const batch2Skills = SKILLS.filter(s => !s.ready);
   const SKILL_ENABLE_OPTIONS = [
     { key: "all", title: "Turn on all ready to enable skills", desc: "AI Agent will always follow skill instructions when matching intent is detected", badge: "Recommended" },
@@ -3701,7 +3685,7 @@ function IntakePage() {
           if (currentMsgIndex < welcomeMessages.length - 1) {
             setTimeout(() => setCurrentMsgIndex((p) => p + 1), 600);
           } else {
-            setTimeout(() => setResearchPhase("running"), 800);
+            setTimeout(() => setPlatformPhase("selecting"), 800);
           }
         }
       }, 10);
@@ -3709,37 +3693,33 @@ function IntakePage() {
     return () => clearTimeout(startDelay);
   }, [currentMsgIndex, cinematicPhase]);
 
-  /* Platform bridge narration typing (2 messages after ToV confirmation) */
+  /* Shopify acknowledgment typing — after OAuth success, before research */
   useEffect(() => {
-    if (platformPhase !== "bridge-typing") return;
-    if (platformBridgeMsgIdx >= PLATFORM_BRIDGE_MESSAGES.length) return;
-    const fullText = PLATFORM_BRIDGE_MESSAGES[platformBridgeMsgIdx].text;
+    if (platformPhase !== "shopify-ack") return;
+    const ackFullText = "Got it. Now let me pull up some info about your brand so I can get the voice right.";
     let charIndex = 0;
-    setPlatformBridgeTypingText("");
+    setShopifyAckText("");
     const startDelay = setTimeout(() => {
       const interval = setInterval(() => {
         charIndex++;
-        setPlatformBridgeTypingText(fullText.substring(0, charIndex));
-        if (charIndex >= fullText.length) {
+        setShopifyAckText(ackFullText.substring(0, charIndex));
+        if (charIndex >= ackFullText.length) {
           clearInterval(interval);
-          setPlatformBridgeCommitted((prev) => [...prev, fullText]);
-          setPlatformBridgeTypingText("");
-          if (platformBridgeMsgIdx < PLATFORM_BRIDGE_MESSAGES.length - 1) {
-            setTimeout(() => setPlatformBridgeMsgIdx((p) => p + 1), 600);
-          } else {
-            setTimeout(() => setPlatformPhase("selecting"), 400);
-          }
+          setShopifyAckComplete(true);
+          setShopifyAckText("");
+          setPlatformPhase("connected");
+          setTimeout(() => setResearchPhase("running"), 800);
         }
       }, 10);
-    }, 300);
+    }, 600);
     return () => clearTimeout(startDelay);
-  }, [platformPhase, platformBridgeMsgIdx]);
+  }, [platformPhase]);
 
   /* Platform other-path acknowledgment typing */
   useEffect(() => {
     if (platformPhase !== "other-typing") return;
     const platformName = selectedPlatform || "your platform";
-    const otherFullText = "Great — I've noted " + platformName + " as your ecommerce platform. You can connect it from your dashboard once you're set up. For now, let's get your support email connected so you're ready for customers.";
+    const otherFullText = "Got it. You can connect " + platformName + " later from your apps page. For now, let's get your support email set up so you're ready for customers.";
     let charIndex = 0;
     setIsTypingMessage(true);
     setTypingText("");
@@ -3780,8 +3760,7 @@ function IntakePage() {
   const handleShopifyConnected = () => {
     setPlatformConnectedShown(true);
     completeChecklistItem("platform");
-    setPlatformPhase("connected");
-    setTimeout(startSkillsTyping, 900);
+    setPlatformPhase("shopify-ack");
   };
   const [platformFreeformValue, setPlatformFreeformValue] = useState("");
 
@@ -3886,19 +3865,10 @@ function IntakePage() {
     setSkillsBatch1Choice(key);
     setSkillsBatch1Reply(key === "freeform" ? freeformText : SKILL_ENABLE_REPLY_TEXT[key]);
     if (key === "pick") return;
-    if (batchMode) {
-      setTimeout(() => {
-        setSkillsPhase("typing-batch2");
-        setSkillsBatch2MsgIdx(0);
-      }, 600);
-    } else {
-      setTimeout(() => {
-        completeChecklistItem("skills");
-        setSkillsPhase("done");
-        setChannelsPhase("typing-intro");
-        setChannelsMsgIdx(0);
-      }, 600);
-    }
+    setTimeout(() => {
+      setSkillsPhase("typing-batch2");
+      setSkillsBatch2MsgIdx(0);
+    }, 600);
   };
   const [allB1DraftMsg, setAllB1DraftMsg] = useState(null);
   const [allB1DraftTyping, setAllB1DraftTyping] = useState("");
@@ -3909,19 +3879,10 @@ function IntakePage() {
     if (noneSelected) {
       setAllB1DraftMsg("typing");
     }
-    if (batchMode) {
-      setTimeout(() => {
-        setSkillsPhase("typing-batch2");
-        setSkillsBatch2MsgIdx(0);
-      }, 600);
-    } else {
-      setTimeout(() => {
-        completeChecklistItem("skills");
-        setSkillsPhase("done");
-        setChannelsPhase("typing-intro");
-        setChannelsMsgIdx(0);
-      }, 600);
-    }
+    setTimeout(() => {
+      setSkillsPhase("typing-batch2");
+      setSkillsBatch2MsgIdx(0);
+    }, 600);
   };
 
   /* Skills intro typing — batch 2 (3 messages) */
@@ -4083,16 +4044,12 @@ function IntakePage() {
   };
 
   /* Voice card actions */
-  const startPlatformBridge = () => {
-    setPlatformPhase("bridge-typing");
-    setPlatformBridgeMsgIdx(0);
-  };
   const handleVoiceYes = () => {
     setVoiceUserReply("Yes, looks good. I'll adjust it later if needed.");
     setShowVoiceConfirm(false);
     completeChecklistItem("tone");
     closePanel();
-    setTimeout(startPlatformBridge, 900);
+    setTimeout(startSkillsTyping, 900);
   };
   const handleVoiceNo = () => {
     setVoiceUserReply("No, I need to make some changes.");
@@ -4110,7 +4067,7 @@ function IntakePage() {
     setVoiceRevisionPhase("idle");
     completeChecklistItem("tone");
     closePanel();
-    setTimeout(startPlatformBridge, 900);
+    setTimeout(startSkillsTyping, 900);
   };
   const handleRevisionNo = () => {
     setVoiceRevisionMessages(prev => [...prev, { role: "user", text: "No, I need more changes." }]);
@@ -4123,7 +4080,7 @@ function IntakePage() {
     setShowVoiceConfirm(false);
     completeChecklistItem("tone");
     closePanel();
-    setTimeout(startPlatformBridge, 900);
+    setTimeout(startSkillsTyping, 900);
   };
 
   /* Voice revision typing effects */
@@ -4175,9 +4132,10 @@ function IntakePage() {
   const advanceAfterChannels = () => {
     completeChecklistItem("channels");
     setChannelsPhase("done");
-    const _aiEnabled = selectedPlatform === "shopify"
-      && (skillsBatch1Choice === "all" || skillsBatch1Choice === "freeform"
-        || (skillsBatch1Choice === "pick" && SKILL_PICKER_OPTIONS.some(s => skillPickerToggles[s.key])));
+    const isShopify = !!selectedPlatform && selectedPlatform.toLowerCase() === "shopify";
+    if (!isShopify) return;
+    const _aiEnabled = skillsBatch1Choice === "all" || skillsBatch1Choice === "freeform"
+      || (skillsBatch1Choice === "pick" && SKILL_PICKER_OPTIONS.some(s => skillPickerToggles[s.key]));
     if (_aiEnabled) {
       setShowConfetti(true);
       setTimeout(() => setShowConfetti(false), 4500);
@@ -4222,7 +4180,7 @@ function IntakePage() {
     } else if (answersMap.shopify_action && !answersMap.shopify_action.startsWith("No")) {
       setActionDeclinedKeys((prev) => { const next = new Set(prev); next.delete(skillKey); return next; });
     }
-    const phase = batchMode ? (activeSkillIdx < batch1Skills.length ? "batch1" : "batch2") : "batch1";
+    const phase = activeSkillIdx < batch1Skills.length ? "batch1" : "batch2";
     const skillTitle = SKILLS[activeSkillIdx].title;
     setEditChatMessages((prev) => prev.concat([{ role: "confirmation", label: "Updated " + skillTitle, phase }]));
   };
@@ -4350,8 +4308,8 @@ function IntakePage() {
               {[
                 { key: "signup", label: "Signup" },
                 { key: "intro", label: "Intro" },
-                { key: "tov", label: "ToV" },
                 { key: "platform", label: "Platform" },
+                { key: "tov", label: "ToV" },
                 { key: "skills", label: "Skill Setup" },
                 { key: "channels", label: "Channel Mapping" },
                 { key: "end", label: "End" },
@@ -4474,6 +4432,66 @@ function IntakePage() {
                 }}>
                   {typingText}<span style={{ opacity: 0.3, animation: "pulse 1s infinite" }}>|</span>
                 </div>
+              </div>
+            )}
+
+            {/* Platform user reply bubble */}
+            {selectedPlatform && platformPhase !== "idle" && platformPhase !== "selecting" && (
+              <div style={{
+                marginBottom: 16, display: "flex", flexDirection: "column",
+                alignItems: "flex-end", animation: "fadeInUp .35s ease-out",
+              }}>
+                <div style={{
+                  fontSize: 14, lineHeight: 1.45, color: TEXT,
+                  maxWidth: "85%", padding: "11px 16px", borderRadius: 14,
+                  background: SURFACE, fontFamily: "'Inter', sans-serif",
+                }}>{selectedPlatform}</div>
+              </div>
+            )}
+
+            {/* Platform connected confirmation */}
+            {platformConnectedShown && (
+              <ConfirmationRow label="Connected to Shopify" />
+            )}
+
+            {/* Shopify acknowledgment typing */}
+            {platformPhase === "shopify-ack" && shopifyAckText && (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{
+                  fontSize: 14, lineHeight: 1.55, color: "#1E242E",
+                  fontFamily: "'Inter', sans-serif", fontWeight: 450, whiteSpace: "pre-wrap",
+                }}>
+                  {shopifyAckText}<span style={{ opacity: 0.3, animation: "pulse 1s infinite" }}>|</span>
+                </div>
+              </div>
+            )}
+            {shopifyAckComplete && (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{
+                  fontSize: 14, lineHeight: 1.55, color: "#1E242E",
+                  fontFamily: "'Inter', sans-serif", fontWeight: 450, whiteSpace: "pre-wrap",
+                }}>{renderThreadText("Got it. Now let me pull up some info about your brand so I can get the voice right.", seenTerms)}</div>
+              </div>
+            )}
+
+            {/* Platform other-path typing */}
+            {platformPhase === "other-typing" && platformOtherText && (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{
+                  fontSize: 14, lineHeight: 1.55, color: "#1E242E",
+                  fontFamily: "'Inter', sans-serif", fontWeight: 450, whiteSpace: "pre-wrap",
+                }}>
+                  {platformOtherText}<span style={{ opacity: 0.3, animation: "pulse 1s infinite" }}>|</span>
+                </div>
+              </div>
+            )}
+            {platformOtherComplete && (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{
+                  fontSize: 14, lineHeight: 1.55, color: "#1E242E",
+                  fontFamily: "'Inter', sans-serif", fontWeight: 450, whiteSpace: "pre-wrap",
+                  animation: "fadeInUp .35s ease-out",
+                }}>{renderThreadText("Got it. You can connect " + (selectedPlatform || "your platform") + " later from your apps page. For now, let's get your support email set up so you're ready for customers.", seenTerms)}</div>
               </div>
             )}
 
@@ -4672,68 +4690,6 @@ function IntakePage() {
               </div>
             )}
 
-            {/* Platform bridge messages (committed + currently typing) */}
-            {platformBridgeCommitted.map((text, i) => (
-              <div key={"pbm-" + i} style={{ marginBottom: 16 }}>
-                <div style={{
-                  fontSize: 14, lineHeight: 1.55, color: "#1E242E",
-                  fontFamily: "'Inter', sans-serif", fontWeight: 450, whiteSpace: "pre-wrap",
-                }}>{renderThreadText(text, seenTerms)}</div>
-              </div>
-            ))}
-
-            {/* Platform bridge typing indicator */}
-            {platformPhase === "bridge-typing" && platformBridgeTypingText && (
-              <div style={{ marginBottom: 16 }}>
-                <div style={{
-                  fontSize: 14, lineHeight: 1.55, color: "#1E242E",
-                  fontFamily: "'Inter', sans-serif", fontWeight: 450, whiteSpace: "pre-wrap",
-                }}>
-                  {platformBridgeTypingText}<span style={{ opacity: 0.3, animation: "pulse 1s infinite" }}>|</span>
-                </div>
-              </div>
-            )}
-
-            {/* Platform user reply bubble */}
-            {selectedPlatform && platformPhase !== "idle" && platformPhase !== "bridge-typing" && platformPhase !== "selecting" && (
-              <div style={{
-                marginBottom: 16, display: "flex", flexDirection: "column",
-                alignItems: "flex-end", animation: "fadeInUp .35s ease-out",
-              }}>
-                <div style={{
-                  fontSize: 14, lineHeight: 1.45, color: TEXT,
-                  maxWidth: "85%", padding: "11px 16px", borderRadius: 14,
-                  background: SURFACE, fontFamily: "'Inter', sans-serif",
-                }}>{selectedPlatform}</div>
-              </div>
-            )}
-
-            {/* Platform connected confirmation */}
-            {platformConnectedShown && (
-              <ConfirmationRow label="Connected to Shopify" />
-            )}
-
-            {/* Platform other-path typing */}
-            {platformPhase === "other-typing" && platformOtherText && (
-              <div style={{ marginBottom: 16 }}>
-                <div style={{
-                  fontSize: 14, lineHeight: 1.55, color: "#1E242E",
-                  fontFamily: "'Inter', sans-serif", fontWeight: 450, whiteSpace: "pre-wrap",
-                }}>
-                  {platformOtherText}<span style={{ opacity: 0.3, animation: "pulse 1s infinite" }}>|</span>
-                </div>
-              </div>
-            )}
-            {platformOtherComplete && (
-              <div style={{ marginBottom: 16 }}>
-                <div style={{
-                  fontSize: 14, lineHeight: 1.55, color: "#1E242E",
-                  fontFamily: "'Inter', sans-serif", fontWeight: 450, whiteSpace: "pre-wrap",
-                  animation: "fadeInUp .35s ease-out",
-                }}>{renderThreadText("Great — I've noted " + (selectedPlatform || "your platform") + " as your ecommerce platform. You can connect it from your dashboard once you're set up. For now, let's get your support email connected so you're ready for customers.", seenTerms)}</div>
-              </div>
-            )}
-
             {/* Skills batch 1 intro — committed messages (sequentially typed) */}
             {skillsBatch1Messages.map((msg, i) => (
               <div key={"sk1m-" + i} style={{ marginBottom: 16 }}>
@@ -4772,7 +4728,7 @@ function IntakePage() {
               </div>
             )}
 
-            {/* Batch 1 skills (batchMode: ready-to-enable; flat mode: all) */}
+            {/* Batch 1 skills (ready-to-enable) */}
             {(skillsPhase === "shown-batch1" || skillsPhase === "typing-batch2" || skillsPhase === "shown-batch2" || skillsPhase === "done") && (
               <div style={{ marginBottom: 4 }}>
                 <SkillListCard
@@ -4891,8 +4847,8 @@ function IntakePage() {
               </div>
             )}
 
-            {/* Skills batch 2 — only in batchMode */}
-            {batchMode && skillsBatch2Messages.map((msg, i) => (
+            {/* Skills batch 2 */}
+            {skillsBatch2Messages.map((msg, i) => (
               <div key={"sk2m-" + i} style={{ marginBottom: 16 }}>
                 <div style={{
                   fontSize: 14, lineHeight: 1.55, color: "#1E242E",
@@ -4902,7 +4858,7 @@ function IntakePage() {
                 </div>
               </div>
             ))}
-            {batchMode && skillsTypingText && skillsPhase === "typing-batch2" && (
+            {skillsTypingText && skillsPhase === "typing-batch2" && (
               <div style={{ marginBottom: 16 }}>
                 <div style={{
                   fontSize: 14, lineHeight: 1.55, color: "#1E242E",
@@ -4918,7 +4874,7 @@ function IntakePage() {
               </div>
             )}
 
-            {batchMode && (skillsPhase === "shown-batch2" || skillsPhase === "done") && (
+            {(skillsPhase === "shown-batch2" || skillsPhase === "done") && (
               <div style={{ marginBottom: 4 }}>
                 <SkillListCard
                   skills={batch2Skills}
@@ -4937,7 +4893,7 @@ function IntakePage() {
               </div>
             )}
 
-            {batchMode && skillsBatch2Reply && (
+            {skillsBatch2Reply && (
               <div style={{
                 marginBottom: 16, display: "flex", flexDirection: "column",
                 alignItems: "flex-end", animation: "fadeInUp .35s ease-out",
@@ -4950,7 +4906,7 @@ function IntakePage() {
               </div>
             )}
 
-            {batchMode && editChatMessages.filter(m => m.phase === "batch2").map((msg, i) => (
+            {editChatMessages.filter(m => m.phase === "batch2").map((msg, i) => (
               msg.role === "confirmation" ? (
                 <ConfirmationRow key={"edm2-" + i} label={msg.label} compact />
               ) : (
@@ -4991,7 +4947,7 @@ function IntakePage() {
               </div>
               )
             ))}
-            {batchMode && editAiTyping && editAiTyping.phase === "batch2" && (
+            {editAiTyping && editAiTyping.phase === "batch2" && (
               <div style={{ marginBottom: 12, animation: "fadeInUp .35s ease-out" }}>
                 <div style={{
                   fontSize: 14, lineHeight: 1.55, color: "#1E242E",
@@ -5000,7 +4956,7 @@ function IntakePage() {
               </div>
             )}
 
-            {batchMode && skillsPhase === "done" && skillsBatch2Choice !== "skip" && (() => {
+            {skillsPhase === "done" && skillsBatch2Choice !== "skip" && (() => {
               const b2EnabledCount = b2EnableChoice === "pick"
                 ? Object.keys(b2EnablePickerToggles).filter(k => b2EnablePickerToggles[k] && !draftSkillKeys.has(k)).length
                 : batch2Skills.filter(s => answeredSkillKeys.has(s.key) && !draftSkillKeys.has(s.key)).length;
@@ -5104,8 +5060,8 @@ function IntakePage() {
         {closingPhase !== "shown" && (() => {
           const narrating = isTypingMessage
             || (cinematicPhase === "done" && currentMsgIndex < welcomeMessages.length)
-            || platformPhase === "bridge-typing"
             || platformPhase === "oauth"
+            || platformPhase === "shopify-ack"
             || platformPhase === "other-typing"
             || researchPhase === "running"
             || (researchPhase === "done" && !findingsComplete)
@@ -5152,14 +5108,24 @@ function IntakePage() {
                     />
                   );
                 })()
-                : channelsPhase === "shown" && !channelConnectMethod ? (
+                : platformPhase === "selecting" && !selectedPlatform ? (
+                  <QuestionCard
+                    title="Which ecommerce platform are you on?"
+                    options={PLATFORM_OPTIONS}
+                    onSelect={handlePlatformSelect}
+                    onClose={null}
+                    freeformValue={platformFreeformValue}
+                    onFreeformChange={setPlatformFreeformValue}
+                    onFreeformSubmit={() => { if (platformFreeformValue.trim()) { handlePlatformFreeform(platformFreeformValue.trim()); setPlatformFreeformValue(""); } }}
+                  />
+                ) : channelsPhase === "shown" && !channelConnectMethod ? (
                   <QuestionCard
                     title="How would you like to connect your support email?"
                     options={CHANNEL_CONNECT_OPTIONS}
                     onSelect={handleChannelSelect}
                     onClose={null}
                     hideFreeform
-                    onSkip={() => setClosingPhase("shown")}
+                    onSkip={() => advanceAfterChannels()}
                   />
                 ) : (skillsPhase === "shown-batch1" && !skillsBatch1Choice) ? (
                   <QuestionCard
@@ -5183,7 +5149,7 @@ function IntakePage() {
                     frozen={false}
                     disabledKeys={draftSkillKeys}
                   />
-                ) : (batchMode && skillsPhase === "shown-batch2" && allB2Complete && !b2EnableChoice) ? (
+                ) : (skillsPhase === "shown-batch2" && allB2Complete && !b2EnableChoice) ? (
                   <QuestionCard
                     title="Do you want to enable these skills?"
                     options={SKILL_ENABLE_OPTIONS}
@@ -5193,7 +5159,7 @@ function IntakePage() {
                     onFreeformChange={setB2EnableFreeform}
                     onFreeformSubmit={() => { if (b2EnableFreeform.trim()) handleB2EnableChoice("freeform", b2EnableFreeform.trim()); }}
                   />
-                ) : (batchMode && b2EnableChoice === "pick" && !b2EnablePickerConfirmed) ? (
+                ) : (b2EnableChoice === "pick" && !b2EnablePickerConfirmed) ? (
                   <SkillPickerCard
                     toggles={b2EnablePickerToggles}
                     onToggle={(key) => setB2EnablePickerToggles((prev) => ({ ...prev, [key]: !prev[key] }))}
@@ -5206,7 +5172,7 @@ function IntakePage() {
                     options={SKILL_PICKER_OPTIONS_B2}
                     disabledKeys={draftSkillKeys}
                   />
-                ) : (batchMode && skillsPhase === "shown-batch2" && !skillsBatch2Choice && !allB2Complete) ? (
+                ) : (skillsPhase === "shown-batch2" && !skillsBatch2Choice && !allB2Complete) ? (
                   <QuestionCard
                     title="Ready to fill in the missing details so these skills can be enabled?"
                     options={SKILL_ENABLE_OPTIONS_B2}
@@ -5215,16 +5181,6 @@ function IntakePage() {
                     freeformValue={skillsBatch2Freeform}
                     onFreeformChange={setSkillsBatch2Freeform}
                     onFreeformSubmit={() => { if (skillsBatch2Freeform.trim()) advanceFromBatch2("freeform", skillsBatch2Freeform.trim()); }}
-                  />
-                ) : platformPhase === "selecting" && !selectedPlatform ? (
-                  <QuestionCard
-                    title="Which ecommerce platform are you on?"
-                    options={PLATFORM_OPTIONS}
-                    onSelect={handlePlatformSelect}
-                    onClose={null}
-                    freeformValue={platformFreeformValue}
-                    onFreeformChange={setPlatformFreeformValue}
-                    onFreeformSubmit={() => { if (platformFreeformValue.trim()) { handlePlatformFreeform(platformFreeformValue.trim()); setPlatformFreeformValue(""); } }}
                   />
                 ) : voiceRevisionPhase === "input" ? (
                   <ChatInputBar
@@ -5248,13 +5204,13 @@ function IntakePage() {
                     {[
                       { label: "Yes, looks good.", icon: "check", onClick: handleRevisionYes },
                       { label: "No, I need more changes.", icon: "cross", onClick: handleRevisionNo },
-                    ].map((opt, oi) => (
+                    ].map((opt, oi, arr) => (
                       <div key={oi}
                         onClick={opt.onClick}
                         style={{
                           padding: "12px 18px", cursor: "pointer", display: "flex", alignItems: "center", gap: 12,
                           transition: "background .15s",
-                          borderBottom: "1px solid " + BORDER,
+                          borderBottom: oi < arr.length - 1 ? "1px solid " + BORDER : "none",
                           background: CARD_BG,
                         }}
                         onMouseEnter={(e) => { e.currentTarget.style.background = SURFACE; }}
@@ -5282,7 +5238,7 @@ function IntakePage() {
                     overflow: "hidden",
                   }}>
                     <div style={{ padding: "14px 18px 12px", fontSize: 14, fontWeight: 600, color: TEXT, borderBottom: "1px solid " + BORDER }}>
-                      Does this capture the UrbanStems context well?
+                      Does this sound like UrbanStems?
                     </div>
                     {[
                       { label: "Yes, looks good. I'll adjust it later if needed.", icon: "check", onClick: handleVoiceYes },
@@ -5379,11 +5335,11 @@ function IntakePage() {
       </div>
 
       {/* Floating setup checklist — bottom left */}
-      {cinematicPhase === "done" && closingPhase !== "shown" && !activePanel && (() => {
+      {cinematicPhase === "done" && closingPhase !== "shown" && !activePanel && selectedPlatform && (() => {
         const isNonShopifyPath = !!selectedPlatform && selectedPlatform.toLowerCase() !== "shopify";
         const checklistItems = [
-          { key: "tone", label: "Review tone of voice" },
           { key: "platform", label: "Connect e-commerce platform" },
+          { key: "tone", label: "Review tone of voice" },
           ...(!isNonShopifyPath ? [{ key: "skills", label: "Configure skills" }] : []),
           { key: "channels", label: "Connect support channel(s)" },
         ];
@@ -5981,7 +5937,7 @@ function WelcomeIntro({ onStartSetup, closing }) {
       <div style={{
         flex: "0 0 600px", alignSelf: "stretch",
         overflow: "hidden", borderRadius: 32,
-        background: "#ff9780", position: "relative",
+        background: "#F0EBE4", position: "relative",
       }}>
         <img
           src="welcome-hero.png"

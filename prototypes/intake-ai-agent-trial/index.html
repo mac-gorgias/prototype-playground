@@ -3331,6 +3331,11 @@ function IntakePage({ initialJump }) {
     setShowVoiceConfirm(false);
     setVoiceUserReply(null);
     setVoiceEditHelp(null);
+    setKnowledgePhase("idle");
+    setKnowledgeTypingText("");
+    setKnowledgeRevisionMessages([]);
+    setKnowledgeRevisionTypingText("");
+    setKnowledgeRevisionText("");
     setSkillsPhase("idle");
     setSkillsBatch1MsgIdx(-1);
     setSkillsBatch2MsgIdx(-1);
@@ -3400,6 +3405,14 @@ function IntakePage({ initialJump }) {
       setShowVoiceCard(true);
       setVoiceUserReply("Yes, looks good. I'll adjust it later if needed.");
       completeChecklistItem("tone");
+
+      if (section === "knowledge") {
+        setKnowledgePhase("shown");
+        setActivePanel("knowledge");
+        return;
+      }
+
+      setKnowledgePhase("done");
       completeChecklistItem("knowledge");
 
       if (section === "skills") {
@@ -3414,11 +3427,9 @@ function IntakePage({ initialJump }) {
       completeChecklistItem("skills");
       setSkillsPhase("done");
 
-      if (batchMode) {
-        setSkillsBatch2Messages(SKILL_INTRO_MESSAGES_BATCH_2.map(m => ({ text: m.text, bold: m.bold || null })));
-        setSkillsBatch2Choice("all");
-        setSkillsBatch2Reply("Turn on all ready to enable skills");
-      }
+      setSkillsBatch2Messages(SKILL_INTRO_MESSAGES_BATCH_2.map(m => ({ text: m.text, bold: m.bold || null })));
+      setSkillsBatch2Choice("all");
+      setSkillsBatch2Reply("Turn on all ready to enable skills");
 
       if (section === "channels") {
         setChannelsPhase("shown");
@@ -3483,7 +3494,7 @@ function IntakePage({ initialJump }) {
   const welcomeMessages = [
     { text: "I'm Gaia, your Gorgias AI assistant, and I will work alongside you to learn about UrbanStems' shoppers, priorities, and challenges.", bold: "I'm Gaia" },
     { text: "By the end of this conversation, we'll have AI Agent live and ready to help UrbanStems's shoppers." },
-    { text: "I'll start by pulling up some information about your business to make sure I've got your brand right." },
+    { text: "Let me pull up some info about your brand so I can get the voice right." },
   ];
 
   // Research
@@ -3509,6 +3520,14 @@ function IntakePage({ initialJump }) {
   const findingsStartedRef = useRef(false);
   const findingsFullText = "Here's what I learned about UrbanStems from your site, social, and store.";
   const findingsBold = "UrbanStems";
+
+  // Knowledge sources step (between ToV and Skills)
+  const [knowledgePhase, setKnowledgePhase] = useState("idle"); // idle | typing | shown | revision-asking | revision-input | revision-submitted | revision-confirm | done
+  const [knowledgeTypingText, setKnowledgeTypingText] = useState("");
+  const knowledgeFullText = "Your brand voice is set. I've also added your website and Shopify store as knowledge sources, so your AI Agent can pull from real UrbanStems content when it responds.";
+  const [knowledgeRevisionMessages, setKnowledgeRevisionMessages] = useState([]);
+  const [knowledgeRevisionTypingText, setKnowledgeRevisionTypingText] = useState("");
+  const [knowledgeRevisionText, setKnowledgeRevisionText] = useState("");
 
   // Right-side panels (Voice card / Preview / Edit)
   const [activePanel, setActivePanel] = useState(null); // null | "voice" | "knowledge" | "preview" | "edit"
@@ -3536,27 +3555,22 @@ function IntakePage({ initialJump }) {
   const [skillsTypingActive, setSkillsTypingActive] = useState(false);
   const [skillsBatch1Messages, setSkillsBatch1Messages] = useState([]); // batch 1 committed messages
   const [skillsBatch2Messages, setSkillsBatch2Messages] = useState([]); // batch 2 committed messages
-  const [batchMode, setBatchMode] = useState(true);
-  const SKILL_INTRO_MESSAGES_BATCH_1 = batchMode ? [
+  const SKILL_INTRO_MESSAGES_BATCH_1 = [
     { text: "With your tone of voice and knowledge sources, AI Agent now knows how to sound like your brand and answer general questions.", bold: ["tone of voice", "knowledge sources"] },
     { text: "Now it needs skills to address your most common customer requests. When a request comes in, AI Agent detects the intent, matches it to a skill, and follows its instructions to respond.", bold: "skills", learnMore: true },
-    { text: "I've already set up a few skills that cover around 40% of incoming support tickets for merchants from day one, on average.", bold: "40%" },
-  ] : [
-    { text: "With your tone of voice and knowledge sources, AI Agent now knows how to sound like your brand and answer general questions.", bold: ["tone of voice", "knowledge sources"] },
-    { text: "Now it needs skills to address your most common customer requests. When a request comes in, AI Agent detects the intent, matches it to a skill, and follows its instructions to respond.", bold: "skills", learnMore: true },
-    { text: "I've already drafted some starter skills to cover X% of your incoming tickets. Most of them are ready to go, but some need a few additional details to get your policy right.", bold: "X%" },
+    { text: "I've already set up a few skills that cover a meaningful share of incoming support tickets from day one." },
   ];
   const [skillsBatch1Expanded, setSkillsBatch1Expanded] = useState(false);
   const [skillsBatch2Expanded, setSkillsBatch2Expanded] = useState(false);
   const [skillsBatch1Choice, setSkillsBatch1Choice] = useState(null); // null | "all" | "pick" | "freeform"
   const [skillsBatch1CardClosed, setSkillsBatch1CardClosed] = useState(false);
   const [skillsBatch2Choice, setSkillsBatch2Choice] = useState(null);
-  const SKILL_INTRO_MESSAGES_BATCH_2 = skillsBatch1Choice === "pick" ? [
-    { text: "Got it — your selected skills are enabled and the rest are saved as drafts. You can enable them anytime from your Skills page.", bold: ["drafts", "Skills page"] },
-    { text: "The next 3 skills need a few more details to get your policy right. Let's make sure they'll work with your current workflows.", bold: "3 skills" },
-  ] : [
+  const SKILL_INTRO_MESSAGES_BATCH_2 = skillsBatch1Choice !== "pick" ? [
     { text: "Great work! The next 3 skills need a few more details to get your policy right.", bold: "3 skills" },
     { text: "Let's make sure they'll work with your current workflows." },
+  ] : [
+    { text: "Got it — your selected skills are enabled and the rest are saved as drafts. You can enable them anytime from your Skills page.", bold: ["drafts", "Skills page"] },
+    { text: "The next 3 skills need a few more details to get your policy right. Let's make sure they'll work with your current workflows.", bold: "3 skills" },
   ];
   const [skillsBatch1Reply, setSkillsBatch1Reply] = useState(null); // user-bubble text after picking
   const [skillsBatch2Reply, setSkillsBatch2Reply] = useState(null);
@@ -3567,7 +3581,7 @@ function IntakePage({ initialJump }) {
   const [b2EnableFreeform, setB2EnableFreeform] = useState("");
   const [b2EnablePickerToggles, setB2EnablePickerToggles] = useState({});
   const [b2EnablePickerConfirmed, setB2EnablePickerConfirmed] = useState(false);
-  const batch1Skills = batchMode ? SKILLS.filter(s => s.ready) : SKILLS;
+  const batch1Skills = SKILLS.filter(s => s.ready);
   const batch2Skills = SKILLS.filter(s => !s.ready);
   const SKILL_ENABLE_OPTIONS = [
     { key: "all", title: "Turn on all ready to enable skills", desc: "AI Agent will always follow skill instructions when matching intent is detected", badge: "Recommended" },
@@ -3616,7 +3630,7 @@ function IntakePage({ initialJump }) {
       ? [{ text: "I found three channels active for UrbanStems:", bold: "three channels" }]
       : [{ text: "Now, let's pick where AI Agent should help your shoppers. I found three channels active for UrbanStems:", bold: "three channels" }]
     ),
-    { text: "I've turned both on by default. You can toggle either off if you'd rather start with just one." },
+    { text: "All channels are enabled by default. You can toggle any off if you'd rather start smaller." },
   ];
   const [channelToggles, setChannelToggles] = useState({ email1: true, email2: true, chat: true });
   const [channelsCardClosed, setChannelsCardClosed] = useState(false);
@@ -3836,19 +3850,10 @@ function IntakePage({ initialJump }) {
     setSkillsBatch1Choice(key);
     setSkillsBatch1Reply(key === "freeform" ? freeformText : SKILL_ENABLE_REPLY_TEXT[key]);
     if (key === "pick") return;
-    if (batchMode) {
-      setTimeout(() => {
-        setSkillsPhase("typing-batch2");
-        setSkillsBatch2MsgIdx(0);
-      }, 600);
-    } else {
-      setTimeout(() => {
-        completeChecklistItem("skills");
-        setSkillsPhase("done");
-        setChannelsPhase("typing-intro");
-        setChannelsMsgIdx(0);
-      }, 600);
-    }
+    setTimeout(() => {
+      setSkillsPhase("typing-batch2");
+      setSkillsBatch2MsgIdx(0);
+    }, 600);
   };
   const [allB1DraftMsg, setAllB1DraftMsg] = useState(null);
   const [allB1DraftTyping, setAllB1DraftTyping] = useState("");
@@ -3859,19 +3864,10 @@ function IntakePage({ initialJump }) {
     if (noneSelected) {
       setAllB1DraftMsg("typing");
     }
-    if (batchMode) {
-      setTimeout(() => {
-        setSkillsPhase("typing-batch2");
-        setSkillsBatch2MsgIdx(0);
-      }, 600);
-    } else {
-      setTimeout(() => {
-        completeChecklistItem("skills");
-        setSkillsPhase("done");
-        setChannelsPhase("typing-intro");
-        setChannelsMsgIdx(0);
-      }, 600);
-    }
+    setTimeout(() => {
+      setSkillsPhase("typing-batch2");
+      setSkillsBatch2MsgIdx(0);
+    }, 600);
   };
 
   /* Skills intro typing — batch 2 (3 messages) */
@@ -4059,14 +4055,103 @@ function IntakePage({ initialJump }) {
     setSkillsBatch1MsgIdx(0);
   };
 
+  /* Knowledge sources typing effect */
+  useEffect(() => {
+    if (knowledgePhase !== "typing") return;
+    let charIndex = 0;
+    setKnowledgeTypingText("");
+    const startDelay = setTimeout(() => {
+      const interval = setInterval(() => {
+        charIndex++;
+        setKnowledgeTypingText(knowledgeFullText.substring(0, charIndex));
+        if (charIndex >= knowledgeFullText.length) {
+          clearInterval(interval);
+          setKnowledgeTypingText("");
+          setKnowledgePhase("shown");
+          completeChecklistItem("knowledge");
+        }
+      }, 10);
+    }, 300);
+    return () => clearTimeout(startDelay);
+  }, [knowledgePhase]);
+
+  /* Knowledge sources confirmation handlers */
+  const handleKnowledgeYes = () => {
+    setKnowledgeRevisionMessages(prev => [...prev, { role: "user", text: "Yes, looks good. I'll add more later if needed." }]);
+    setKnowledgePhase("done");
+    if (activePanel === "knowledge") closePanel();
+    setTimeout(startSkillsTyping, 900);
+  };
+  const handleKnowledgeNo = () => {
+    setKnowledgeRevisionMessages(prev => [...prev, { role: "user", text: "No, I need to make some changes." }]);
+    setKnowledgePhase("revision-asking");
+  };
+  const handleKnowledgeRevisionSubmit = () => {
+    if (!knowledgeRevisionText.trim()) return;
+    setKnowledgeRevisionMessages(prev => [...prev, { role: "user", text: knowledgeRevisionText.trim() }]);
+    setKnowledgeRevisionText("");
+    setKnowledgePhase("revision-submitted");
+  };
+  const handleKnowledgeRevisionYes = () => {
+    setKnowledgeRevisionMessages(prev => [...prev, { role: "user", text: "Yes, looks good." }]);
+    setKnowledgePhase("done");
+    if (activePanel === "knowledge") closePanel();
+    setTimeout(startSkillsTyping, 900);
+  };
+  const handleKnowledgeRevisionNo = () => {
+    setKnowledgeRevisionMessages(prev => [...prev, { role: "user", text: "No, I need more changes." }]);
+    setKnowledgePhase("revision-asking");
+  };
+
+  /* Knowledge revision typing effects */
+  useEffect(() => {
+    if (knowledgePhase !== "revision-asking") return;
+    const fullText = "Okay got it, let me know how I can adjust it.";
+    let charIndex = 0;
+    setKnowledgeRevisionTypingText("");
+    const delay = setTimeout(() => {
+      const interval = setInterval(() => {
+        charIndex++;
+        setKnowledgeRevisionTypingText(fullText.substring(0, charIndex));
+        if (charIndex >= fullText.length) {
+          clearInterval(interval);
+          setKnowledgeRevisionTypingText("");
+          setKnowledgeRevisionMessages(prev => [...prev, { role: "gaia", text: fullText }]);
+          setKnowledgePhase("revision-input");
+          setActivePanel("knowledge");
+        }
+      }, 10);
+    }, 400);
+    return () => clearTimeout(delay);
+  }, [knowledgePhase]);
+
+  useEffect(() => {
+    if (knowledgePhase !== "revision-submitted") return;
+    const fullText = "Got it, I've updated your knowledge sources.";
+    let charIndex = 0;
+    setKnowledgeRevisionTypingText("");
+    const delay = setTimeout(() => {
+      const interval = setInterval(() => {
+        charIndex++;
+        setKnowledgeRevisionTypingText(fullText.substring(0, charIndex));
+        if (charIndex >= fullText.length) {
+          clearInterval(interval);
+          setKnowledgeRevisionTypingText("");
+          setKnowledgeRevisionMessages(prev => [...prev, { role: "gaia", text: fullText }]);
+          setTimeout(() => setKnowledgePhase("revision-confirm"), 800);
+        }
+      }, 10);
+    }, 400);
+    return () => clearTimeout(delay);
+  }, [knowledgePhase]);
+
   /* Voice card actions */
   const handleVoiceYes = () => {
     setVoiceUserReply("Yes, looks good. I'll adjust it later if needed.");
     setShowVoiceConfirm(false);
     completeChecklistItem("tone");
-    completeChecklistItem("knowledge");
     closePanel();
-    setTimeout(startSkillsTyping, 900);
+    setTimeout(() => setKnowledgePhase("typing"), 900);
   };
   const handleVoiceNo = () => {
     setVoiceUserReply("No, I need to make some changes.");
@@ -4083,9 +4168,8 @@ function IntakePage({ initialJump }) {
     setVoiceRevisionMessages(prev => [...prev, { role: "user", text: "Yes, looks good." }]);
     setVoiceRevisionPhase("idle");
     completeChecklistItem("tone");
-    completeChecklistItem("knowledge");
     closePanel();
-    setTimeout(startSkillsTyping, 900);
+    setTimeout(() => setKnowledgePhase("typing"), 900);
   };
   const handleRevisionNo = () => {
     setVoiceRevisionMessages(prev => [...prev, { role: "user", text: "No, I need more changes." }]);
@@ -4097,9 +4181,8 @@ function IntakePage({ initialJump }) {
     setVoiceFreeform("");
     setShowVoiceConfirm(false);
     completeChecklistItem("tone");
-    completeChecklistItem("knowledge");
     closePanel();
-    setTimeout(startSkillsTyping, 900);
+    setTimeout(() => setKnowledgePhase("typing"), 900);
   };
 
   /* Voice revision typing effects */
@@ -4216,7 +4299,7 @@ function IntakePage({ initialJump }) {
         setB2EnablePickerToggles((prev) => ({ ...prev, [skillKey]: false }));
       }
     }
-    const phase = batchMode ? (activeSkillIdx < batch1Skills.length ? "batch1" : "batch2") : "batch1";
+    const phase = activeSkillIdx < batch1Skills.length ? "batch1" : "batch2";
     const skillTitle = SKILLS[activeSkillIdx].title;
     setEditChatMessages((prev) => prev.concat([{ role: "confirmation", label: "Updated " + skillTitle, phase }]));
   };
@@ -4553,35 +4636,6 @@ function IntakePage({ initialJump }) {
                           <span style={{ fontSize: 13, color: TEXT_MUTED, lineHeight: 1.3 }}>This is how AI Agent will sound in responses</span>
                         </div>
                       </div>
-                      <div
-                        onClick={(e) => { e.stopPropagation(); setActivePanel("knowledge"); }}
-                        style={{
-                          border: activePanel === "knowledge" ? "1px solid " + ACCENT : "1px solid " + BORDER,
-                          borderRadius: 12, background: CARD_BG, overflow: "hidden",
-                          display: "flex", alignItems: "center", gap: 14,
-                          padding: "14px 16px",
-                          cursor: "pointer", transition: "border-color .15s, box-shadow .15s",
-                          animation: "fadeInUp .5s cubic-bezier(.16,1,.3,1) forwards",
-                        }}
-                        onMouseEnter={(e) => { if (activePanel !== "knowledge") { e.currentTarget.style.borderColor = "#D0D0D0"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,.04)"; } }}
-                        onMouseLeave={(e) => { if (activePanel !== "knowledge") { e.currentTarget.style.borderColor = BORDER; e.currentTarget.style.boxShadow = "none"; } }}
-                      >
-                        <div style={{ width: 56, height: 56, borderRadius: 10, background: "#EDE8F8", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          <svg width="24" height="24" viewBox="10 10 20 20" fill="none">
-                            <path d="M20 18.05C20 16.3698 20 15.5298 20.327 14.888C20.6146 14.3235 21.0735 13.8646 21.638 13.577C22.2798 13.25 23.1198 13.25 24.8 13.25H25.1C25.9401 13.25 26.3601 13.25 26.681 13.4135C26.9632 13.5573 27.1927 13.7868 27.3365 14.069C27.5 14.3899 27.5 14.8099 27.5 15.65V22.1C27.5 22.9401 27.5 23.3601 27.3365 23.681C27.1927 23.9632 26.9632 24.1927 26.681 24.3365C26.3601 24.5 25.9401 24.5 25.1 24.5H24.0689C23.1297 24.5 22.6601 24.5 22.2338 24.6295C21.8564 24.7441 21.5054 24.9319 21.2007 25.1824C20.8565 25.4652 20.596 25.856 20.075 26.6374L20 26.75L19.925 26.6374C19.404 25.856 19.1435 25.4652 18.7993 25.1824C18.4946 24.9319 18.1436 24.7441 17.7662 24.6295C17.3399 24.5 16.8703 24.5 15.9311 24.5H14.9C14.0599 24.5 13.6399 24.5 13.319 24.3365C13.0368 24.1927 12.8073 23.9632 12.6635 23.681C12.5 23.3601 12.5 22.9401 12.5 22.1V15.65C12.5 14.8099 12.5 14.3899 12.6635 14.069C12.8073 13.7868 13.0368 13.5573 13.319 13.4135C13.6399 13.25 14.0599 13.25 14.9 13.25H15.2C16.8802 13.25 17.7202 13.25 18.362 13.577C18.9265 13.8646 19.3854 14.3235 19.673 14.888C20 15.5298 20 16.3698 20 18.05ZM20 26.75V18.05" stroke="#363433" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        </div>
-                        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}>
-                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-                            <span style={{ fontSize: 13, fontWeight: 600, color: TEXT, lineHeight: 1.3 }}>Your knowledge sources</span>
-                            <button style={{ ...BTN_SECONDARY_SM, flexShrink: 0 }}
-                              onMouseEnter={(e) => { Object.assign(e.currentTarget.style, BTN_SECONDARY_HOVER); }}
-                              onMouseLeave={(e) => { Object.assign(e.currentTarget.style, BTN_SECONDARY_LEAVE); }}
-                            >View</button>
-                          </div>
-                          <span style={{ fontSize: 13, color: TEXT_MUTED, lineHeight: 1.3 }}>This is how AI Agent knows what to say</span>
-                        </div>
-                      </div>
                     </div>
                   </div>
                 )}
@@ -4642,6 +4696,88 @@ function IntakePage({ initialJump }) {
               </div>
             )}
 
+            {/* Knowledge sources message */}
+            {knowledgePhase !== "idle" && knowledgeTypingText && (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{
+                  fontSize: 14, lineHeight: 1.55, color: "#1E242E",
+                  fontFamily: "'Inter', sans-serif", fontWeight: 450, whiteSpace: "pre-wrap",
+                }}>
+                  {knowledgeTypingText}<span style={{ opacity: 0.3, animation: "pulse 1s infinite" }}>|</span>
+                </div>
+              </div>
+            )}
+            {knowledgePhase !== "idle" && knowledgePhase !== "typing" && (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{
+                  fontSize: 14, lineHeight: 1.55, color: "#1E242E",
+                  fontFamily: "'Inter', sans-serif", fontWeight: 450, whiteSpace: "pre-wrap",
+                }}>{renderThreadText(knowledgeFullText, seenTerms)}</div>
+                <div style={{ marginTop: 12 }}>
+                  <div
+                    onClick={(e) => { e.stopPropagation(); setActivePanel("knowledge"); }}
+                    style={{
+                      border: activePanel === "knowledge" ? "1px solid " + ACCENT : "1px solid " + BORDER,
+                      borderRadius: 12, background: CARD_BG, overflow: "hidden",
+                      display: "flex", alignItems: "center", gap: 14,
+                      padding: "14px 16px",
+                      cursor: "pointer", transition: "border-color .15s, box-shadow .15s",
+                      animation: "fadeInUp .5s cubic-bezier(.16,1,.3,1) forwards",
+                    }}
+                    onMouseEnter={(e) => { if (activePanel !== "knowledge") { e.currentTarget.style.borderColor = "#D0D0D0"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,.04)"; } }}
+                    onMouseLeave={(e) => { if (activePanel !== "knowledge") { e.currentTarget.style.borderColor = BORDER; e.currentTarget.style.boxShadow = "none"; } }}
+                  >
+                    <div style={{ width: 56, height: 56, borderRadius: 10, background: "#EDE8F8", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <svg width="24" height="24" viewBox="10 10 20 20" fill="none">
+                        <path d="M20 18.05C20 16.3698 20 15.5298 20.327 14.888C20.6146 14.3235 21.0735 13.8646 21.638 13.577C22.2798 13.25 23.1198 13.25 24.8 13.25H25.1C25.9401 13.25 26.3601 13.25 26.681 13.4135C26.9632 13.5573 27.1927 13.7868 27.3365 14.069C27.5 14.3899 27.5 14.8099 27.5 15.65V22.1C27.5 22.9401 27.5 23.3601 27.3365 23.681C27.1927 23.9632 26.9632 24.1927 26.681 24.3365C26.3601 24.5 25.9401 24.5 25.1 24.5H24.0689C23.1297 24.5 22.6601 24.5 22.2338 24.6295C21.8564 24.7441 21.5054 24.9319 21.2007 25.1824C20.8565 25.4652 20.596 25.856 20.075 26.6374L20 26.75L19.925 26.6374C19.404 25.856 19.1435 25.4652 18.7993 25.1824C18.4946 24.9319 18.1436 24.7441 17.7662 24.6295C17.3399 24.5 16.8703 24.5 15.9311 24.5H14.9C14.0599 24.5 13.6399 24.5 13.319 24.3365C13.0368 24.1927 12.8073 23.9632 12.6635 23.681C12.5 23.3601 12.5 22.9401 12.5 22.1V15.65C12.5 14.8099 12.5 14.3899 12.6635 14.069C12.8073 13.7868 13.0368 13.5573 13.319 13.4135C13.6399 13.25 14.0599 13.25 14.9 13.25H15.2C16.8802 13.25 17.7202 13.25 18.362 13.577C18.9265 13.8646 19.3854 14.3235 19.673 14.888C20 15.5298 20 16.3698 20 18.05ZM20 26.75V18.05" stroke="#363433" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                    <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: TEXT, lineHeight: 1.3 }}>Your knowledge sources</span>
+                        <button style={{ ...BTN_SECONDARY_SM, flexShrink: 0 }}
+                          onMouseEnter={(e) => { Object.assign(e.currentTarget.style, BTN_SECONDARY_HOVER); }}
+                          onMouseLeave={(e) => { Object.assign(e.currentTarget.style, BTN_SECONDARY_LEAVE); }}
+                        >View</button>
+                      </div>
+                      <span style={{ fontSize: 13, color: TEXT_MUTED, lineHeight: 1.3 }}>This is how AI Agent knows what to say</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Knowledge revision thread (user replies + Gaia responses) */}
+            {knowledgeRevisionMessages.map((msg, i) => (
+              msg.role === "user" ? (
+                <div key={"kr-" + i} style={{
+                  marginBottom: 16, display: "flex", flexDirection: "column",
+                  alignItems: "flex-end", animation: "fadeInUp .35s ease-out",
+                }}>
+                  <div style={{
+                    fontSize: 14, lineHeight: 1.45, color: TEXT,
+                    maxWidth: "85%", padding: "11px 16px", borderRadius: 14,
+                    background: SURFACE, fontFamily: "'Inter', sans-serif",
+                  }}>{msg.text}</div>
+                </div>
+              ) : (
+                <div key={"kr-" + i} style={{ marginBottom: 16 }}>
+                  <div style={{
+                    fontSize: 14, lineHeight: 1.55, color: "#1E242E",
+                    fontFamily: "'Inter', sans-serif", fontWeight: 450, whiteSpace: "pre-wrap",
+                  }}>{renderThreadText(msg.text, seenTerms)}</div>
+                </div>
+              )
+            ))}
+            {knowledgeRevisionTypingText && (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{
+                  fontSize: 14, lineHeight: 1.55, color: "#1E242E",
+                  fontFamily: "'Inter', sans-serif", fontWeight: 450, whiteSpace: "pre-wrap",
+                }}>{knowledgeRevisionTypingText}<span style={{ opacity: 0.4, animation: "blink 1s step-end infinite" }}>|</span></div>
+              </div>
+            )}
+
             {/* Skills batch 1 intro — committed messages (sequentially typed) */}
             {skillsBatch1Messages.map((msg, i) => (
               <div key={"sk1m-" + i} style={{ marginBottom: 16 }}>
@@ -4680,7 +4816,7 @@ function IntakePage({ initialJump }) {
               </div>
             )}
 
-            {/* Batch 1 skills (batchMode: first 4 ready-to-enable; flat mode: all 7) */}
+            {/* Batch 1 skills (ready-to-enable) */}
             {(skillsPhase === "shown-batch1" || skillsPhase === "typing-batch2" || skillsPhase === "shown-batch2" || skillsPhase === "done") && (
               <div style={{ marginBottom: 4 }}>
                 <SkillListCard
@@ -4799,8 +4935,8 @@ function IntakePage({ initialJump }) {
               </div>
             )}
 
-            {/* Skills batch 2 — only in batchMode */}
-            {batchMode && skillsBatch2Messages.map((msg, i) => (
+            {/* Skills batch 2 */}
+            {skillsBatch2Messages.map((msg, i) => (
               <div key={"sk2m-" + i} style={{ marginBottom: 16 }}>
                 <div style={{
                   fontSize: 14, lineHeight: 1.55, color: "#1E242E",
@@ -4810,7 +4946,7 @@ function IntakePage({ initialJump }) {
                 </div>
               </div>
             ))}
-            {batchMode && skillsTypingText && skillsPhase === "typing-batch2" && (
+            {skillsTypingText && skillsPhase === "typing-batch2" && (
               <div style={{ marginBottom: 16 }}>
                 <div style={{
                   fontSize: 14, lineHeight: 1.55, color: "#1E242E",
@@ -4826,7 +4962,7 @@ function IntakePage({ initialJump }) {
               </div>
             )}
 
-            {batchMode && (skillsPhase === "shown-batch2" || skillsPhase === "done") && (
+            {(skillsPhase === "shown-batch2" || skillsPhase === "done") && (
               <div style={{ marginBottom: 4 }}>
                 <SkillListCard
                   skills={batch2Skills}
@@ -4845,7 +4981,7 @@ function IntakePage({ initialJump }) {
               </div>
             )}
 
-            {batchMode && skillsBatch2Reply && (
+            {skillsBatch2Reply && (
               <div style={{
                 marginBottom: 16, display: "flex", flexDirection: "column",
                 alignItems: "flex-end", animation: "fadeInUp .35s ease-out",
@@ -4858,7 +4994,7 @@ function IntakePage({ initialJump }) {
               </div>
             )}
 
-            {batchMode && editChatMessages.filter(m => m.phase === "batch2").map((msg, i) => (
+            {editChatMessages.filter(m => m.phase === "batch2").map((msg, i) => (
               msg.role === "confirmation" ? (
                 <ConfirmationRow key={"edm2-" + i} label={msg.label} compact />
               ) : (
@@ -4899,7 +5035,7 @@ function IntakePage({ initialJump }) {
               </div>
               )
             ))}
-            {batchMode && editAiTyping && editAiTyping.phase === "batch2" && (
+            {editAiTyping && editAiTyping.phase === "batch2" && (
               <div style={{ marginBottom: 12, animation: "fadeInUp .35s ease-out" }}>
                 <div style={{
                   fontSize: 14, lineHeight: 1.55, color: "#1E242E",
@@ -4908,7 +5044,7 @@ function IntakePage({ initialJump }) {
               </div>
             )}
 
-            {batchMode && skillsPhase === "done" && skillsBatch2Choice !== "skip" && (() => {
+            {skillsPhase === "done" && skillsBatch2Choice !== "skip" && (() => {
               const b2EnabledCount = b2EnableChoice === "pick"
                 ? Object.keys(b2EnablePickerToggles).filter(k => b2EnablePickerToggles[k] && !draftSkillKeys.has(k)).length
                 : batch2Skills.filter(s => answeredSkillKeys.has(s.key) && !draftSkillKeys.has(s.key)).length;
@@ -5053,6 +5189,9 @@ function IntakePage({ initialJump }) {
             || (researchPhase === "done" && !findingsComplete)
             || findingsTyping
             || (findingsComplete && !showVoiceConfirm && !voiceUserReply)
+            || knowledgePhase === "typing"
+            || knowledgePhase === "revision-asking"
+            || knowledgePhase === "revision-submitted"
             || skillsTypingActive
             || skillsPhase === "typing-batch1"
             || skillsPhase === "typing-batch2"
@@ -5170,7 +5309,7 @@ function IntakePage({ initialJump }) {
                     frozen={false}
                     disabledKeys={draftSkillKeys}
                   />
-                ) : (batchMode && skillsPhase === "shown-batch2" && allB2Complete && !b2EnableChoice) ? (
+                ) : (skillsPhase === "shown-batch2" && allB2Complete && !b2EnableChoice) ? (
                   <QuestionCard
                     title="Do you want to enable these skills?"
                     options={SKILL_ENABLE_OPTIONS}
@@ -5180,7 +5319,7 @@ function IntakePage({ initialJump }) {
                     onFreeformChange={setB2EnableFreeform}
                     onFreeformSubmit={() => { if (b2EnableFreeform.trim()) handleB2EnableChoice("freeform", b2EnableFreeform.trim()); }}
                   />
-                ) : (batchMode && b2EnableChoice === "pick" && !b2EnablePickerConfirmed) ? (
+                ) : (b2EnableChoice === "pick" && !b2EnablePickerConfirmed) ? (
                   <SkillPickerCard
                     toggles={b2EnablePickerToggles}
                     onToggle={(key) => setB2EnablePickerToggles((prev) => ({ ...prev, [key]: !prev[key] }))}
@@ -5193,7 +5332,7 @@ function IntakePage({ initialJump }) {
                     options={SKILL_PICKER_OPTIONS_B2}
                     disabledKeys={draftSkillKeys}
                   />
-                ) : (batchMode && skillsPhase === "shown-batch2" && !skillsBatch2Choice && !allB2Complete) ? (
+                ) : (skillsPhase === "shown-batch2" && !skillsBatch2Choice && !allB2Complete) ? (
                   <QuestionCard
                     title="Ready to fill in the missing details so these skills can be enabled?"
                     options={SKILL_ENABLE_OPTIONS_B2}
@@ -5225,13 +5364,13 @@ function IntakePage({ initialJump }) {
                     {[
                       { label: "Yes, looks good.", icon: "check", onClick: handleRevisionYes },
                       { label: "No, I need more changes.", icon: "cross", onClick: handleRevisionNo },
-                    ].map((opt, oi) => (
+                    ].map((opt, oi, arr) => (
                       <div key={oi}
                         onClick={opt.onClick}
                         style={{
                           padding: "12px 18px", cursor: "pointer", display: "flex", alignItems: "center", gap: 12,
                           transition: "background .15s",
-                          borderBottom: "1px solid " + BORDER,
+                          borderBottom: oi < arr.length - 1 ? "1px solid " + BORDER : "none",
                           background: CARD_BG,
                         }}
                         onMouseEnter={(e) => { e.currentTarget.style.background = SURFACE; }}
@@ -5259,7 +5398,7 @@ function IntakePage({ initialJump }) {
                     overflow: "hidden",
                   }}>
                     <div style={{ padding: "14px 18px 12px", fontSize: 14, fontWeight: 600, color: TEXT, borderBottom: "1px solid " + BORDER }}>
-                      Does this capture the UrbanStems context well?
+                      Does this sound like UrbanStems?
                     </div>
                     {[
                       { label: "Yes, looks good. I'll adjust it later if needed.", icon: "check", onClick: handleVoiceYes },
@@ -5314,6 +5453,94 @@ function IntakePage({ initialJump }) {
                         }}
                       />
                     </div>
+                  </div>
+                ) : knowledgePhase === "revision-input" ? (
+                  <ChatInputBar
+                    value={knowledgeRevisionText}
+                    onChange={(e) => setKnowledgeRevisionText(e.target.value)}
+                    onSend={handleKnowledgeRevisionSubmit}
+                    onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleKnowledgeRevisionSubmit(); } }}
+                    placeholder="Describe what you'd like to change..."
+                    sendDisabled={!knowledgeRevisionText.trim()}
+                    thinking={false}
+                  />
+                ) : knowledgePhase === "revision-confirm" ? (
+                  <div style={{
+                    animation: "fadeInUp .35s ease-out",
+                    border: "1px solid " + BORDER, borderRadius: 8, background: "#ffffff",
+                    overflow: "hidden",
+                  }}>
+                    <div style={{ padding: "14px 18px 12px", fontSize: 14, fontWeight: 600, color: TEXT, borderBottom: "1px solid " + BORDER }}>
+                      Does this look better?
+                    </div>
+                    {[
+                      { label: "Yes, looks good.", icon: "check", onClick: handleKnowledgeRevisionYes },
+                      { label: "No, I need more changes.", icon: "cross", onClick: handleKnowledgeRevisionNo },
+                    ].map((opt, oi, arr) => (
+                      <div key={oi}
+                        onClick={opt.onClick}
+                        style={{
+                          padding: "12px 18px", cursor: "pointer", display: "flex", alignItems: "center", gap: 12,
+                          transition: "background .15s",
+                          borderBottom: oi < arr.length - 1 ? "1px solid " + BORDER : "none",
+                          background: CARD_BG,
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = SURFACE; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = CARD_BG; }}
+                      >
+                        <div style={{
+                          width: 26, height: 26, borderRadius: 6,
+                          background: "transparent", border: "1px solid " + BORDER,
+                          display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                        }}>
+                          {opt.icon === "check" ? (
+                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3.5 8.5l3 3 6-6.5" stroke={TEXT_MUTED} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                          ) : (
+                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke={TEXT_MUTED} strokeWidth="1.4" strokeLinecap="round" /></svg>
+                          )}
+                        </div>
+                        <span style={{ fontSize: 14, color: TEXT, fontFamily: "'Inter', sans-serif" }}>{opt.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : knowledgePhase === "shown" ? (
+                  <div style={{
+                    animation: "fadeInUp .35s ease-out",
+                    border: "1px solid " + BORDER, borderRadius: 8, background: "#ffffff",
+                    overflow: "hidden",
+                  }}>
+                    <div style={{ padding: "14px 18px 12px", fontSize: 14, fontWeight: 600, color: TEXT, borderBottom: "1px solid " + BORDER }}>
+                      Are these knowledge sources correct?
+                    </div>
+                    {[
+                      { label: "Yes, looks good. I'll add more later if needed.", icon: "check", onClick: handleKnowledgeYes },
+                      { label: "No, I need to make some changes.", icon: "cross", onClick: handleKnowledgeNo },
+                    ].map((opt, oi, arr) => (
+                      <div key={oi}
+                        onClick={opt.onClick}
+                        style={{
+                          padding: "12px 18px", cursor: "pointer", display: "flex", alignItems: "center", gap: 12,
+                          transition: "background .15s",
+                          borderBottom: oi < arr.length - 1 ? "1px solid " + BORDER : "none",
+                          background: CARD_BG,
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = SURFACE; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = CARD_BG; }}
+                      >
+                        <div style={{
+                          width: 26, height: 26, borderRadius: 6,
+                          background: "transparent", border: "1px solid " + BORDER,
+                          display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                        }}>
+                          {opt.icon === "check" ? (
+                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3.5 8.5l3 3 6-6.5" stroke={TEXT_MUTED} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                          ) : (
+                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke={TEXT_MUTED} strokeWidth="1.4" strokeLinecap="round" /></svg>
+                          )}
+                        </div>
+                        <span style={{ fontSize: 14, color: TEXT, fontFamily: "'Inter', sans-serif" }}>{opt.label}</span>
+                      </div>
+                    ))}
                   </div>
                 ) : (
                   <ChatInputBar
@@ -5606,7 +5833,7 @@ function WelcomeIntro({ onStartSetup, closing }) {
       <div style={{
         flex: "0 0 600px", alignSelf: "stretch",
         overflow: "hidden", borderRadius: 32,
-        background: "#ff9780", position: "relative",
+        background: "#F0EBE4", position: "relative",
       }}>
         <img
           src="welcome-hero.png"
@@ -6193,7 +6420,8 @@ const __default__ = function App() {
   const jumpItems = [
     { key: "inbox", label: "Inbox" },
     { key: "intro", label: "Intro" },
-    { key: "tov", label: "ToV / Knowledge" },
+    { key: "tov", label: "Tone of Voice" },
+    { key: "knowledge", label: "Knowledge Sources" },
     { key: "skills", label: "Skill Setup" },
     { key: "channels", label: "Channel Mapping" },
     { key: "trial", label: "Trial Opt-in" },
