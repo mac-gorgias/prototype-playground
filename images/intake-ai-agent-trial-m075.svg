@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <rect width="1440" height="900" rx="12" fill="#FAFAF8"/>
+  <rect x="2" y="2" width="1436" height="896" rx="10" fill="none" stroke="#E5E5E5" stroke-width="2"/>
+  <text x="720" y="420" text-anchor="middle" font-family="'DM Sans', 'Inter', sans-serif" font-size="72" font-weight="700" fill="#1E242E" letter-spacing="-1">Milestone 0.75</text>
+  <text x="720" y="490" text-anchor="middle" font-family="'Inter', sans-serif" font-size="24" font-weight="400" fill="#8A8A8A">Intake — AI Agent Trial</text>
+  <line x1="620" y1="440" x2="820" y2="440" stroke="#7E55F6" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+</svg>

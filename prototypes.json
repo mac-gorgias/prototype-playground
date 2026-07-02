@@ -46,5 +46,13 @@
     "description": "Gorgias trial intake variant — identical to AI Agent Trial, ready for independent customization. Self-contained, no API keys required.",
     "file": "intake-gorgias-trial/index.html",
     "image": "intake-gorgias-trial-user.png"
+  },
+  {
+    "name": "Intake — AI Agent Trial (Milestone 0.75)",
+    "author": "Mac",
+    "date": "2026-07-02",
+    "description": "Milestone 0.75 — Gorgias-style test panel, skill instructions for Customer Feedback and Marketing, updated closing screen copy and warm brown icons. Self-contained, no API keys required.",
+    "file": "intake-ai-agent-trial-m075/index.html",
+    "image": "intake-ai-agent-trial-m075.svg"
   }
 ]
