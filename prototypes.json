@@ -54,5 +54,13 @@
     "description": "Milestone 0.75 — Gorgias-style test panel, skill instructions for Customer Feedback and Marketing, updated closing screen copy and warm brown icons. Self-contained, no API keys required.",
     "file": "intake-ai-agent-trial-m075/index.html",
     "image": "intake-ai-agent-trial-m075.svg"
+  },
+  {
+    "name": "Intake — Gorgias Trial (Milestone 0.75)",
+    "author": "Mac",
+    "date": "2026-07-07",
+    "description": "Milestone 0.75 — Gorgias Trial variant with Gorgias-style test panel, skill instructions for Customer Feedback and Marketing, no batch 2 skills, no floating checklist, updated closing screen. Self-contained, no API keys required.",
+    "file": "intake-gorgias-trial-m075/index.html",
+    "image": "intake-gorgias-trial-m075.svg"
   }
 ]
