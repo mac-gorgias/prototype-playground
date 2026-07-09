@@ -12,7 +12,7 @@
 <body>
 <div id="root"></div>
 <script type="text/babel" data-type="module">
-const { useState, useEffect, useRef, useCallback } = React;
+const { useState, useEffect, useLayoutEffect, useRef, useCallback } = React;
 
 /* ─── Google Fonts ─── */
 const fontLink = document.createElement("link");
@@ -213,6 +213,35 @@ const BTN_TERTIARY_HOVER = { background: "rgba(27,35,50,0.03)" };
 const BTN_TERTIARY_LEAVE = { background: "transparent" };
 const BTN_SECONDARY_SM = { ...BTN_SM, color: "#1E242E", background: "rgba(255,255,255,0.5)", border: "1px solid rgba(103,113,131,0.5)", boxShadow: "0px 2px 3px 0px rgba(0,0,0,0.05)" };
 const BTN_TERTIARY_SM = { ...BTN_SM, color: "#1E242E", background: "transparent", border: "1px solid transparent", boxShadow: "none" };
+
+/* ─── Axiom Button / Tag replicas (mirror @gorgias/axiom variants; no npm imports in this CDN prototype) ─── */
+function AxButton({ variant = "primary", onClick, children, style }) {
+  const [base, hover, leave] = {
+    primary: [BTN_PRIMARY, BTN_PRIMARY_HOVER, BTN_PRIMARY_LEAVE],
+    secondary: [BTN_SECONDARY, BTN_SECONDARY_HOVER, BTN_SECONDARY_LEAVE],
+    tertiary: [BTN_TERTIARY, BTN_TERTIARY_HOVER, BTN_TERTIARY_LEAVE],
+  }[variant];
+  return (
+    <button
+      onClick={onClick}
+      style={{ ...base, ...style }}
+      onMouseEnter={(e) => { Object.assign(e.currentTarget.style, hover); }}
+      onMouseLeave={(e) => { Object.assign(e.currentTarget.style, leave); }}
+    >{children}</button>
+  );
+}
+function AxTag({ leadingSlot, children, style }) {
+  return (
+    <div style={{
+      display: "inline-flex", alignItems: "center", gap: 6,
+      background: ACCENT_LIGHT, borderRadius: 6, padding: "5px 10px 5px 8px",
+      ...style,
+    }}>
+      {leadingSlot}
+      <span style={{ fontSize: 12, fontWeight: 500, color: ACCENT, whiteSpace: "nowrap" }}>{children}</span>
+    </div>
+  );
+}
 
 /* ─── Skill icons ─── */
 const SKILL_ICONS = {
@@ -499,102 +528,157 @@ const VOICE_RESEARCH_SOURCES = [
 ];
 
 /* ─── Voice card content (mirrors the existing prototype's ModalHowBrandSounds) ─── */
-function VoiceCardPanel() {
-  const [showTooltip, setShowTooltip] = useState(false);
-
-  const [selectedPreset, setSelectedPreset] = useState("Custom");
+function TovHitlCard({ onApprove, onReject, approved }) {
+  const DEFAULT_PERSONALITY = "UrbanStems brand voice is warm, occasion-driven, and emotionally resonant. The AI Agent should acknowledge the shopper's moment first, then offer helpful guidance.\n\nDos\n• Lead with the occasion (\"A birthday gift? How exciting.\")\n• Use first person and contractions (\"I'd love to help you find something.\")\n• Match the customer's emotional register (excited, stressed, last-minute)\n\nDon'ts\n• Don't open with \"How can I assist you today?\"\n• Don't list options robotically — guide, don't dump\n• Avoid words like: utilize, ensure, kindly, please note";
+  const PRESET_TEXTS = {
+    Friendly: "Write in a warm, friendly, and approachable way. Use emojis naturally throughout replies to add personality and make conversations feel more human. Keep the tone conversational and upbeat, like a helpful friend rather than a formal support agent.",
+    Professional: "Write in a clear, direct, and professional manner. Use precise language and maintain a polished tone throughout all communications. Be authoritative yet approachable, focusing on efficiency and clarity in every response.",
+    Sophisticated: "Write with an elevated, refined tone that conveys elegance and expertise. Use rich vocabulary and thoughtful phrasing. Maintain a premium feel that reflects sophistication while remaining warm and accessible to customers.",
+  };
   const presets = [
-    { name: "Custom", desc: "Created just for you" },
+    { name: "Custom", desc: "Customize your personality" },
     { name: "Friendly", desc: "Warm, inviting, encouraging" },
-    { name: "Professional", desc: "Precise, polished, assured" },
+    { name: "Professional", desc: "Precise, polished, authoritative" },
     { name: "Sophisticated", desc: "Elevated, elegant, refined" },
   ];
+  const [selectedPreset, setSelectedPreset] = useState("Custom");
+  const [personalityText, setPersonalityText] = useState(DEFAULT_PERSONALITY);
+
+  const handlePresetClick = (name) => {
+    setSelectedPreset(name);
+    if (name === "Custom") setPersonalityText(DEFAULT_PERSONALITY);
+    else setPersonalityText(PRESET_TEXTS[name]);
+  };
 
   return (
-    <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, lineHeight: 1.6, color: TEXT }}>
-      <h2 style={{ fontFamily: "'Inter', sans-serif", fontSize: 20, fontWeight: 700, letterSpacing: "-0.3px", color: "#1A1918", marginBottom: 20, marginTop: 0, paddingRight: 40 }}>Your brand's tone of voice</h2>
-
-      {/* Personality section */}
-      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
-        <span style={{ fontSize: 14, fontWeight: 600, color: "#1E242E" }}>AI Agent personality</span>
-        <div style={{ position: "relative", display: "inline-flex" }}
-          onMouseEnter={() => setShowTooltip(true)}
-          onMouseLeave={() => setShowTooltip(false)}
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ cursor: "pointer" }}>
-            <circle cx="8" cy="8" r="7" stroke="#9CA3AF" strokeWidth="1.2" />
-            <text x="8" y="11.5" textAnchor="middle" fontSize="10" fontWeight="600" fill="#9CA3AF" fontFamily="Inter, sans-serif">i</text>
+    <div style={{
+      border: "1px solid rgba(0,0,0,0.08)",
+      boxShadow: "0px 2px 20px 0px rgba(0,0,0,0.04)",
+      borderRadius: 8, background: "#fff", padding: "20px",
+      fontFamily: "'Inter', sans-serif",
+      animation: "fadeInUp .5s cubic-bezier(.16,1,.3,1) forwards",
+    }}>
+      {/* Tone of Voice tag */}
+      <AxTag
+        style={{ marginBottom: 14 }}
+        leadingSlot={
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M5.5 6.5a2.5 2.5 0 1 1 5 0" stroke={ACCENT} strokeWidth="1.2" strokeLinecap="round" />
+            <circle cx="8" cy="4" r="2" stroke={ACCENT} strokeWidth="1.2" />
+            <path d="M3 13.5c0-2.5 2.2-4.5 5-4.5s5 2 5 4.5" stroke={ACCENT} strokeWidth="1.2" strokeLinecap="round" />
           </svg>
-          {showTooltip && (
-            <div style={{
-              position: "absolute", bottom: "calc(100% + 8px)", left: "50%", transform: "translateX(-30%)",
-              background: "#1E242E", color: "#fff", fontSize: 12, lineHeight: 1.5,
-              padding: "8px 12px", borderRadius: 8, width: 220, zIndex: 10,
-              boxShadow: "0 4px 12px rgba(0,0,0,.15)",
-            }}>
-              We crafted this personality based on your brand. You can tweak the name, tone, and style anytime.
-              <div style={{
-                position: "absolute", top: "100%", left: "30%", transform: "translateX(-50%)",
-                width: 0, height: 0, borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderTop: "6px solid #1E242E",
-              }} />
-            </div>
-          )}
-        </div>
-      </div>
+        }
+      >Tone of Voice</AxTag>
+
+      <h3 style={{ fontSize: 16, fontWeight: 700, color: "#1A1A1A", margin: "0 0 16px", lineHeight: 1.3 }}>
+        Review Tone of Voice changes
+      </h3>
+
+      <div style={{ fontSize: 13, fontWeight: 600, color: "#1E242E", marginBottom: 8 }}>AI Agent personality</div>
 
       <textarea
         ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; } }}
-        disabled={selectedPreset !== "Custom"}
-        defaultValue={"UrbanStems brand voice is warm, occasion-driven, and emotionally resonant. The AI Agent should acknowledge the shopper's moment first, then offer helpful guidance.\n\nDos\n• Lead with the occasion (\"A birthday gift? How exciting.\")\n• Use first person and contractions (\"I'd love to help you find something.\")\n• Match the customer's emotional register (excited, stressed, last-minute)\n\nDon'ts\n• Don't open with \"How can I assist you today?\"\n• Don't list options robotically — guide, don't dump\n• Avoid words like: utilize, ensure, kindly, please note"}
+        value={personalityText}
+        onChange={(e) => { setPersonalityText(e.target.value); setSelectedPreset("Custom"); }}
+        disabled={approved}
+        maxLength={3000}
         style={{
           width: "100%", padding: "12px 14px", fontSize: 13, lineHeight: 1.65,
-          fontFamily: "'Inter', sans-serif",
-          color: selectedPreset !== "Custom" ? TEXT_MUTED : TEXT,
-          background: selectedPreset !== "Custom" ? "#F8F8F8" : "#fff",
-          border: "1px solid " + BORDER, borderRadius: 10, resize: "none",
-          outline: "none", boxSizing: "border-box", overflow: "hidden",
-          opacity: selectedPreset !== "Custom" ? 0.6 : 1,
-          transition: "opacity .2s, background .2s, color .2s",
-          cursor: selectedPreset !== "Custom" ? "default" : "text",
+          fontFamily: "'Inter', sans-serif", color: TEXT,
+          background: approved ? "#F8F8F8" : "#fff",
+          border: "1px solid " + BORDER, borderRadius: 8, resize: "vertical",
+          outline: "none", boxSizing: "border-box", minHeight: 80,
         }}
         onInput={(e) => { e.target.style.height = "auto"; e.target.style.height = e.target.scrollHeight + "px"; }}
-        onFocus={(e) => { if (selectedPreset === "Custom") e.target.style.borderColor = ACCENT; }}
+        onFocus={(e) => { e.target.style.borderColor = ACCENT; }}
         onBlur={(e) => { e.target.style.borderColor = BORDER; }}
       />
+      <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 4, marginBottom: 16 }}>
+        {personalityText.length}/3000
+      </div>
 
-
-      {/* Preset personalities — 2x2 grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 16 }}>
+      {/* Preset grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
         {presets.map((p) => {
           const isSelected = selectedPreset === p.name;
           return (
             <div key={p.name}
-              onClick={() => setSelectedPreset(p.name)}
+              onClick={() => { if (!approved) handlePresetClick(p.name); }}
               style={{
-                border: isSelected ? "1.5px solid " + ACCENT : "1px solid " + BORDER,
-                borderRadius: 8, padding: "10px 12px", cursor: "pointer",
+                border: isSelected ? "2px solid " + ACCENT : "1px solid rgba(0,0,0,0.08)",
+                borderRadius: 10, padding: "12px 14px", cursor: approved ? "default" : "pointer",
                 transition: "border-color .15s, box-shadow .15s",
-                background: isSelected ? "#F9F7FE" : "#fff",
+                background: "#fff", position: "relative",
               }}
-              onMouseEnter={(e) => { if (!isSelected) { e.currentTarget.style.borderColor = "#D0D0D0"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,.04)"; } }}
-              onMouseLeave={(e) => { if (!isSelected) { e.currentTarget.style.borderColor = BORDER; e.currentTarget.style.boxShadow = "none"; } }}
+              onMouseEnter={(e) => { if (!isSelected && !approved) { e.currentTarget.style.borderColor = "#D0D0D0"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,.04)"; } }}
+              onMouseLeave={(e) => { if (!isSelected && !approved) { e.currentTarget.style.borderColor = "rgba(0,0,0,0.08)"; e.currentTarget.style.boxShadow = "none"; } }}
             >
-              <div style={{ fontSize: 13, fontWeight: 600, color: isSelected ? ACCENT : TEXT, marginBottom: 2 }}>{p.name}</div>
-              <div style={{ fontSize: 12, color: TEXT_MUTED }}>{p.desc}</div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ fontSize: 14, fontWeight: 600, color: "#1A1A1A" }}>{p.name}</span>
+                {isSelected && (
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <circle cx="10" cy="10" r="9" stroke={ACCENT} strokeWidth="1.5" fill="white" />
+                    <path d="M6.5 10.5l2 2 5-5" stroke={ACCENT} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </div>
+              <div style={{ fontSize: 13, color: "#5C6370", marginTop: 4, lineHeight: 1.4 }}>{p.desc}</div>
             </div>
           );
         })}
       </div>
 
-      <div style={{ marginTop: 12 }}>
-        <span style={{ fontSize: 12, fontWeight: 400, color: "#683FCF", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 2, letterSpacing: "0.01em", lineHeight: "16px" }}>
-          Learn more
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6.333 3.667H5.133c-.747 0-1.12 0-1.406.145a1.333 1.333 0 0 0-.582.583c-.145.285-.145.659-.145 1.405v5.067c0 .747 0 1.12.145 1.405.128.251.332.455.582.583.285.145.659.145 1.404.145h5.07c.746 0 1.119 0 1.404-.145.251-.128.455-.332.583-.583.145-.285.145-.658.145-1.405V9.667M9.667 3H13v3.333M13 3L8.333 7.667" stroke="#683FCF" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" /></svg>
-        </span>
+      {/* Approve / Reject */}
+      {!approved && (
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 20 }}>
+          <AxButton variant="primary" onClick={onApprove}>Approve</AxButton>
+          <AxButton variant="tertiary" onClick={onReject}>Reject</AxButton>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── Connection card (Shopify / email) — in-thread artifact card with a direct-click connect CTA ─── */
+function ConnectCard({ pillLabel, pillIcon, heading, body, primaryLabel, onPrimary, secondaryLabel, onSecondary }) {
+  return (
+    <div style={{
+      border: "1px solid rgba(0,0,0,0.08)",
+      boxShadow: "0px 2px 20px 0px rgba(0,0,0,0.04)",
+      borderRadius: 8, background: "#fff", padding: "20px",
+      fontFamily: "'Inter', sans-serif",
+      animation: "fadeInUp .5s cubic-bezier(.16,1,.3,1) forwards",
+    }}>
+      <AxTag style={{ marginBottom: 14 }} leadingSlot={pillIcon}>{pillLabel}</AxTag>
+
+      <h3 style={{ fontSize: 16, fontWeight: 700, color: "#1A1A1A", margin: "0 0 8px", lineHeight: 1.3 }}>
+        {heading}
+      </h3>
+
+      <div style={{ fontSize: 14, lineHeight: 1.55, color: "#5C6370", fontWeight: 450 }}>
+        {body}
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 20 }}>
+        <AxButton variant="primary" onClick={onPrimary}>{primaryLabel}</AxButton>
+        <AxButton variant="secondary" onClick={onSecondary}>{secondaryLabel}</AxButton>
       </div>
     </div>
   );
 }
+
+const CONNECT_PILL_ICON_SHOPIFY = (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <path d="M3.5 5.5h9l-.7 7a1.5 1.5 0 0 1-1.5 1.3H5.7a1.5 1.5 0 0 1-1.5-1.3l-.7-7Z" stroke={ACCENT} strokeWidth="1.2" strokeLinejoin="round" />
+    <path d="M5.8 5.5V4.7a2.2 2.2 0 0 1 4.4 0v.8" stroke={ACCENT} strokeWidth="1.2" strokeLinecap="round" />
+  </svg>
+);
+const CONNECT_PILL_ICON_EMAIL = (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <rect x="2.2" y="3.8" width="11.6" height="8.4" rx="1.5" stroke={ACCENT} strokeWidth="1.2" />
+    <path d="m2.8 4.8 5.2 4 5.2-4" stroke={ACCENT} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
 
 /* ─── Live chat widget (Chat 2.0) — accepts an optional preloaded shopper message ─── */
 function ModalLiveChat({ preloadMessage, skillId }) {
@@ -2879,14 +2963,14 @@ function SkillPickerCard({ toggles, onToggle, onConfirm, onClose, freeformValue,
 }
 
 /* ─── Cinematic closing — full-page overlay with staggered entrance ─── */
-function ClosingScreen({ onAction1, onAction2, isComplete, isNonShopify, enabledSkillCount }) {
+function ClosingScreen({ onAction1, onAction2, isNonShopify, enabledSkillCount }) {
   const wordIn = (delay) => ({
     display: "inline-block",
     opacity: 0,
     animation: "cinematicWordIn .8s cubic-bezier(.16,1,.3,1) " + delay + "s forwards",
   });
 
-  const headline = isComplete ? "Great work!" : "You're almost there";
+  const headline = "Great work!";
 
   const ICON_COLOR = "#8B6F52";
   const ICON_BG = "#F3EDE7";
@@ -2895,16 +2979,8 @@ function ClosingScreen({ onAction1, onAction2, isComplete, isNonShopify, enabled
     { icon: (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M21 12l-4-4v3H7V8l-4 4 4 4v-3h10v3l4-4z" stroke={ICON_COLOR} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M3 21V17M7 21V15M11 21V17M15 21V13M19 21V11" stroke={ICON_COLOR} strokeWidth="1.5" strokeLinecap="round" /></svg>), text: "You'll see what's automated and what needs a human" },
     { icon: (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" stroke={ICON_COLOR} strokeWidth="1.5" /><path d="M12 6v6l4 2" stroke={ICON_COLOR} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M8 2h8" stroke={ICON_COLOR} strokeWidth="1.5" strokeLinecap="round" /></svg>), text: "Add more skills, channels, or teammates anytime" },
   ];
-  let bodyLines, bullets;
-  if (isComplete) {
-    bodyLines = ["Your helpdesk is live, with AI Agent covering X% of your tickets."];
-    bullets = completeBullets;
-  } else {
-    bodyLines = [
-      "You've made a good start. Finish the last few steps to get your support up and running.",
-    ];
-    bullets = null;
-  }
+  const bodyLines = ["Your helpdesk is live, with AI Agent covering X% of your tickets."];
+  const bullets = completeBullets;
 
   return (
     <div style={{
@@ -2915,12 +2991,7 @@ function ClosingScreen({ onAction1, onAction2, isComplete, isNonShopify, enabled
       animation: "overlayBackdropIn .6s ease forwards",
       overflow: "hidden",
     }}>
-      <div style={{ position: "absolute", display: "flex", alignItems: "center", justifyContent: "center", left: -564, top: -300, width: 1104, height: 1104, zIndex: 0, opacity: 0, animation: "fadeIn 1.2s ease 0.3s forwards" }}>
-        <img src="../../images/watercolor-bloom-1.png" alt="" style={{ width: 792, height: 792, opacity: 0.2, transform: "rotate(35.44deg)", pointerEvents: "none" }} />
-      </div>
-      <div style={{ position: "absolute", display: "flex", alignItems: "center", justifyContent: "center", left: 565, top: 60, width: 1399, height: 1399, zIndex: 0, opacity: 0, animation: "fadeIn 1.2s ease 0.3s forwards" }}>
-        <img src="../../images/watercolor-bloom-2.png" alt="" style={{ width: 1024, height: 1024, opacity: 0.2, transform: "rotate(-30deg)", pointerEvents: "none" }} />
-      </div>
+      <img src="../../images/closing-screen-bg.png" alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 0, opacity: 0, animation: "fadeIn 1.2s ease 0.3s forwards", pointerEvents: "none" }} />
       <div style={{ width: 480, display: "flex", flexDirection: "column", gap: 24, position: "relative", zIndex: 1 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <h1 style={{
@@ -2941,7 +3012,7 @@ function ClosingScreen({ onAction1, onAction2, isComplete, isNonShopify, enabled
           </div>
         </div>
 
-        {isComplete && bullets && (
+        {bullets && (
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <div style={{
               fontFamily: "'Inter', sans-serif",
@@ -2968,7 +3039,7 @@ function ClosingScreen({ onAction1, onAction2, isComplete, isNonShopify, enabled
         <div style={{
           display: "flex", gap: 8,
           opacity: 0,
-          animation: "cinematicSlideUp .55s cubic-bezier(.16,1,.3,1) " + (isComplete ? "2.4" : "1.5") + "s forwards",
+          animation: "cinematicSlideUp .55s cubic-bezier(.16,1,.3,1) 2.4s forwards",
         }}>
           <button onClick={onAction2}
             style={BTN_SECONDARY}
@@ -3006,6 +3077,303 @@ function ConfettiBurst() {
       {pieces.map((p, i) => (
         <span key={i} style={{ left: p.l, animationDelay: p.d, background: p.c }} />
       ))}
+    </div>
+  );
+}
+
+/* ─── Home page — shown after "Finish later" ─── */
+function HomePage({ onContinueSetup, onNotShopify }) {
+  const sidebarNavItems = [
+    { key: "home", label: "Home", active: true, icon: (c) => (
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+        <path d="M3 10L10 3l7 7" stroke={c} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M5 8.5V16a1 1 0 001 1h3v-4h2v4h3a1 1 0 001-1V8.5" stroke={c} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    )},
+    { key: "inbox", label: "Inbox", icon: (c) => (
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+        <rect x="3" y="4" width="14" height="12" rx="2" stroke={c} strokeWidth="1.5" />
+        <path d="M3 8l7 4 7-4" stroke={c} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    )},
+    { key: "ai-agent", label: "AI Agent", icon: (c) => (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <path d="M12 3l2 6 6 2-6 2-2 6-2-6-6-2 6-2z" stroke={c} strokeWidth="1.5" strokeLinejoin="round" />
+      </svg>
+    )},
+    { key: "ai-journey", label: "AI Journey", icon: (c) => (
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+        <path d="M3 17c3-6 5-14 14-14" stroke={c} strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M14 3h3v3" stroke={c} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    )},
+    { key: "convert", label: "Convert", icon: (c) => (
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+        <path d="M6 10h8M14 10l-3 3M14 10l-3-3" stroke={c} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="10" cy="10" r="7" stroke={c} strokeWidth="1.5" />
+      </svg>
+    )},
+    { key: "analytics", label: "Analytics", icon: (c) => (
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+        <path d="M3 16l5-6 4 3 5-7" stroke={c} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    )},
+    { key: "workflows", label: "Workflows", icon: (c) => (
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+        <rect x="3" y="3" width="5" height="5" rx="1" stroke={c} strokeWidth="1.5" />
+        <rect x="12" y="3" width="5" height="5" rx="1" stroke={c} strokeWidth="1.5" />
+        <rect x="7.5" y="12" width="5" height="5" rx="1" stroke={c} strokeWidth="1.5" />
+        <path d="M5.5 8v2a2 2 0 002 2h5a2 2 0 002-2V8" stroke={c} strokeWidth="1.5" />
+        <path d="M10 12v0" stroke={c} strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+    )},
+    { key: "customers", label: "Customers", icon: (c) => (
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+        <circle cx="10" cy="7" r="3.5" stroke={c} strokeWidth="1.5" />
+        <path d="M3 17.5c0-3 3.1-5.5 7-5.5s7 2.5 7 5.5" stroke={c} strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+    )},
+    { key: "settings", label: "Settings", icon: (c) => (
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+        <path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" stroke={c} strokeWidth="1.3" />
+        <path d="M16.2 12.2l-.8-.4a6.3 6.3 0 000-3.6l.8-.4a.8.8 0 00.3-1.1l-.6-1a.8.8 0 00-1.1-.3l-.8.4a5.7 5.7 0 00-3.2-1.8V3.2a.8.8 0 00-.8-.8h-1a.8.8 0 00-.8.8v.8A5.7 5.7 0 005 5.8l-.8-.4a.8.8 0 00-1.1.3l-.6 1a.8.8 0 00.3 1.1l.8.4a6.3 6.3 0 000 3.6l-.8.4a.8.8 0 00-.3 1.1l.6 1a.8.8 0 001.1.3l.8-.4a5.7 5.7 0 003.2 1.8v.8c0 .4.3.8.8.8h1c.4 0 .8-.3.8-.8v-.8a5.7 5.7 0 003.2-1.8l.8.4a.8.8 0 001.1-.3l.6-1a.8.8 0 00-.3-1.1z" stroke={c} strokeWidth="1.1" />
+      </svg>
+    )},
+  ];
+
+  const resourceCards = [
+    {
+      image: "assets/community.png",
+      title: "Join the Gorgias Community",
+      description: "Connect with peers, share best practices, and get answers from experts.",
+      link: "Join the community",
+    },
+    {
+      image: "assets/academy.png",
+      title: "Learn with Gorgias Academy",
+      description: "Build your expertise with guided learning paths, certifications, and lessons.",
+      link: "Start learning",
+    },
+    {
+      image: "assets/helpcenter.png",
+      title: "Visit the Gorgias Help Center",
+      description: "Find clear answers, setup guides, and troubleshooting resources.",
+      link: "Save a seat",
+    },
+  ];
+
+  return (
+    <div style={{ width: "100vw", height: "100vh", display: "flex", background: "#fafafa", overflow: "hidden" }}>
+      {/* Gorgias App Sidebar */}
+      <div style={{
+        width: 210, minWidth: 210, background: "#fafafa",
+        display: "flex", flexDirection: "column", flexShrink: 0,
+        fontFamily: "'Inter', sans-serif",
+      }}>
+        {/* Top header */}
+        <div style={{ padding: "14px 12px 10px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+              <path d="M3 10L10 3l7 7" stroke="#1a1a1a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M5 8.5V16a1 1 0 001 1h3v-4h2v4h3a1 1 0 001-1V8.5" stroke="#1a1a1a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span style={{ fontSize: 15, fontWeight: 600, color: "#1a1a1a" }}>Home</span>
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+              <path d="M4 6l4 4 4-4" stroke="#1a1a1a" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <div style={{ width: 28, height: 28, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+              <svg width="17" height="17" viewBox="0 0 20 20" fill="none">
+                <path d="M10 3a5 5 0 0 0-5 5v3l-1.5 2h13L15 11V8a5 5 0 0 0-5-5z" stroke="#1a1a1a" strokeWidth="1.4" strokeLinejoin="round" />
+                <path d="M8 15a2 2 0 0 0 4 0" stroke="#1a1a1a" strokeWidth="1.4" strokeLinecap="round" />
+              </svg>
+            </div>
+            <div style={{ width: 28, height: 28, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+              <svg width="17" height="17" viewBox="0 0 20 20" fill="none">
+                <circle cx="9" cy="9" r="6" stroke="#1a1a1a" strokeWidth="1.6" />
+                <path d="M13.5 13.5L17 17" stroke="#1a1a1a" strokeWidth="1.6" strokeLinecap="round" />
+              </svg>
+            </div>
+            <div style={{ width: 28, height: 28, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+              <svg width="17" height="17" viewBox="0 0 20 20" fill="none">
+                <rect x="3" y="3" width="6" height="6" rx="1.5" stroke="#1a1a1a" strokeWidth="1.4" />
+                <rect x="11" y="3" width="6" height="6" rx="1.5" stroke="#1a1a1a" strokeWidth="1.4" />
+                <rect x="3" y="11" width="6" height="6" rx="1.5" stroke="#1a1a1a" strokeWidth="1.4" />
+                <rect x="11" y="11" width="6" height="6" rx="1.5" stroke="#1a1a1a" strokeWidth="1.4" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        {/* Nav items */}
+        <div style={{ padding: "4px 8px", display: "flex", flexDirection: "column", gap: 1 }}>
+          {sidebarNavItems.map((item) => (
+            <div key={item.key} style={{
+              display: "flex", alignItems: "center", gap: 10,
+              padding: "7px 10px", borderRadius: 8,
+              fontSize: 14, fontWeight: item.active ? 600 : 450,
+              color: "#1a1a1a",
+              background: item.active ? "#EBEBEB" : "transparent",
+              cursor: "pointer", transition: "background .15s",
+            }}
+              onMouseEnter={(e) => { if (!item.active) e.currentTarget.style.background = "#F0F0F0"; }}
+              onMouseLeave={(e) => { if (!item.active) e.currentTarget.style.background = item.active ? "#EBEBEB" : "transparent"; }}
+            >
+              <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {item.icon("#1a1a1a")}
+              </div>
+              <span>{item.label}</span>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ flex: 1 }} />
+
+        {/* Bottom bar */}
+        <div style={{
+          padding: "10px 12px 14px",
+          borderTop: "1px solid #E5E5E5",
+          display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
+        }}>
+          <div style={{
+            width: 32, height: 32, borderRadius: "50%", background: "#D8D8D8",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 11, fontWeight: 600, color: "#1a1a1a", flexShrink: 0, position: "relative",
+          }}>
+            JN
+            <div style={{
+              position: "absolute", bottom: -1, right: -1,
+              width: 10, height: 10, borderRadius: "50%",
+              background: "#34c759", border: "2px solid #fafafa",
+            }} />
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <div style={{ width: 30, height: 30, borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "background .15s" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#EBEBEB"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+            >
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                <path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" stroke="#1a1a1a" strokeWidth="1.3" />
+                <path d="M16.2 12.2l-.8-.4a6.3 6.3 0 000-3.6l.8-.4a.8.8 0 00.3-1.1l-.6-1a.8.8 0 00-1.1-.3l-.8.4a5.7 5.7 0 00-3.2-1.8V3.2a.8.8 0 00-.8-.8h-1a.8.8 0 00-.8.8v.8A5.7 5.7 0 005 5.8l-.8-.4a.8.8 0 00-1.1.3l-.6 1a.8.8 0 00.3 1.1l.8.4a6.3 6.3 0 000 3.6l-.8.4a.8.8 0 00-.3 1.1l.6 1a.8.8 0 001.1.3l.8-.4a5.7 5.7 0 003.2 1.8v.8c0 .4.3.8.8.8h1c.4 0 .8-.3.8-.8v-.8a5.7 5.7 0 003.2-1.8l.8.4a.8.8 0 001.1-.3l.6-1a.8.8 0 00-.3-1.1z" stroke="#1a1a1a" strokeWidth="1.1" />
+              </svg>
+            </div>
+            <div style={{ width: 30, height: 30, borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "background .15s" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#EBEBEB"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+            >
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                <circle cx="10" cy="10" r="7.5" stroke="#1a1a1a" strokeWidth="1.4" />
+                <path d="M8 7.8a2.2 2.2 0 014 1.2c0 1.5-2 1.5-2 3" stroke="#1a1a1a" strokeWidth="1.3" strokeLinecap="round" />
+                <circle cx="10" cy="14" r=".8" fill="#1a1a1a" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main content */}
+      <div style={{
+        flex: 1, display: "flex", flexDirection: "column", overflow: "auto",
+        background: "#ffffff", borderRadius: 16,
+        margin: 16,
+        border: "1px solid #EBECEF",
+        padding: "32px 40px",
+        fontFamily: "'Inter', sans-serif",
+      }}>
+        <h1 style={{
+          fontSize: 20, fontWeight: 600, color: "#1a1a1a", margin: "0 0 24px 0",
+          fontFamily: "'Inter', sans-serif",
+        }}>Home</h1>
+
+        {/* Setup banner */}
+        <div style={{
+          background: "#F4F5F7", borderRadius: 12, padding: "32px 36px",
+          display: "flex", alignItems: "center", gap: 32,
+          marginBottom: 32,
+        }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h2 style={{
+              fontSize: 18, fontWeight: 600, color: "#1a1a1a", margin: "0 0 12px 0",
+              fontFamily: "'Inter', sans-serif",
+            }}>Your setup is almost complete</h2>
+            <p style={{
+              fontSize: 14, lineHeight: "22px", color: "#1a1a1a", margin: "0 0 20px 0",
+              fontFamily: "'Inter', sans-serif", fontWeight: 400,
+            }}>
+              Allow Gaia, your Gorgias AI assistant, to guide you through your remaining setup steps to get the most out of Gorgias. It will help you connect your first channel, integrate with your e-commerce platform, and start automating support.
+            </p>
+            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+              <button
+                onClick={onContinueSetup}
+                style={{
+                  ...BTN_PRIMARY,
+                  height: 36, fontSize: 14, padding: "0 16px",
+                }}
+                onMouseEnter={(e) => { Object.assign(e.currentTarget.style, BTN_PRIMARY_HOVER); }}
+                onMouseLeave={(e) => { Object.assign(e.currentTarget.style, BTN_PRIMARY_LEAVE); }}
+              >Continue setup</button>
+              <span
+                onClick={onNotShopify}
+                style={{
+                  fontSize: 14, color: "#1a1a1a", cursor: "pointer",
+                  fontFamily: "'Inter', sans-serif", fontWeight: 400,
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.textDecoration = "underline"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.textDecoration = "none"; }}
+              >I&apos;m not on Shopify</span>
+            </div>
+          </div>
+          <img src="assets/home-illustration.png" alt="" style={{
+            width: 180, height: "auto", flexShrink: 0, objectFit: "contain",
+          }} />
+        </div>
+
+        {/* Resources section */}
+        <h2 style={{
+          fontSize: 16, fontWeight: 600, color: "#1a1a1a", margin: "0 0 16px 0",
+          fontFamily: "'Inter', sans-serif",
+        }}>Make the most of Gorgias</h2>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
+          {resourceCards.map((card) => (
+            <div key={card.title} style={{
+              background: "#ffffff", borderRadius: 12,
+              border: "1px solid rgba(0,0,0,0.08)",
+              boxShadow: "0px 2px 20px 0px rgba(0,0,0,0.04)",
+              overflow: "hidden", cursor: "pointer",
+              transition: "box-shadow .15s",
+            }}
+              onMouseEnter={(e) => { e.currentTarget.style.boxShadow = "0px 4px 24px 0px rgba(0,0,0,0.08)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "0px 2px 20px 0px rgba(0,0,0,0.04)"; }}
+            >
+              <div style={{
+                height: 180, overflow: "hidden",
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <img src={card.image} alt="" style={{
+                  width: "100%", height: "100%", objectFit: "cover",
+                }} />
+              </div>
+              <div style={{ padding: "16px 20px 20px" }}>
+                <h3 style={{
+                  fontSize: 14, fontWeight: 600, color: "#1a1a1a",
+                  margin: "0 0 6px 0", fontFamily: "'Inter', sans-serif",
+                }}>{card.title}</h3>
+                <p style={{
+                  fontSize: 13, lineHeight: "18px", color: "#5C6370",
+                  margin: "0 0 12px 0", fontFamily: "'Inter', sans-serif", fontWeight: 400,
+                }}>{card.description}</p>
+                <span style={{
+                  fontSize: 13, color: "#1a1a1a", fontWeight: 400,
+                  fontFamily: "'Inter', sans-serif",
+                  textDecoration: "underline", cursor: "pointer",
+                }}>{card.link}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -3068,12 +3436,17 @@ function IntakePage() {
     setEnableAiTypingText("");
     setEnableAiChoice(null);
     setClosingPhase("idle");
+    setShowHomePage(false);
     setShowConfetti(false);
     setActivePanel(null);
     setActiveSkillIdx(null);
     setPanelClosing(false);
     setChannelConnectMethod(null);
     setChannelConnected(false);
+    setChannelConnectClicked(false);
+    setEmailOtherText("");
+    setEmailOtherComplete(false);
+    setShopifyConnectClicked(false);
     setPlatformPhase("idle");
     setSelectedPlatform(null);
     setShopifyAckText("");
@@ -3091,6 +3464,14 @@ function IntakePage() {
 
       if (section === "signup") return;
       if (section === "intro") return;
+
+      if (section === "home") {
+        setChatMessages(welcomeMessages.map(m => ({ role: "ai", text: m.text, bold: m.bold || null })));
+        setCurrentMsgIndex(welcomeMessages.length);
+        setShowHomePage(true);
+        setDevMenuOpen(false);
+        return;
+      }
 
       setCinematicPhase("done");
       setLandingClosing(false);
@@ -3155,6 +3536,16 @@ function IntakePage() {
     setDevMenuOpen(false);
   };
 
+  const handleContinueSetup = () => {
+    setShowHomePage(false);
+  };
+
+  const handleNotShopify = () => {
+    setShowHomePage(false);
+    setSelectedPlatform(null);
+    setPlatformPhase("selecting");
+  };
+
   const cinematicRef = useRef(null);
 
   // Welcome typing
@@ -3215,18 +3606,17 @@ function IntakePage() {
   const findingsBold = "UrbanStems";
 
   // Platform selector (after ToV confirmation)
-  const [platformPhase, setPlatformPhase] = useState("idle"); // idle | selecting | oauth | shopify-ack | connected | other-typing | other-path
+  const [platformPhase, setPlatformPhase] = useState("idle"); // idle | selecting | shopify-confirm | shopify-ack | connected | other-typing | other-path
   const [selectedPlatform, setSelectedPlatform] = useState(null);
   const [shopifyAckText, setShopifyAckText] = useState("");
   const [shopifyAckComplete, setShopifyAckComplete] = useState(false);
   const [platformConnectedShown, setPlatformConnectedShown] = useState(false);
   const [platformOtherText, setPlatformOtherText] = useState("");
   const [platformOtherComplete, setPlatformOtherComplete] = useState(false);
+  const [shopifyConnectClicked, setShopifyConnectClicked] = useState(false);
   const PLATFORM_OPTIONS = [
-    { key: "shopify", title: "Shopify", badge: "AI detected" },
-    { key: "woocommerce", title: "WooCommerce" },
-    { key: "bigcommerce", title: "BigCommerce" },
-    { key: "magento", title: "Magento" },
+    { key: "shopify", title: "Shopify" },
+    { key: "other", title: "Other" },
   ];
 
   // Right-side panels (Voice card / Preview / Edit)
@@ -3290,18 +3680,22 @@ function IntakePage() {
   const [channelToggles, setChannelToggles] = useState({ email: true, chat: true });
   const [channelsCardClosed, setChannelsCardClosed] = useState(false);
   const [channelsFreeform, setChannelsFreeform] = useState("");
-  const [channelConnectMethod, setChannelConnectMethod] = useState(null); // null | "gmail" | "microsoft" | "forwarding"
+  const [channelConnectMethod, setChannelConnectMethod] = useState(null); // null | "gmail" | "microsoft" | "other"
   const [channelConnected, setChannelConnected] = useState(false);
+  const [channelConnectClicked, setChannelConnectClicked] = useState(false);
+  const [emailOtherText, setEmailOtherText] = useState("");
+  const [emailOtherComplete, setEmailOtherComplete] = useState(false);
   const CHANNEL_CONNECT_OPTIONS = [
     { key: "gmail", title: "Gmail", desc: "Connect with Google OAuth" },
     { key: "microsoft", title: "Microsoft 365", desc: "Connect with Microsoft OAuth" },
+    { key: "other", title: "Other" },
   ];
 
   // Enable AI Agent phase (between channels and closing)
   const [enableAiPhase, setEnableAiPhase] = useState("idle"); // idle | typing | shown | done
   const [enableAiTypingText, setEnableAiTypingText] = useState("");
   const [enableAiChoice, setEnableAiChoice] = useState(null); // null | "yes" | "no"
-  const enableAiFullText = "Everything's in place. When you're ready, AI Agent will start handling matching tickets on your connected channels.";
+  const enableAiFullText = "Everything's in place. When you're ready, AI Agent will start handling customer tickets on your connected channels.";
 
   const [editChatMessages, setEditChatMessages] = useState([]);
   const [editAiTyping, setEditAiTyping] = useState(null);
@@ -3309,13 +3703,16 @@ function IntakePage() {
 
   // Closing
   const [closingPhase, setClosingPhase] = useState("idle"); // idle | shown
+  const [showHomePage, setShowHomePage] = useState(false);
   const [showSkillsScreen, setShowSkillsScreen] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
 
   const chatEndRef = useRef(null);
   const chatScrollRef = useRef(null);
   const [userScrolledUp, setUserScrolledUp] = useState(false);
+  const isAutoScrollingRef = useRef(false);
   const handleChatScroll = (e) => {
+    if (isAutoScrollingRef.current) return;
     const el = e.currentTarget;
     const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
     setUserScrolledUp(distFromBottom > 80);
@@ -3413,8 +3810,7 @@ function IntakePage() {
   /* Platform other-path acknowledgment typing */
   useEffect(() => {
     if (platformPhase !== "other-typing") return;
-    const platformName = selectedPlatform || "your platform";
-    const otherFullText = "Got it. You can connect " + platformName + " later from your apps page. For now, let's get your support email set up so you're ready for customers.";
+    const otherFullText = "No worries! You can connect your ecommerce platform later from your apps page. For now, let’s get your support email set up so you’re ready for customers.";
     let charIndex = 0;
     setIsTypingMessage(true);
     setTypingText("");
@@ -3439,18 +3835,14 @@ function IntakePage() {
 
   /* Platform selection handler */
   const handlePlatformSelect = (key) => {
-    const platform = PLATFORM_OPTIONS.find((p) => p.key === key);
-    const label = platform ? platform.title : key;
-    setSelectedPlatform(label);
     if (key === "shopify") {
-      setPlatformPhase("oauth");
+      setSelectedPlatform("Shopify");
+      setShopifyConnectClicked(false);
+      setPlatformPhase("shopify-confirm");
     } else {
+      setSelectedPlatform("Other");
       setPlatformPhase("other-typing");
     }
-  };
-  const handlePlatformFreeform = (text) => {
-    setSelectedPlatform(text);
-    setPlatformPhase("other-typing");
   };
   const handleShopifyConnected = () => {
     setPlatformConnectedShown(true);
@@ -3518,7 +3910,6 @@ function IntakePage() {
           setFindingsComplete(true);
           setFindingsText(findingsFullText);
           setTimeout(() => setShowVoiceCard(true), 300);
-          setTimeout(() => setShowVoiceConfirm(true), 1500);
         }
       }, 10);
     }, 800);
@@ -3601,10 +3992,33 @@ function IntakePage() {
     return () => clearInterval(interval);
   }, [channelsPhase, channelsMsgIdx]);
 
+  /* Email "Other" provider acknowledgment typing */
+  useEffect(() => {
+    if (channelsPhase !== "shown" || channelConnectMethod !== "other" || emailOtherComplete) return;
+    const otherFullText = "I can only connect Gmail or Microsoft 365 from here, but you can connect other providers from the app.";
+    let charIndex = 0;
+    setIsTypingMessage(true);
+    const startDelay = setTimeout(() => {
+      const interval = setInterval(() => {
+        charIndex++;
+        setEmailOtherText(otherFullText.substring(0, charIndex));
+        if (charIndex >= otherFullText.length) {
+          clearInterval(interval);
+          setIsTypingMessage(false);
+          setEmailOtherText("");
+          setEmailOtherComplete(true);
+        }
+      }, 10);
+    }, 300);
+    return () => clearTimeout(startDelay);
+  }, [channelsPhase, channelConnectMethod, emailOtherComplete]);
+
   /* Auto-scroll — only when the user hasn't manually scrolled up */
   useEffect(() => {
     if (userScrolledUp) return;
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    isAutoScrollingRef.current = true;
+    chatEndRef.current?.scrollIntoView({ behavior: "auto", block: "end" });
+    requestAnimationFrame(() => { isAutoScrollingRef.current = false; });
   });
 
   /* Helper to kick off the skills typing sequence (starts at batch 1) */
@@ -3616,13 +4030,10 @@ function IntakePage() {
   /* Voice card actions */
   const handleVoiceYes = () => {
     setVoiceUserReply("Yes, looks good. I'll adjust it later if needed.");
-    setShowVoiceConfirm(false);
-    closePanel();
     setTimeout(startSkillsTyping, 900);
   };
   const handleVoiceNo = () => {
     setVoiceUserReply("No, I need to make some changes.");
-    setShowVoiceConfirm(false);
     setVoiceRevisionPhase("asking");
   };
   const handleVoiceRevisionSubmit = () => {
@@ -3634,7 +4045,6 @@ function IntakePage() {
   const handleRevisionYes = () => {
     setVoiceRevisionMessages(prev => [...prev, { role: "user", text: "Yes, looks good." }]);
     setVoiceRevisionPhase("idle");
-    closePanel();
     setTimeout(startSkillsTyping, 900);
   };
   const handleRevisionNo = () => {
@@ -3645,8 +4055,6 @@ function IntakePage() {
     if (!voiceFreeform.trim()) return;
     setVoiceUserReply(voiceFreeform.trim());
     setVoiceFreeform("");
-    setShowVoiceConfirm(false);
-    closePanel();
     setTimeout(startSkillsTyping, 900);
   };
 
@@ -3684,7 +4092,6 @@ function IntakePage() {
           clearInterval(interval);
           setVoiceRevisionTypingText("");
           setVoiceRevisionMessages(prev => [...prev, { role: "gaia", text: fullText }]);
-          setActivePanel("voice");
           setTimeout(() => setVoiceRevisionPhase("confirm"), 800);
         }
       }, 10);
@@ -3702,7 +4109,7 @@ function IntakePage() {
     if (isShopify) {
       setTimeout(() => setEnableAiPhase("typing"), 600);
     } else {
-      setTimeout(() => setClosingPhase("shown"), 600);
+      setTimeout(() => setShowHomePage(true), 600);
     }
   };
   const onChannelConfirm = () => advanceAfterChannels();
@@ -3710,6 +4117,7 @@ function IntakePage() {
   const onChannelClose = () => { setChannelsCardClosed(true); advanceAfterChannels(); };
   const onChannelFreeformSubmit = () => { if (!channelsFreeform.trim()) return; advanceAfterChannels(); };
   const handleChannelSelect = (key) => {
+    setChannelConnectClicked(false);
     setChannelConnectMethod(key);
   };
   const handleChannelOAuthConfirm = () => {
@@ -3718,6 +4126,7 @@ function IntakePage() {
   };
   const handleChannelOAuthCancel = () => {
     setChannelConnectMethod(null);
+    setChannelConnectClicked(false);
   };
 
   /* Enable AI Agent typing effect */
@@ -3745,10 +4154,12 @@ function IntakePage() {
     const _aiEnabled = choice === "yes" && (skillsBatch1Choice === "all" || skillsBatch1Choice === "freeform"
       || (skillsBatch1Choice === "pick" && SKILL_PICKER_OPTIONS.some(s => skillPickerToggles[s.key])));
     if (_aiEnabled) {
-      setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 4500);
     }
-    setTimeout(() => setClosingPhase("shown"), _aiEnabled ? 1400 : 600);
+    if (_aiEnabled) {
+      setTimeout(() => setClosingPhase("shown"), 1400);
+    } else {
+      setTimeout(() => setShowHomePage(true), 600);
+    }
   };
 
   useEffect(() => {
@@ -3778,6 +4189,63 @@ function IntakePage() {
 
   if (!signupDone) {
     return <SignupScreen onSubmit={() => setSignupDone(true)} />;
+  }
+
+  if (showHomePage) {
+    return (
+      <div style={{ width: "100vw", height: "100vh", display: "flex", background: "#fafafa", overflow: "hidden" }}>
+        {/* Dev menu pill */}
+        <div style={{
+          position: "fixed", bottom: 16, right: 16, zIndex: 9999,
+          display: "flex", alignItems: "center", gap: 8,
+          background: "rgba(30,36,46,0.92)", color: "#fff",
+          fontSize: 12, fontWeight: 500, fontFamily: "'Inter', sans-serif",
+          padding: "8px 14px", borderRadius: 999,
+          boxShadow: "0 4px 16px rgba(0,0,0,.25)",
+          userSelect: "none",
+        }}>
+          <div style={{ position: "relative" }}>
+            <span
+              onClick={() => setDevMenuOpen((p) => !p)}
+              style={{ cursor: "pointer", opacity: devMenuOpen ? 1 : 0.7, transition: "opacity .15s" }}
+              onMouseEnter={(e) => { e.currentTarget.style.opacity = "1"; }}
+              onMouseLeave={(e) => { if (!devMenuOpen) e.currentTarget.style.opacity = "0.7"; }}
+            >Jump to &#9662;</span>
+            {devMenuOpen && (
+              <div style={{
+                position: "absolute", bottom: "calc(100% + 10px)", right: 0,
+                background: "rgba(30,36,46,0.96)", borderRadius: 10,
+                padding: "6px 0", minWidth: 200,
+                boxShadow: "0 8px 24px rgba(0,0,0,.35)",
+              }}>
+                {[
+                  { key: "signup", label: "Signup" },
+                  { key: "intro", label: "Intro" },
+                  { key: "home", label: "Home (Finish later)" },
+                  { key: "platform", label: "Platform" },
+                  { key: "tov", label: "ToV" },
+                  { key: "skills", label: "Skill Setup" },
+                  { key: "channels", label: "Channel Mapping" },
+                  { key: "end", label: "End" },
+                ].map((item) => (
+                  <div
+                    key={item.key}
+                    onClick={() => jumpTo(item.key)}
+                    style={{
+                      padding: "8px 16px", cursor: "pointer", fontSize: 12,
+                      color: "#fff", transition: "background .1s",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                  >{item.label}</div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+        <HomePage onContinueSetup={handleContinueSetup} onNotShopify={handleNotShopify} />
+      </div>
+    );
   }
 
   return (
@@ -3812,6 +4280,7 @@ function IntakePage() {
               {[
                 { key: "signup", label: "Signup" },
                 { key: "intro", label: "Intro" },
+                { key: "home", label: "Home (Finish later)" },
                 { key: "platform", label: "Platform" },
                 { key: "tov", label: "ToV" },
                 { key: "skills", label: "Skill Setup" },
@@ -3868,9 +4337,9 @@ function IntakePage() {
         )}
 
         {/* Skip setup tertiary link (top-right) — visible after cinematic, hidden when closing screen takes over */}
-        {cinematicPhase === "done" && closingPhase !== "shown" && !showSkillsScreen && (
+        {cinematicPhase === "done" && closingPhase !== "shown" && !showSkillsScreen && !showHomePage && (
           <div
-            onClick={() => setClosingPhase("shown")}
+            onClick={() => setShowHomePage(true)}
             style={{
               position: "absolute", top: 16, right: 20, zIndex: 4,
               fontSize: 14, fontWeight: 600, color: "#1E242E",
@@ -3943,6 +4412,29 @@ function IntakePage() {
               </div>
             )}
 
+            {/* Shopify connection card — in-thread, like the ToV HITL card */}
+            {platformPhase === "shopify-confirm" && (
+              <div style={{ marginBottom: 16 }} onClick={(e) => e.stopPropagation()}>
+                <ConnectCard
+                  pillLabel="Ecommerce"
+                  pillIcon={CONNECT_PILL_ICON_SHOPIFY}
+                  heading="Connect your Shopify store"
+                  body="Connect Shopify so I can pull in your products, orders, and customer info."
+                  primaryLabel={shopifyConnectClicked ? "I'm done" : "Connect Shopify"}
+                  onPrimary={() => {
+                    if (shopifyConnectClicked) {
+                      handleShopifyConnected();
+                    } else {
+                      window.open("https://apps.shopify.com/helpdesk?st_source=autocomplete&surface_detail=autocomplete_apps", "_blank");
+                      setShopifyConnectClicked(true);
+                    }
+                  }}
+                  secondaryLabel="Use a different platform"
+                  onSecondary={() => { setSelectedPlatform(null); setShopifyConnectClicked(false); setPlatformPhase("selecting"); }}
+                />
+              </div>
+            )}
+
             {/* Platform connected confirmation */}
             {platformConnectedShown && (
               <ConfirmationRow label="Connected to Shopify" />
@@ -3984,7 +4476,7 @@ function IntakePage() {
                 <div style={{
                   fontSize: 14, lineHeight: 1.55, color: "#1E242E",
                   fontFamily: "'Inter', sans-serif", fontWeight: 450, whiteSpace: "pre-wrap",
-                }}>{renderThreadText("Got it. You can connect " + (selectedPlatform || "your platform") + " later from your apps page. For now, let's get your support email set up so you're ready for customers.", seenTerms)}</div>
+                }}>{renderThreadText("No worries! You can connect your ecommerce platform later from your apps page. For now, let's get your support email set up so you're ready for customers.", seenTerms)}</div>
               </div>
             )}
 
@@ -4092,38 +4584,12 @@ function IntakePage() {
                   {findingsTyping && <span style={{ opacity: 0.3, animation: "pulse 1s infinite" }}>|</span>}
                 </div>
                 {showVoiceCard && (
-                  <div>
-                    <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 10 }}>
-                      <div
-                        onClick={(e) => { e.stopPropagation(); setActivePanel("voice"); }}
-                        style={{
-                          border: activePanel === "voice" ? "1px solid " + ACCENT : "1px solid " + BORDER,
-                          borderRadius: 12, background: CARD_BG, overflow: "hidden",
-                          display: "flex", alignItems: "center", gap: 14,
-                          padding: "14px 16px",
-                          cursor: "pointer", transition: "border-color .15s, box-shadow .15s",
-                          animation: "fadeInUp .5s cubic-bezier(.16,1,.3,1) forwards",
-                        }}
-                        onMouseEnter={(e) => { if (activePanel !== "voice") { e.currentTarget.style.borderColor = "#D0D0D0"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,.04)"; } }}
-                        onMouseLeave={(e) => { if (activePanel !== "voice") { e.currentTarget.style.borderColor = BORDER; e.currentTarget.style.boxShadow = "none"; } }}
-                      >
-                        <div style={{ width: 56, height: 56, borderRadius: 10, background: "#EDE8F8", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          <svg width="24" height="24" viewBox="12 10 16 20" fill="none">
-                            <path d="M25.25 18.5V20C25.25 22.8995 22.8995 25.25 20 25.25M14.75 18.5V20C14.75 22.8995 17.1005 25.25 20 25.25M20 25.25V27.5M17 27.5H23M20 22.25C18.7574 22.25 17.75 21.2426 17.75 20V14.75C17.75 13.5074 18.7574 12.5 20 12.5C21.2426 12.5 22.25 13.5074 22.25 14.75V20C22.25 21.2426 21.2426 22.25 20 22.25Z" stroke="#363433" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        </div>
-                        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}>
-                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-                            <span style={{ fontSize: 13, fontWeight: 600, color: TEXT, lineHeight: 1.3 }}>Your brand's tone of voice</span>
-                            <button style={{ ...BTN_SECONDARY_SM, flexShrink: 0 }}
-                              onMouseEnter={(e) => { Object.assign(e.currentTarget.style, BTN_SECONDARY_HOVER); }}
-                              onMouseLeave={(e) => { Object.assign(e.currentTarget.style, BTN_SECONDARY_LEAVE); }}
-                            >View</button>
-                          </div>
-                          <span style={{ fontSize: 13, color: TEXT_MUTED, lineHeight: 1.3 }}>This is how AI Agent will sound in responses</span>
-                        </div>
-                      </div>
-                    </div>
+                  <div style={{ marginTop: 20 }} onClick={(e) => e.stopPropagation()}>
+                    <TovHitlCard
+                      onApprove={handleVoiceYes}
+                      onReject={handleVoiceNo}
+                      approved={!!voiceUserReply}
+                    />
                   </div>
                 )}
               </div>
@@ -4362,6 +4828,52 @@ function IntakePage() {
               </div>
             )}
 
+            {/* Email connection card — in-thread, like the ToV HITL card */}
+            {channelsPhase === "shown" && (channelConnectMethod === "gmail" || channelConnectMethod === "microsoft") && !channelConnected && (
+              <div style={{ marginBottom: 16 }} onClick={(e) => e.stopPropagation()}>
+                <ConnectCard
+                  pillLabel="Email"
+                  pillIcon={CONNECT_PILL_ICON_EMAIL}
+                  heading={"Connect your " + (channelConnectMethod === "gmail" ? "Gmail" : "Microsoft 365")}
+                  body="Connect your email so AI Agent can respond."
+                  primaryLabel={channelConnectClicked ? "I'm done" : ("Connect " + (channelConnectMethod === "gmail" ? "Gmail" : "Microsoft 365"))}
+                  onPrimary={() => {
+                    if (channelConnectClicked) {
+                      handleChannelOAuthConfirm();
+                    } else {
+                      const url = channelConnectMethod === "gmail"
+                        ? "https://accounts.google.com/o/oauth2/auth"
+                        : "https://login.microsoftonline.com/common/oauth2/v2.0/authorize";
+                      window.open(url, "_blank");
+                      setChannelConnectClicked(true);
+                    }
+                  }}
+                  secondaryLabel="Use a different email provider"
+                  onSecondary={handleChannelOAuthCancel}
+                />
+              </div>
+            )}
+
+            {/* Email other-provider typing */}
+            {emailOtherText && !emailOtherComplete && (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{
+                  fontSize: 14, lineHeight: 1.55, color: "#1E242E",
+                  fontFamily: "'Inter', sans-serif", fontWeight: 450, whiteSpace: "pre-wrap",
+                }}>
+                  {emailOtherText}<span style={{ opacity: 0.3, animation: "pulse 1s infinite" }}>|</span>
+                </div>
+              </div>
+            )}
+            {emailOtherComplete && (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{
+                  fontSize: 14, lineHeight: 1.55, color: "#1E242E",
+                  fontFamily: "'Inter', sans-serif", fontWeight: 450, whiteSpace: "pre-wrap",
+                }}>{renderThreadText("I can only connect Gmail or Microsoft 365 from here, but you can connect other providers from the app.", seenTerms)}</div>
+              </div>
+            )}
+
             {/* Channels confirmation row */}
             {channelConnected && (
               <ConfirmationRow label="Connected email channel" />
@@ -4403,7 +4915,7 @@ function IntakePage() {
         {/* Scroll to bottom button — inside chat area, above thread */}
         {userScrolledUp && closingPhase !== "shown" && (
           <button
-            onClick={() => chatEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" })}
+            onClick={() => { setUserScrolledUp(false); }}
             style={{
               position: "absolute", bottom: 12, left: "50%", transform: "translateX(-50%)",
               zIndex: 10,
@@ -4425,17 +4937,17 @@ function IntakePage() {
         {closingPhase !== "shown" && (() => {
           const narrating = isTypingMessage
             || (cinematicPhase === "done" && currentMsgIndex < welcomeMessages.length)
-            || platformPhase === "oauth"
             || platformPhase === "shopify-ack"
             || platformPhase === "other-typing"
             || researchPhase === "running"
             || (researchPhase === "done" && !findingsComplete)
             || findingsTyping
-            || (findingsComplete && !showVoiceConfirm && !voiceUserReply)
+            || (findingsComplete && !voiceUserReply)
             || skillsTypingActive
             || skillsPhase === "typing-batch1"
             || channelsTypingActive
             || channelsPhase === "typing-intro"
+            || (channelsPhase === "shown" && channelConnectMethod === "other" && !emailOtherComplete)
             || enableAiPhase === "typing"
             || voiceRevisionPhase === "asking"
             || voiceRevisionPhase === "submitted"
@@ -4464,9 +4976,7 @@ function IntakePage() {
                     options={PLATFORM_OPTIONS}
                     onSelect={handlePlatformSelect}
                     onClose={null}
-                    freeformValue={platformFreeformValue}
-                    onFreeformChange={setPlatformFreeformValue}
-                    onFreeformSubmit={() => { if (platformFreeformValue.trim()) { handlePlatformFreeform(platformFreeformValue.trim()); setPlatformFreeformValue(""); } }}
+                    hideFreeform
                   />
                 ) : enableAiPhase === "shown" && !enableAiChoice ? (
                   <QuestionCard
@@ -4487,6 +4997,25 @@ function IntakePage() {
                     onClose={null}
                     hideFreeform
                     onSkip={() => advanceAfterChannels()}
+                  />
+                ) : channelsPhase === "shown" && channelConnectMethod === "other" && emailOtherComplete ? (
+                  <QuestionCard
+                    title="What would you like to do?"
+                    options={[
+                      { key: "done", title: "I'm done" },
+                      { key: "connect", title: "Connect Gmail or Microsoft 365" },
+                    ]}
+                    onSelect={(key) => {
+                      if (key === "done") {
+                        advanceAfterChannels();
+                      } else {
+                        setChannelConnectMethod(null);
+                        setEmailOtherText("");
+                        setEmailOtherComplete(false);
+                      }
+                    }}
+                    onClose={null}
+                    hideFreeform
                   />
                 ) : (skillsPhase === "shown-batch1" && !skillsBatch1Choice) ? (
                   <QuestionCard
@@ -4558,69 +5087,6 @@ function IntakePage() {
                       </div>
                     ))}
                   </div>
-                ) : showVoiceConfirm ? (
-                  <div style={{
-                    animation: "fadeInUp .35s ease-out",
-                    border: "1px solid " + BORDER, borderRadius: 8, background: "#ffffff",
-                    overflow: "hidden",
-                  }}>
-                    <div style={{ padding: "14px 18px 12px", fontSize: 14, fontWeight: 600, color: TEXT, borderBottom: "1px solid " + BORDER }}>
-                      Does this sound like UrbanStems?
-                    </div>
-                    {[
-                      { label: "Yes, looks good. I'll adjust it later if needed.", icon: "check", onClick: handleVoiceYes },
-                      { label: "No, I need to make some changes.", icon: "cross", onClick: handleVoiceNo },
-                    ].map((opt, oi) => (
-                      <div key={oi}
-                        onClick={opt.onClick}
-                        style={{
-                          padding: "12px 18px", cursor: "pointer", display: "flex", alignItems: "center", gap: 12,
-                          transition: "background .15s",
-                          borderBottom: "1px solid " + BORDER,
-                          background: CARD_BG,
-                        }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = SURFACE; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = CARD_BG; }}
-                      >
-                        <div style={{
-                          width: 26, height: 26, borderRadius: 6,
-                          background: "transparent", border: "1px solid " + BORDER,
-                          display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                        }}>
-                          {opt.icon === "check" ? (
-                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3.5 8.5l3 3 6-6.5" stroke={TEXT_MUTED} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                          ) : (
-                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke={TEXT_MUTED} strokeWidth="1.4" strokeLinecap="round" /></svg>
-                          )}
-                        </div>
-                        <span style={{ fontSize: 14, color: TEXT, fontFamily: "'Inter', sans-serif" }}>{opt.label}</span>
-                      </div>
-                    ))}
-                    {/* Freeform Something else */}
-                    <div style={{ padding: "12px 18px", display: "flex", alignItems: "center", gap: 12 }}>
-                      <div style={{
-                        width: 26, height: 26, borderRadius: 6,
-                        background: "transparent", border: "1px solid " + BORDER,
-                        display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                      }}>
-                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                          <path d="M11.2 1.8a1.6 1.6 0 0 1 2.3 0l.7.7a1.6 1.6 0 0 1 0 2.3L5.7 13.3l-3.4.9.9-3.4Z" stroke={TEXT_MUTED} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                          <path d="M9.5 3.5l3 3" stroke={TEXT_MUTED} strokeWidth="1.2" strokeLinecap="round" />
-                        </svg>
-                      </div>
-                      <input
-                        value={voiceFreeform}
-                        onChange={(e) => setVoiceFreeform(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleVoiceFreeformSubmit(); } }}
-                        placeholder="Something else..."
-                        style={{
-                          flex: 1, border: "none", outline: "none", background: "transparent",
-                          fontSize: 14, fontFamily: "'Inter', sans-serif", color: TEXT,
-                          fontStyle: voiceFreeform ? "normal" : "italic",
-                        }}
-                      />
-                    </div>
-                  </div>
                 ) : (
                   <ChatInputBar
                     value={chatInput}
@@ -4644,11 +5110,6 @@ function IntakePage() {
           <ClosingScreen
             onAction1={() => {}}
             onAction2={() => {}}
-            isComplete={
-              enableAiChoice === "yes"
-              && (skillsBatch1Choice === "all" || skillsBatch1Choice === "freeform"
-                || (skillsBatch1Choice === "pick" && SKILL_PICKER_OPTIONS.some(s => skillPickerToggles[s.key])))
-            }
             isNonShopify={!!selectedPlatform && selectedPlatform.toLowerCase() !== "shopify"}
             enabledSkillCount={
               skillsBatch1Choice === "all" ? batch1Skills.length
@@ -4659,37 +5120,6 @@ function IntakePage() {
         )}
 
       </div>
-
-      {/* Voice card panel */}
-      {activePanel === "voice" && (
-        <div style={{
-          position: "fixed", top: 16, right: 16, bottom: 16, width: 500,
-          zIndex: 1000,
-          background: "#ffffff",
-          border: "1px solid #EBECEF",
-          borderRadius: 16,
-              animation: panelClosing ? "slideOutRight .2s ease forwards" : (skipSlideIn ? "none" : "slideInRight .2s ease-out forwards"),
-          display: "flex", flexDirection: "column",
-        }}>
-          <div onClick={closePanel}
-            style={{
-              position: "absolute", top: 16, right: 16, zIndex: 2,
-              width: 32, height: 32, borderRadius: 8,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              cursor: "pointer", transition: "background .15s",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = SURFACE; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-          >
-            <svg width="16" height="16" viewBox="0 0 14 14" fill="none">
-              <path d="M3 3l8 8M11 3l-8 8" stroke={TEXT_MUTED} strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-          </div>
-          <div style={{ flex: 1, overflowY: "auto", padding: "32px 24px" }}>
-            <VoiceCardPanel />
-          </div>
-        </div>
-      )}
 
       {/* Preview panel */}
       {activePanel === "preview" && activeSkillIdx !== null && (
@@ -4757,164 +5187,6 @@ function IntakePage() {
         </div>
       )}
 
-      {/* Shopify OAuth modal */}
-      {platformPhase === "oauth" && (
-        <div style={{
-          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-          zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center",
-          background: "rgba(0,0,0,0.4)", animation: "fadeIn .2s ease-out",
-        }}>
-          <div style={{
-            background: "#fff", borderRadius: 16, padding: "40px 36px 32px",
-            width: 400, boxShadow: "0 24px 64px rgba(0,0,0,.18)",
-            animation: "fadeInUp .25s ease-out",
-            textAlign: "center",
-          }}>
-            <div style={{
-              width: 56, height: 56, borderRadius: 12, background: "#F0FAF0",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              margin: "0 auto 20px",
-            }}>
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                <path d="M15.5 3.5c-.7-.4-1.5-.5-2.2-.2-.6.2-1.1.7-1.3 1.3l-.2.8-1-.2c-.5-.1-1 0-1.4.3-.4.3-.7.8-.7 1.3v.4l-1.5 7.5c-.2 1 .1 2 .7 2.7.6.7 1.5 1.2 2.5 1.3l5 .5c1 .1 2-.2 2.7-.8.7-.6 1.2-1.5 1.3-2.5l.8-5.5.3-1.8c.1-.5-.1-1-.4-1.4-.3-.4-.8-.6-1.3-.6h-.3l.2-1.3c.1-.7-.1-1.5-.6-2-.4-.4-.9-.5-1.3-.5l-1.3-.2z" stroke="#5E8E3E" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
-            <h3 style={{ fontSize: 18, fontWeight: 700, color: TEXT, marginBottom: 8 }}>
-              Connect Shopify
-            </h3>
-            <p style={{ fontSize: 14, color: TEXT_MUTED, lineHeight: 1.5, marginBottom: 28 }}>
-              Sign in to your Shopify store to import products, orders, and customer data. This helps AI Agent understand your business.
-            </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <button
-                onClick={handleShopifyConnected}
-                style={{
-                  width: "100%", padding: "12px 0", fontSize: 14, fontWeight: 600,
-                  color: "#fff", background: "#5E8E3E", border: "none", borderRadius: 8,
-                  cursor: "pointer",
-                }}
-              >Connect Shopify</button>
-              <button
-                onClick={() => {
-                  setSelectedPlatform(null);
-                  setPlatformPhase("selecting");
-                }}
-                style={{
-                  width: "100%", padding: "10px 0", fontSize: 13, fontWeight: 500,
-                  color: TEXT_MUTED, background: "transparent", border: "none",
-                  cursor: "pointer",
-                }}
-              >Cancel</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Gmail OAuth modal */}
-      {channelConnectMethod === "gmail" && !channelConnected && (
-        <div style={{
-          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-          zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center",
-          background: "rgba(0,0,0,0.4)", animation: "fadeIn .2s ease-out",
-        }}>
-          <div style={{
-            background: "#fff", borderRadius: 16, padding: "40px 36px 32px",
-            width: 400, boxShadow: "0 24px 64px rgba(0,0,0,.18)",
-            animation: "fadeInUp .25s ease-out",
-            textAlign: "center",
-          }}>
-            <div style={{
-              width: 56, height: 56, borderRadius: 12, background: "#FFF4F0",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              margin: "0 auto 20px",
-            }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M22 6L12 13 2 6" stroke="#EA4335" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                <rect x="2" y="4" width="20" height="16" rx="3" stroke="#EA4335" strokeWidth="1.8" fill="none" />
-              </svg>
-            </div>
-            <h3 style={{ fontSize: 18, fontWeight: 700, color: TEXT, marginBottom: 8 }}>
-              Connect Gmail
-            </h3>
-            <p style={{ fontSize: 14, color: TEXT_MUTED, lineHeight: 1.5, marginBottom: 28 }}>
-              Sign in with your Google account to connect your Gmail inbox. AI Agent will read and respond to support emails on your behalf.
-            </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <button
-                onClick={handleChannelOAuthConfirm}
-                style={{
-                  width: "100%", padding: "12px 0", fontSize: 14, fontWeight: 600,
-                  color: "#fff", background: "#EA4335", border: "none", borderRadius: 8,
-                  cursor: "pointer",
-                }}
-              >Connect Gmail</button>
-              <button
-                onClick={handleChannelOAuthCancel}
-                style={{
-                  width: "100%", padding: "10px 0", fontSize: 13, fontWeight: 500,
-                  color: TEXT_MUTED, background: "transparent", border: "none",
-                  cursor: "pointer",
-                }}
-              >Cancel</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Microsoft 365 OAuth modal */}
-      {channelConnectMethod === "microsoft" && !channelConnected && (
-        <div style={{
-          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-          zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center",
-          background: "rgba(0,0,0,0.4)", animation: "fadeIn .2s ease-out",
-        }}>
-          <div style={{
-            background: "#fff", borderRadius: 16, padding: "40px 36px 32px",
-            width: 400, boxShadow: "0 24px 64px rgba(0,0,0,.18)",
-            animation: "fadeInUp .25s ease-out",
-            textAlign: "center",
-          }}>
-            <div style={{
-              width: 56, height: 56, borderRadius: 12, background: "#F0F4FF",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              margin: "0 auto 20px",
-            }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <rect x="1" y="1" width="10" height="10" fill="#F25022" rx="1" />
-                <rect x="13" y="1" width="10" height="10" fill="#7FBA00" rx="1" />
-                <rect x="1" y="13" width="10" height="10" fill="#00A4EF" rx="1" />
-                <rect x="13" y="13" width="10" height="10" fill="#FFB900" rx="1" />
-              </svg>
-            </div>
-            <h3 style={{ fontSize: 18, fontWeight: 700, color: TEXT, marginBottom: 8 }}>
-              Connect Microsoft 365
-            </h3>
-            <p style={{ fontSize: 14, color: TEXT_MUTED, lineHeight: 1.5, marginBottom: 28 }}>
-              Sign in with your Microsoft account to connect your Outlook inbox. AI Agent will read and respond to support emails on your behalf.
-            </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <button
-                onClick={handleChannelOAuthConfirm}
-                style={{
-                  width: "100%", padding: "12px 0", fontSize: 14, fontWeight: 600,
-                  color: "#fff", background: "#0078D4", border: "none", borderRadius: 8,
-                  cursor: "pointer",
-                }}
-              >Connect Microsoft 365</button>
-              <button
-                onClick={handleChannelOAuthCancel}
-                style={{
-                  width: "100%", padding: "10px 0", fontSize: 13, fontWeight: 500,
-                  color: TEXT_MUTED, background: "transparent", border: "none",
-                  cursor: "pointer",
-                }}
-              >Cancel</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showConfetti && <ConfettiBurst />}
     </div>
   );
 }
