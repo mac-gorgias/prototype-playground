@@ -518,8 +518,10 @@ function TovHitlCard({ onApprove, onReject, approved }) {
   const handlePresetClick = (name) => {
     setSelectedPreset(name);
     if (name === "Custom") setPersonalityText(DEFAULT_PERSONALITY);
-    else setPersonalityText(PRESET_TEXTS[name]);
+    else setPersonalityText("");
   };
+
+  const isPresetSelected = selectedPreset !== "Custom";
 
   return (
     <div style={{
@@ -553,17 +555,21 @@ function TovHitlCard({ onApprove, onReject, approved }) {
         ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; } }}
         value={personalityText}
         onChange={(e) => { setPersonalityText(e.target.value); setSelectedPreset("Custom"); }}
-        disabled={approved}
+        disabled={approved || isPresetSelected}
         maxLength={3000}
         style={{
           width: "100%", padding: "12px 14px", fontSize: 13, lineHeight: 1.65,
-          fontFamily: "'Inter', sans-serif", color: TEXT,
-          background: approved ? "#F8F8F8" : "#fff",
+          fontFamily: "'Inter', sans-serif",
+          color: (approved || isPresetSelected) ? TEXT_MUTED : TEXT,
+          background: (approved || isPresetSelected) ? "#F8F8F8" : "#fff",
           border: "1px solid " + BORDER, borderRadius: 8, resize: "vertical",
           outline: "none", boxSizing: "border-box", minHeight: 80,
+          opacity: (approved || isPresetSelected) ? 0.6 : 1,
+          transition: "opacity .2s, background .2s, color .2s",
+          cursor: (approved || isPresetSelected) ? "default" : "text",
         }}
         onInput={(e) => { e.target.style.height = "auto"; e.target.style.height = e.target.scrollHeight + "px"; }}
-        onFocus={(e) => { e.target.style.borderColor = ACCENT; }}
+        onFocus={(e) => { if (!isPresetSelected) e.target.style.borderColor = ACCENT; }}
         onBlur={(e) => { e.target.style.borderColor = BORDER; }}
       />
       <div style={{ fontSize: 12, color: TEXT_MUTED, marginTop: 4, marginBottom: 16 }}>
@@ -3457,6 +3463,15 @@ function IntakePage({ initialJump }) {
 
   const handleContinueSetup = () => {
     setShowHomePage(false);
+    if (trialPhase === "done" && trialChoice === "decline") {
+      setTrialPhase("shown");
+      setTrialChoice(null);
+    }
+    if (channelsPhase === "done" && channelsSkipped) {
+      setChannelsPhase("shown");
+      setChannelsCardClosed(false);
+      setChannelsSkipped(false);
+    }
   };
 
   const handleNotShopify = () => {
