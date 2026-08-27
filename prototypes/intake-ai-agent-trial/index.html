@@ -55,11 +55,6 @@ styleEl.textContent = `
     0% { opacity: 0; backdrop-filter: blur(0px); -webkit-backdrop-filter: blur(0px); }
     100% { opacity: 1; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
   }
-  @keyframes fullscreenConfettiFall {
-    0%   { transform: translateY(-20px) rotate(0deg); opacity: 0; }
-    8%   { opacity: 1; }
-    100% { transform: translateY(105vh) rotate(720deg); opacity: 0; }
-  }
   @keyframes welcomeLogoReveal {
     from { opacity: 0; transform: scale(0.94); filter: blur(12px); }
     to   { opacity: 1; transform: scale(1);    filter: blur(0px); }
@@ -141,24 +136,6 @@ styleEl.textContent = `
   }
   .toggle-switch.on .toggle-switch-knob {
     transform: translateX(16px);
-  }
-
-  /* Confetti */
-  .fullscreen-confetti {
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    overflow: hidden;
-    z-index: 2500;
-  }
-  .fullscreen-confetti span {
-    position: absolute;
-    top: -20px;
-    width: 8px;
-    height: 14px;
-    border-radius: 1px;
-    opacity: 0;
-    animation: fullscreenConfettiFall 4s cubic-bezier(.16,1,.3,1) forwards;
   }
 
   input::placeholder, textarea::placeholder { color: #B0B0B0; }
@@ -1727,7 +1704,7 @@ function SidebarNav({ collapsed, onToggleCollapse, checklist, cinematicDone, sho
 }
 
 /* ─── Skill card (each skill is its own card, matches the Voice card visual style) ─── */
-function SkillCard({ skill, index, isActive, onPreview, onEdit, needsInfo, answeredSkillKeys, actionDeclinedKeys, draftKeys }) {
+function SkillCard({ skill, index, isActive, onPreview, onEdit, needsInfo, answeredSkillKeys, actionDeclinedKeys, draftKeys, staggerIndex = 0 }) {
   const isAnswered = answeredSkillKeys && answeredSkillKeys.has(skill.key);
   const isActionDeclined = actionDeclinedKeys && actionDeclinedKeys.has(skill.key);
   return (
@@ -1738,7 +1715,7 @@ function SkillCard({ skill, index, isActive, onPreview, onEdit, needsInfo, answe
       display: "flex", alignItems: "center", gap: 14,
       padding: "14px 16px",
       transition: "border-color .15s, box-shadow .15s",
-      animation: "fadeInUp .35s cubic-bezier(.16,1,.3,1) forwards",
+      animation: "fadeInUp .35s cubic-bezier(.16,1,.3,1) " + (Math.min(staggerIndex, 5) * 0.08) + "s both",
       marginBottom: 10,
     }}>
       <div style={{
@@ -1828,6 +1805,7 @@ function SkillListCard({ skills = SKILLS, startIndex = 0, visibleCount = 3, need
           key={skill.key}
           skill={skill}
           index={startIndex + i}
+          staggerIndex={i}
           isActive={activeSkillIdx === startIndex + i}
           onPreview={onPreview}
           onEdit={onEdit}
@@ -1843,6 +1821,7 @@ function SkillListCard({ skills = SKILLS, startIndex = 0, visibleCount = 3, need
             <SkillCard
               skill={peekSkill}
               index={startIndex + visibleCount}
+              staggerIndex={visibleCount}
               isActive={false}
               onPreview={() => {}}
               onEdit={() => {}}
@@ -1961,6 +1940,30 @@ function ChatInputBar({ value, onChange, onSend, onKeyDown, placeholder, sendDis
             </button>
           </>
         )}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Inline video placeholder (thread-embedded explainer) ─── */
+function VideoPlaceholder({ onClick }) {
+  return (
+    <div style={{ marginTop: 12, marginBottom: 4, display: "flex", justifyContent: "center" }}>
+      <div
+        onClick={onClick || undefined}
+        style={{
+          width: 420, aspectRatio: "16 / 9", background: "#EAECF0", borderRadius: 8,
+          display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
+        }}
+      >
+        <div style={{
+          width: 36, height: 36, borderRadius: "50%", background: "#4B5563",
+          display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+        }}>
+          <svg width="12" height="14" viewBox="0 0 12 14" fill="none">
+            <path d="M1.5 1.2v11.6L11 7z" fill="#fff" />
+          </svg>
+        </div>
       </div>
     </div>
   );
@@ -3159,29 +3162,25 @@ function SkillPickerCard({ toggles, onToggle, onConfirm, onClose, freeformValue,
 }
 
 /* ─── Cinematic closing — full-page overlay with staggered entrance ─── */
-function ClosingScreen({ onAction1, onAction2, isComplete, enabledSkillCount }) {
+function ClosingScreen({ onAction1, onAction2, enabledSkillCount }) {
   const wordIn = (delay) => ({
     display: "inline-block",
     opacity: 0,
     animation: "cinematicWordIn .8s cubic-bezier(.16,1,.3,1) " + delay + "s forwards",
   });
 
-  const headline = isComplete ? "Great work!" : "You’re almost there";
+  const headline = "Great work!";
 
-  const bodyLines = isComplete
-    ? [
-        "In just a couple of minutes, you’ve built an AI Agent that can handle your most common conversations.",
-        ...(enabledSkillCount > 0 ? ["Based on the " + enabledSkillCount + " skills you enabled, it can typically handle 20–30% of your tickets automatically."] : []),
-      ]
-    : [
-        "AI Agent isn’t live yet. Finish the last few steps to turn it on and start automating your most common tickets.",
-        "Your remaining steps are saved in your setup checklist.",
-      ];
+  const bodyLines = [
+    "Your AI Agent is live, covering X% of your tickets.",
+  ];
 
+  const ICON_COLOR = "#8B6F52";
+  const ICON_BG = "#F3EDE7";
   const bullets = [
-    { icon: (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 12V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5" stroke="#7E55F6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M3 12l3 6h12l3-6" stroke="#7E55F6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M3 12h5l1.5 2h5L16 12h5" stroke="#7E55F6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>), text: "New tickets start routing through AI Agent immediately" },
-    { icon: (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M7 21V10M17 21V6M12 21V14" stroke="#7E55F6" strokeWidth="1.5" strokeLinecap="round" /><path d="M4 21h16" stroke="#7E55F6" strokeWidth="1.5" strokeLinecap="round" /></svg>), text: "You’ll see a live performance view in your dashboard" },
-    { icon: (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 6h8M16 6h4" stroke="#7E55F6" strokeWidth="1.5" strokeLinecap="round" /><circle cx="14" cy="6" r="2" stroke="#7E55F6" strokeWidth="1.5" /><path d="M4 12h2M10 12h10" stroke="#7E55F6" strokeWidth="1.5" strokeLinecap="round" /><circle cx="8" cy="12" r="2" stroke="#7E55F6" strokeWidth="1.5" /><path d="M4 18h12M20 18h0" stroke="#7E55F6" strokeWidth="1.5" strokeLinecap="round" /><circle cx="18" cy="18" r="2" stroke="#7E55F6" strokeWidth="1.5" /></svg>), text: "You can add more skills and tweak tone of voice" },
+    { icon: (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 12V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5" stroke={ICON_COLOR} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M3 12l3 6h12l3-6" stroke={ICON_COLOR} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M3 12h5l1.5 2h5L16 12h5" stroke={ICON_COLOR} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>), text: "New tickets start routing through your AI Agent right away" },
+    { icon: (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M21 12l-4-4v3H7V8l-4 4 4 4v-3h10v3l4-4z" stroke={ICON_COLOR} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M3 21V17M7 21V15M11 21V17M15 21V13M19 21V11" stroke={ICON_COLOR} strokeWidth="1.5" strokeLinecap="round" /></svg>), text: "You’ll see live automation performance in your dashboard" },
+    { icon: (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" stroke={ICON_COLOR} strokeWidth="1.5" /><path d="M12 6v6l4 2" stroke={ICON_COLOR} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M8 2h8" stroke={ICON_COLOR} strokeWidth="1.5" strokeLinecap="round" /></svg>), text: "Add more skills or fine-tune your tone of voice anytime" },
   ];
 
   return (
@@ -3193,18 +3192,13 @@ function ClosingScreen({ onAction1, onAction2, isComplete, enabledSkillCount }) 
       animation: "overlayBackdropIn .6s ease forwards",
       overflow: "hidden",
     }}>
-      <div style={{ position: "absolute", display: "flex", alignItems: "center", justifyContent: "center", left: -564, top: -300, width: 1104, height: 1104, zIndex: 0, opacity: 0, animation: "fadeIn 1.2s ease 0.3s forwards" }}>
-        <img src="../../images/watercolor-bloom-1.png" alt="" style={{ width: 792, height: 792, opacity: 0.2, transform: "rotate(35.44deg)", pointerEvents: "none" }} />
-      </div>
-      <div style={{ position: "absolute", display: "flex", alignItems: "center", justifyContent: "center", left: 565, top: 60, width: 1399, height: 1399, zIndex: 0, opacity: 0, animation: "fadeIn 1.2s ease 0.3s forwards" }}>
-        <img src="../../images/watercolor-bloom-2.png" alt="" style={{ width: 1024, height: 1024, opacity: 0.2, transform: "rotate(-30deg)", pointerEvents: "none" }} />
-      </div>
+      <img src="../../images/closing-screen-bg.png" alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 0, opacity: 0, animation: "fadeIn 1.2s ease 0.3s forwards", pointerEvents: "none" }} />
       <div style={{ width: 480, display: "flex", flexDirection: "column", gap: 24, position: "relative", zIndex: 1 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <h1 style={{
             fontFamily: "'Feature Deck', serif",
-            fontSize: 42, fontWeight: 400, letterSpacing: "-0.42px",
-            color: "#1E242E", lineHeight: 1.1, margin: 0,
+            fontSize: 28, fontWeight: 400, letterSpacing: "-0.42px",
+            color: "#1E242E", lineHeight: "36px", margin: 0,
           }}>
             <span style={wordIn(.65)}>{headline}</span>
           </h1>
@@ -3214,78 +3208,51 @@ function ClosingScreen({ onAction1, onAction2, isComplete, enabledSkillCount }) 
             color: "#1E242E",
           })}>
             <p style={{ margin: "0 0 8px 0" }}>{bodyLines[0]}</p>
-            <p style={{ margin: 0 }}>{bodyLines[1]}</p>
+            {bodyLines[1] && <p style={{ margin: 0 }}>{bodyLines[1]}</p>}
           </div>
         </div>
 
-        {isComplete && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <div style={{
-              fontFamily: "'Inter', sans-serif",
-              fontSize: 14, fontWeight: 600, color: "#1E242E", lineHeight: "20px",
-              opacity: 0,
-              animation: "cinematicSlideUp .55s cubic-bezier(.16,1,.3,1) 1.5s forwards",
-            }}>Here&apos;s what happens next:</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {bullets.map((b, i) => (
-                <div key={i} style={{
-                  display: "flex", alignItems: "center", gap: 8,
-                  fontFamily: "'Inter', sans-serif", fontSize: 14, color: "#1E242E", lineHeight: "20px",
-                  opacity: 0,
-                  animation: "cinematicSlideUp .55s cubic-bezier(.16,1,.3,1) " + (1.7 + i * 0.18) + "s forwards",
-                }}>
-                  <div style={{ width: 28, height: 28, borderRadius: 14, background: "#EDE8F8", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{b.icon}</div>
-                  {b.text}
-                </div>
-              ))}
-            </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div style={{
+            fontFamily: "'Inter', sans-serif",
+            fontSize: 14, fontWeight: 600, color: "#1E242E", lineHeight: "20px",
+            opacity: 0,
+            animation: "cinematicSlideUp .55s cubic-bezier(.16,1,.3,1) 1.5s forwards",
+          }}>Here&apos;s what happens next:</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {bullets.map((b, i) => (
+              <div key={i} style={{
+                display: "flex", alignItems: "center", gap: 8,
+                fontFamily: "'Inter', sans-serif", fontSize: 14, color: "#1E242E", lineHeight: "20px",
+                opacity: 0,
+                animation: "cinematicSlideUp .55s cubic-bezier(.16,1,.3,1) " + (1.7 + i * 0.18) + "s forwards",
+              }}>
+                <div style={{ width: 28, height: 28, borderRadius: 14, background: ICON_BG, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{b.icon}</div>
+                {b.text}
+              </div>
+            ))}
           </div>
-        )}
+        </div>
 
         <div style={{
           display: "flex", gap: 8,
           opacity: 0,
-          animation: "cinematicSlideUp .55s cubic-bezier(.16,1,.3,1) " + (isComplete ? "2.4" : "1.5") + "s forwards",
+          animation: "cinematicSlideUp .55s cubic-bezier(.16,1,.3,1) 2.4s forwards",
         }}>
           <button onClick={onAction2}
             style={BTN_SECONDARY}
             onMouseEnter={(e) => { Object.assign(e.currentTarget.style, BTN_SECONDARY_HOVER); }}
             onMouseLeave={(e) => { Object.assign(e.currentTarget.style, BTN_SECONDARY_LEAVE); }}
-          >{"{{ACTION_2}}"}</button>
+          >Review skills</button>
           <button onClick={onAction1}
             style={BTN_PRIMARY}
             onMouseEnter={(e) => { Object.assign(e.currentTarget.style, BTN_PRIMARY_HOVER); }}
             onMouseLeave={(e) => { Object.assign(e.currentTarget.style, BTN_PRIMARY_LEAVE); }}
           >
-            {"{{ACTION_1}}"}
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            See AI Agent in action
           </button>
         </div>
       </div>
-    </div>
-  );
-}
-
-/* ─── Confetti burst ─── */
-function ConfettiBurst() {
-  const pieces = [
-    { l: "4%", d: "0s", c: "#7e55f6" }, { l: "10%", d: ".25s", c: "#1F8A4C" }, { l: "16%", d: ".1s", c: "#FFC857" },
-    { l: "22%", d: ".4s", c: "#F472B6" }, { l: "28%", d: ".05s", c: "#38BDF8" }, { l: "34%", d: ".5s", c: "#7e55f6" },
-    { l: "40%", d: ".2s", c: "#1F8A4C" }, { l: "46%", d: ".35s", c: "#FFC857" }, { l: "52%", d: ".15s", c: "#F472B6" },
-    { l: "58%", d: ".45s", c: "#38BDF8" }, { l: "64%", d: ".3s", c: "#7e55f6" }, { l: "70%", d: ".55s", c: "#1F8A4C" },
-    { l: "76%", d: ".1s", c: "#FFC857" }, { l: "82%", d: ".4s", c: "#F472B6" }, { l: "88%", d: ".2s", c: "#38BDF8" },
-    { l: "94%", d: ".5s", c: "#7e55f6" }, { l: "7%", d: ".7s", c: "#1F8A4C" }, { l: "19%", d: ".8s", c: "#FFC857" },
-    { l: "31%", d: ".75s", c: "#F472B6" }, { l: "43%", d: ".9s", c: "#38BDF8" }, { l: "55%", d: ".7s", c: "#7e55f6" },
-    { l: "67%", d: ".85s", c: "#1F8A4C" }, { l: "79%", d: ".75s", c: "#FFC857" }, { l: "91%", d: ".95s", c: "#F472B6" },
-    { l: "13%", d: "1.1s", c: "#38BDF8" }, { l: "37%", d: "1.2s", c: "#7e55f6" }, { l: "61%", d: "1.05s", c: "#1F8A4C" }, { l: "85%", d: "1.15s", c: "#FFC857" },
-  ];
-  return (
-    <div className="fullscreen-confetti">
-      {pieces.map((p, i) => (
-        <span key={i} style={{ left: p.l, animationDelay: p.d, background: p.c }} />
-      ))}
     </div>
   );
 }
@@ -3362,7 +3329,6 @@ function IntakePage({ initialJump }) {
     setTrialMsgIdx(-1);
     setTrialChoice(null);
     setClosingPhase("idle");
-    setShowConfetti(false);
     setChecklist({ tone: false, knowledge: false, skills: false, channels: false });
     setActivePanel(null);
     setActiveSkillIdx(null);
@@ -3416,12 +3382,16 @@ function IntakePage({ initialJump }) {
       completeChecklistItem("knowledge");
 
       if (section === "skills") {
-        setSkillsPhase("shown-batch1");
+        setSkillsPhase("gate-batch1");
         setSkillsBatch1Messages(SKILL_INTRO_MESSAGES_BATCH_1.map(m => ({ text: m.text, bold: m.bold || null, learnMore: m.learnMore || false })));
         return;
       }
 
-      setSkillsBatch1Messages(SKILL_INTRO_MESSAGES_BATCH_1.map(m => ({ text: m.text, bold: m.bold || null })));
+      setSkillsBatch1Messages(SKILL_INTRO_MESSAGES_BATCH_1.map(m => ({ text: m.text, bold: m.bold || null, learnMore: m.learnMore || false })));
+      setSkillsReadyChoice("yes");
+      setSkillsReadyReply(SKILLS_READY_REPLY_TEXT.yes);
+      setCardsIntroStarted(true);
+      setCardsIntroCommitted(true);
       setSkillsBatch1Choice("all");
       setSkillsBatch1Reply("Turn on all ready to enable skills");
       completeChecklistItem("skills");
@@ -3548,7 +3518,7 @@ function IntakePage({ initialJump }) {
 
   // Skills phase: two batches. Batch 1 (4 ready-to-enable) → "Enabled N skills" pill →
   // Batch 2 typing intro (3 messages) → 3 needs-review skills → "Enabled N skills" pill → channels
-  const [skillsPhase, setSkillsPhase] = useState("idle"); // idle | typing-batch1 | shown-batch1 | typing-batch2 | shown-batch2 | done
+  const [skillsPhase, setSkillsPhase] = useState("idle"); // idle | typing-batch1 | gate-batch1 | shown-batch1 | typing-batch2 | shown-batch2 | done
   const [skillsBatch1MsgIdx, setSkillsBatch1MsgIdx] = useState(-1);
   const [skillsBatch2MsgIdx, setSkillsBatch2MsgIdx] = useState(-1);
   const [skillsTypingText, setSkillsTypingText] = useState("");
@@ -3558,8 +3528,34 @@ function IntakePage({ initialJump }) {
   const SKILL_INTRO_MESSAGES_BATCH_1 = [
     { text: "With your tone of voice and knowledge sources, AI Agent now knows how to sound like your brand and answer general questions.", bold: ["tone of voice", "knowledge sources"] },
     { text: "Now it needs skills to address your most common customer requests. When a request comes in, AI Agent detects the intent, matches it to a skill, and follows its instructions to respond.", bold: "skills", learnMore: true },
-    { text: "I've already set up a few skills that cover a meaningful share of incoming support tickets from day one." },
   ];
+
+  /* Readiness gate shown between the batch-1 narration and the batch-1 skill cards */
+  const SKILLS_READY_OPTIONS = [
+    { key: "yes", title: "Yes, set them up for me to review", badge: "Recommended" },
+    { key: "more", title: "No, I need to learn more" },
+  ];
+  const SKILLS_READY_REPLY_TEXT = {
+    yes: "Yes, set them up for me to review",
+    more: "No, I need to learn more",
+  };
+  const SKILL_MORE_INFO_MESSAGES = [
+    { text: "A skill is a set of instructions for one type of request — tracking an order, starting a return, applying a discount. AI Agent matches the customer's intent to a skill and follows that skill's policy." },
+    { text: "You stay in control: every skill can be turned on or off, edited, and tested before it goes live. Nothing runs until you enable it." },
+    { text: "Let's take a look at these example skills I've set up for you" },
+  ];
+  const SKILL_CARDS_INTRO = "Here are a few skills that cover a meaningful share of incoming support tickets from day one.";
+  const [cardsIntroStarted, setCardsIntroStarted] = useState(false);
+  const [cardsIntroCommitted, setCardsIntroCommitted] = useState(false);
+  const [cardsIntroTypingText, setCardsIntroTypingText] = useState("");
+  const [cardsIntroActive, setCardsIntroActive] = useState(false);
+  const [skillsReadyChoice, setSkillsReadyChoice] = useState(null); // null | "yes" | "more" | "freeform"
+  const [skillsReadyReply, setSkillsReadyReply] = useState(null);
+  const [skillsReadyFreeform, setSkillsReadyFreeform] = useState("");
+  const [moreInfoMsgIdx, setMoreInfoMsgIdx] = useState(-1);
+  const [moreInfoMessages, setMoreInfoMessages] = useState([]);
+  const [moreInfoTypingText, setMoreInfoTypingText] = useState("");
+  const [moreInfoActive, setMoreInfoActive] = useState(false);
   const [skillsBatch1Expanded, setSkillsBatch1Expanded] = useState(false);
   const [skillsBatch2Expanded, setSkillsBatch2Expanded] = useState(false);
   const [skillsBatch1Choice, setSkillsBatch1Choice] = useState(null); // null | "all" | "pick" | "freeform"
@@ -3671,15 +3667,23 @@ function IntakePage({ initialJump }) {
   // Closing
   const [closingPhase, setClosingPhase] = useState("idle"); // idle | shown
   const [showSkillsScreen, setShowSkillsScreen] = useState(false);
-  const [showConfetti, setShowConfetti] = useState(false);
 
   const chatEndRef = useRef(null);
   const chatScrollRef = useRef(null);
   const [userScrolledUp, setUserScrolledUp] = useState(false);
+  const userScrollIntentRef = useRef(false);
+  const markUserScrollIntent = () => { userScrollIntentRef.current = true; };
   const handleChatScroll = (e) => {
     const el = e.currentTarget;
     const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
-    setUserScrolledUp(distFromBottom > 80);
+    if (distFromBottom <= 80) {
+      userScrollIntentRef.current = false;
+      setUserScrolledUp(false);
+      return;
+    }
+    // Ignore scroll events produced by our own auto-scroll; only a real
+    // wheel/touch gesture should pin the thread away from the bottom.
+    if (userScrollIntentRef.current) setUserScrolledUp(true);
   };
 
   /* Landing → setup transition: phase advances on user click of Start setup (no auto-play animation) */
@@ -3836,13 +3840,70 @@ function IntakePage({ initialJump }) {
         if (skillsBatch1MsgIdx < SKILL_INTRO_MESSAGES_BATCH_1.length - 1) {
           setTimeout(() => setSkillsBatch1MsgIdx(skillsBatch1MsgIdx + 1), 500);
         } else {
-          // Batch 1 typing done → show batch 1 cards, then auto-advance to batch 2 typing
-          setTimeout(() => setSkillsPhase("shown-batch1"), 600);
+          // Batch 1 typing done → ask whether they're ready before revealing the cards
+          setTimeout(() => setSkillsPhase("gate-batch1"), 600);
         }
       }
     }, 10);
     return () => clearInterval(interval);
   }, [skillsPhase, skillsBatch1MsgIdx]);
+
+  /* Readiness gate → either straight into batch 1, or a short explainer first */
+  const handleSkillsReady = (key, freeformText) => {
+    if (skillsReadyChoice) return;
+    setSkillsReadyChoice(key);
+    setSkillsReadyReply(key === "freeform" ? freeformText : SKILLS_READY_REPLY_TEXT[key]);
+    if (key === "more") {
+      setTimeout(() => setMoreInfoMsgIdx(0), 500);
+      return;
+    }
+    setTimeout(() => setCardsIntroStarted(true), 500);
+  };
+
+  /* Lead-in line typed just before the batch 1 skill cards drop in */
+  useEffect(() => {
+    if (!cardsIntroStarted || cardsIntroCommitted) return;
+    let charIdx = 0;
+    setCardsIntroActive(true);
+    setCardsIntroTypingText("");
+    const interval = setInterval(() => {
+      charIdx++;
+      setCardsIntroTypingText(SKILL_CARDS_INTRO.substring(0, charIdx));
+      if (charIdx >= SKILL_CARDS_INTRO.length) {
+        clearInterval(interval);
+        setCardsIntroActive(false);
+        setCardsIntroCommitted(true);
+        setCardsIntroTypingText("");
+        setTimeout(() => setSkillsPhase("shown-batch1"), 600);
+      }
+    }, 10);
+    return () => clearInterval(interval);
+  }, [cardsIntroStarted, cardsIntroCommitted]);
+
+  /* "Tell me more about skills" explainer typing — auto-continues into batch 1 */
+  useEffect(() => {
+    if (moreInfoMsgIdx < 0 || moreInfoMsgIdx >= SKILL_MORE_INFO_MESSAGES.length) return;
+    const fullText = SKILL_MORE_INFO_MESSAGES[moreInfoMsgIdx].text;
+    let charIdx = 0;
+    setMoreInfoActive(true);
+    setMoreInfoTypingText("");
+    const interval = setInterval(() => {
+      charIdx++;
+      setMoreInfoTypingText(fullText.substring(0, charIdx));
+      if (charIdx >= fullText.length) {
+        clearInterval(interval);
+        setMoreInfoActive(false);
+        setMoreInfoMessages((prev) => prev.concat([{ text: fullText }]));
+        setMoreInfoTypingText("");
+        if (moreInfoMsgIdx < SKILL_MORE_INFO_MESSAGES.length - 1) {
+          setTimeout(() => setMoreInfoMsgIdx(moreInfoMsgIdx + 1), 500);
+        } else {
+          setTimeout(() => setSkillsPhase("shown-batch1"), 600);
+        }
+      }
+    }, 10);
+    return () => clearInterval(interval);
+  }, [moreInfoMsgIdx]);
 
   /* Advance from shown-batch1 → typing-batch2 once the user picks an option */
   const advanceFromBatch1 = (key, freeformText) => {
@@ -4043,10 +4104,29 @@ function IntakePage({ initialJump }) {
     return () => clearInterval(interval);
   }, [trialPhase, trialMsgIdx]);
 
-  /* Auto-scroll — only when the user hasn't manually scrolled up */
+  /* Auto-scroll — only when the user hasn't manually scrolled up.
+     Scrolls the thread container itself rather than calling scrollIntoView, so it can
+     never scroll an ancestor. Narration re-renders once per typed character (~every
+     10ms); issuing an animated scroll at that rate restarts the animation continuously
+     and reads as jitter, and any animation still in flight gets cancelled by the next
+     one, which is what made the thread jump around. So the follow-along scroll is
+     instant — each step is only a few pixels, so it still reads as continuous — and an
+     animated scroll is used only for the explicit scroll-to-bottom button, where
+     nothing is competing with it. */
+  const autoScrollToEnd = (smooth) => {
+    const el = chatScrollRef.current;
+    if (!el) return;
+    // Clear the gesture flag first so the scroll events this call emits are not
+    // mistaken for the user scrolling away from the bottom.
+    userScrollIntentRef.current = false;
+    const target = el.scrollHeight - el.clientHeight;
+    if (target <= 0) return;
+    if (smooth) el.scrollTo({ top: target, behavior: "smooth" });
+    else el.scrollTop = target;
+  };
   useEffect(() => {
     if (userScrolledUp) return;
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    autoScrollToEnd();
   });
 
   /* Helper to kick off the skills typing sequence (starts at batch 1) */
@@ -4255,14 +4335,12 @@ function IntakePage({ initialJump }) {
   const handleTrialAccept = () => {
     setTrialChoice("accept");
     setTrialPhase("done");
-    setShowConfetti(true);
-    setTimeout(() => setShowConfetti(false), 4500);
-    setTimeout(() => setClosingPhase("shown"), 600);
+    setTimeout(() => setClosingPhase("shown"), 1000);
   };
   const handleTrialDecline = () => {
     setTrialChoice("decline");
     setTrialPhase("done");
-    setTimeout(() => setClosingPhase("shown"), 600);
+    setTimeout(() => setClosingPhase("shown"), 1000);
   };
 
   /* Edit follow-up handlers (per-skill, batched) */
@@ -4477,8 +4555,8 @@ function IntakePage({ initialJump }) {
 
         {/* Chat thread */}
         {!showSkillsScreen && <React.Fragment><div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 40, background: "linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 100%)", zIndex: 2, pointerEvents: "none" }} />
-        <div ref={chatScrollRef} onScroll={handleChatScroll} style={{ height: "100%", overflowY: "auto", padding: "48px 0 24px" }}>
+        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 24, background: "linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 100%)", zIndex: 2, pointerEvents: "none" }} />
+        <div ref={chatScrollRef} onScroll={handleChatScroll} onWheel={markUserScrollIntent} onTouchMove={markUserScrollIntent} style={{ height: "100%", overflowY: "auto", padding: "48px 0 24px" }}>
           <div style={{ maxWidth: 740, margin: "0 auto", padding: "0 24px" }}>
             {/* Welcome messages */}
             {chatMessages.map((msg, i) => (
@@ -4786,17 +4864,8 @@ function IntakePage({ initialJump }) {
                   fontFamily: "'Inter', sans-serif", fontWeight: 450, whiteSpace: "pre-wrap",
                 }}>
                   {renderThreadText(msg.text, seenTerms)}
-                  {msg.learnMore && (
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 5, marginLeft: 6, cursor: "pointer" }}>
-                      <span style={{ width: 18, height: 18, borderRadius: "50%", background: ACCENT, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <svg width="8" height="9" viewBox="0 0 8 9" fill="none">
-                          <path d="M1.5 1.5v6l5.5-3z" fill="#fff" />
-                        </svg>
-                      </span>
-                      <span style={{ fontSize: 14, fontWeight: 500, color: ACCENT }}>How skills work (2 min)</span>
-                    </span>
-                  )}
                 </div>
+                {msg.learnMore && <VideoPlaceholder />}
               </div>
             ))}
             {/* Currently typing batch 1 message */}
@@ -4810,6 +4879,74 @@ function IntakePage({ initialJump }) {
                   <span style={{
                     opacity: skillsTypingActive ? 0.3 : 0,
                     animation: skillsTypingActive ? "pulse 1s infinite" : "none",
+                    display: "inline-block", width: "0.5ch",
+                  }}>|</span>
+                </div>
+              </div>
+            )}
+
+            {/* User reply to the readiness gate */}
+            {skillsReadyReply && (
+              <div style={{
+                marginBottom: 16, display: "flex", flexDirection: "column",
+                alignItems: "flex-end", animation: "fadeInUp .35s ease-out",
+              }}>
+                <div style={{
+                  fontSize: 14, lineHeight: 1.45, color: TEXT,
+                  maxWidth: "85%", padding: "11px 16px", borderRadius: 14,
+                  background: SURFACE, fontFamily: "'Inter', sans-serif",
+                }}>{skillsReadyReply}</div>
+              </div>
+            )}
+
+            {/* "Tell me more about skills" explainer */}
+            {moreInfoMessages.map((msg, i) => (
+              <div key={"skmi-" + i} style={{ marginBottom: 16 }}>
+                <div style={{
+                  fontSize: 14, lineHeight: 1.55, color: "#1E242E",
+                  fontFamily: "'Inter', sans-serif", fontWeight: 450, whiteSpace: "pre-wrap",
+                }}>
+                  {renderThreadText(msg.text, seenTerms)}
+                </div>
+              </div>
+            ))}
+            {moreInfoTypingText && (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{
+                  fontSize: 14, lineHeight: 1.55, color: "#1E242E",
+                  fontFamily: "'Inter', sans-serif", fontWeight: 450, whiteSpace: "pre-wrap",
+                }}>
+                  {moreInfoTypingText}
+                  <span style={{
+                    opacity: moreInfoActive ? 0.3 : 0,
+                    animation: moreInfoActive ? "pulse 1s infinite" : "none",
+                    display: "inline-block", width: "0.5ch",
+                  }}>|</span>
+                </div>
+              </div>
+            )}
+
+            {/* Lead-in line for the batch 1 skill cards */}
+            {cardsIntroCommitted && (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{
+                  fontSize: 14, lineHeight: 1.55, color: "#1E242E",
+                  fontFamily: "'Inter', sans-serif", fontWeight: 450, whiteSpace: "pre-wrap",
+                }}>
+                  {renderThreadText(SKILL_CARDS_INTRO, seenTerms)}
+                </div>
+              </div>
+            )}
+            {cardsIntroTypingText && (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{
+                  fontSize: 14, lineHeight: 1.55, color: "#1E242E",
+                  fontFamily: "'Inter', sans-serif", fontWeight: 450, whiteSpace: "pre-wrap",
+                }}>
+                  {cardsIntroTypingText}
+                  <span style={{
+                    opacity: cardsIntroActive ? 0.3 : 0,
+                    animation: cardsIntroActive ? "pulse 1s infinite" : "none",
                     display: "inline-block", width: "0.5ch",
                   }}>|</span>
                 </div>
@@ -5163,7 +5300,7 @@ function IntakePage({ initialJump }) {
         {/* Scroll to bottom button — inside chat area, above thread */}
         {userScrolledUp && closingPhase !== "shown" && (
           <button
-            onClick={() => chatEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" })}
+            onClick={() => { setUserScrolledUp(false); autoScrollToEnd(true); }}
             style={{
               position: "absolute", bottom: 12, left: "50%", transform: "translateX(-50%)",
               zIndex: 10,
@@ -5193,6 +5330,9 @@ function IntakePage({ initialJump }) {
             || knowledgePhase === "revision-asking"
             || knowledgePhase === "revision-submitted"
             || skillsTypingActive
+            || moreInfoActive
+            || cardsIntroActive
+            || (skillsPhase === "gate-batch1" && !!skillsReadyChoice)
             || skillsPhase === "typing-batch1"
             || skillsPhase === "typing-batch2"
             || channelsTypingActive
@@ -5205,7 +5345,7 @@ function IntakePage({ initialJump }) {
           const sendDisabled = narrating || !chatInput.trim();
           return (
             <div onClick={(e) => e.stopPropagation()} style={{
-              padding: "16px 24px 24px", position: "relative",
+              padding: "0 24px 24px", position: "relative",
               background: "#ffffff",
             }}>
               <div style={{ maxWidth: 740, margin: "0 auto" }}>
@@ -5286,6 +5426,16 @@ function IntakePage({ initialJump }) {
                     onFreeformChange={setChannelsFreeform}
                     onFreeformSubmit={onChannelFreeformSubmit}
                     frozen={false}
+                  />
+                ) : (skillsPhase === "gate-batch1" && !skillsReadyChoice) ? (
+                  <QuestionCard
+                    title="Are you ready to set up skills?"
+                    options={SKILLS_READY_OPTIONS}
+                    onSelect={(key) => handleSkillsReady(key)}
+                    onClose={null}
+                    freeformValue={skillsReadyFreeform}
+                    onFreeformChange={setSkillsReadyFreeform}
+                    onFreeformSubmit={() => { if (skillsReadyFreeform.trim()) handleSkillsReady("freeform", skillsReadyFreeform.trim()); }}
                   />
                 ) : (skillsPhase === "shown-batch1" && !skillsBatch1Choice && !skillsBatch1CardClosed) ? (
                   <QuestionCard
@@ -5565,11 +5715,6 @@ function IntakePage({ initialJump }) {
           <ClosingScreen
             onAction1={() => {}}
             onAction2={() => {}}
-            isComplete={
-              !channelsSkipped && trialChoice === "accept"
-              && (skillsBatch1Choice === "all" || skillsBatch1Choice === "freeform"
-                || (skillsBatch1Choice === "pick" && SKILL_PICKER_OPTIONS.some(s => skillPickerToggles[s.key])))
-            }
             enabledSkillCount={
               skillsBatch1Choice === "all" ? batch1Skills.length
               : skillsBatch1Choice === "pick" ? SKILL_PICKER_OPTIONS.filter(s => skillPickerToggles[s.key]).length
@@ -5717,7 +5862,6 @@ function IntakePage({ initialJump }) {
         </div>
       )}
 
-      {showConfetti && <ConfettiBurst />}
     </div>
   );
 }
@@ -5787,28 +5931,21 @@ function WelcomeIntro({ onStartSetup, closing }) {
         alignItems: "center", minWidth: 0,
       }}>
         <div style={{ width: 480, display: "flex", flexDirection: "column", gap: 24 }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div>
             <img src="AI Agent Icon.svg" alt="" width="24" height="24" style={{ display: "block" }} draggable={false} />
-            <div style={{
-              fontFamily: "'Red Hat Mono', monospace",
-              fontSize: 12, fontWeight: 500, color: "#8e8985",
-              letterSpacing: "0.08em", textTransform: "uppercase",
-            }}>
-              Meet AI Agent
-            </div>
           </div>
           <h1 style={{
             fontFamily: "'Feature Deck', sans-serif",
-            fontSize: 42, fontWeight: 400, color: "#252423",
-            lineHeight: "110%", letterSpacing: "-0.01em", margin: 0,
+            fontSize: 28, fontWeight: 400, color: "#252423",
+            lineHeight: "36px", letterSpacing: "-0.01em", margin: 0,
           }}>
-            Help shoppers browse, buy, and get support—24/7
+            Meet AI Agent
           </h1>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {[
-              "Define how it responds to specific topics",
-              "Test and refine conversations",
-              "Preview the shopper experience before going live",
+              "Trained on your policies, your catalog, and your tone",
+              "Test and preview real scenarios before it goes live",
+              "Gaia coaches it on every conversation, from setup onward",
             ].map((item, i) => (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
