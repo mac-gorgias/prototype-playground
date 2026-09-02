@@ -1,21 +1,5 @@
 [
   {
-    "name": "Test",
-    "author": "Mac",
-    "date": "2026-03-26",
-    "description": "Conversational onboarding flow with AI-guided setup for Gorgias",
-    "file": "onboarding-test/index.html",
-    "image": "onboarding-test.png"
-  },
-  {
-    "name": "Conversational Onboarding Lovable",
-    "author": "Mac",
-    "date": "2026-03-26",
-    "description": "Conversational onboarding prototype built with Lovable",
-    "url": "https://conversational-launchpad.lovable.app",
-    "image": "conv-onboarding-v3.png"
-  },
-  {
     "name": "Voice Onboarding",
     "author": "Mac",
     "date": "2026-03-30",
