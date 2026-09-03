@@ -1948,7 +1948,7 @@ function ChatInputBar({ value, onChange, onSend, onKeyDown, placeholder, sendDis
 /* ─── Inline video placeholder (thread-embedded explainer) ─── */
 function VideoPlaceholder({ onClick }) {
   return (
-    <div style={{ marginTop: 12, marginBottom: 4, display: "flex", justifyContent: "center" }}>
+    <div style={{ marginTop: 12, marginBottom: 4, display: "flex", justifyContent: "flex-start" }}>
       <div
         onClick={onClick || undefined}
         style={{
