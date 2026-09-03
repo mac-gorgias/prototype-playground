@@ -1945,15 +1945,16 @@ function ChatInputBar({ value, onChange, onSend, onKeyDown, placeholder, sendDis
   );
 }
 
-/* ─── Inline video placeholder (thread-embedded explainer) ─── */
+/* ─── Inline skills video (thread-embedded explainer) ─── */
 function VideoPlaceholder({ onClick }) {
   return (
     <div style={{ marginTop: 12, marginBottom: 4, display: "flex", justifyContent: "flex-start" }}>
       <div
         onClick={onClick || undefined}
         style={{
-          width: 420, aspectRatio: "16 / 9", background: "#EAECF0", borderRadius: 8,
-          display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
+          width: 420, aspectRatio: "16 / 9", borderRadius: 8, overflow: "hidden",
+          background: "#FFD0C5 url(\"../../images/skills-video-thumbnail.png\") center / cover no-repeat",
+          display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", position: "relative",
         }}
       >
         <div style={{
@@ -1964,6 +1965,11 @@ function VideoPlaceholder({ onClick }) {
             <path d="M1.5 1.2v11.6L11 7z" fill="#fff" />
           </svg>
         </div>
+        <div style={{
+          position: "absolute", left: 10, bottom: 10, padding: "4px 7px", borderRadius: 4,
+          background: "rgba(30, 36, 46, 0.58)", color: "rgba(255, 255, 255, 0.88)",
+          fontSize: 11, fontWeight: 500, lineHeight: 1, fontFamily: "'Inter', sans-serif",
+        }}>2 min</div>
       </div>
     </div>
   );
