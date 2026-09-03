@@ -496,17 +496,17 @@ function matchScriptedIntent(text) {
 
 /* Render plain text with one substring bolded (used for the "9 skills" inline bold) */
 const GLOSSARY_TERMS_BASE = [
-  { term: "automation rate", group: "automation-rate", tip: "The % of requests AI Agent resolves without a human." },
-  { term: "tone of voice", group: "tov", tip: "The style and personality AI Agent uses in replies." },
+  { term: "automation rate", group: "automation-rate", tip: "The percentage of customer requests AI Agent completes without human help." },
+  { term: "tone of voice", group: "tov", tip: "The writing style AI Agent uses when speaking with customers." },
   { term: "knowledge sources", group: "knowledge", tip: "Content AI Agent searches, like your website, help center, or uploaded docs." },
   { term: "knowledge", group: "knowledge", tip: "Content AI Agent searches, like your website, help center, or uploaded docs." },
-  { term: "channels", group: "channel", tip: "Where AI Agent talks to customers, like email or chat." },
-  { term: "channel", group: "channel", tip: "Where AI Agent talks to customers, like email or chat." },
+  { term: "channels", group: "channel", tip: "Places where AI Agent can talk with customers, such as email, chat, or SMS." },
+  { term: "channel", group: "channel", tip: "Places where AI Agent can talk with customers, such as email, chat, or SMS." },
   { term: "intents", group: "intent", tip: "The type of request a customer is making, like an order question or return." },
   { term: "intent", group: "intent", tip: "The type of request a customer is making, like an order question or return." },
-  { term: "skills", group: "skill", tip: "Step-by-step instructions AI Agent follows for a specific intent." },
-  { term: "skill", group: "skill", tip: "Step-by-step instructions AI Agent follows for a specific intent." },
-  { term: "actions", group: "action", tip: "Steps the AI agent can execute automatically in your connected apps, like editing an order or re-sending an item." },
+  { term: "skills", group: "skill", tip: "A set of steps AI Agent follows to handle a customer request." },
+  { term: "skill", group: "skill", tip: "A set of steps AI Agent follows to handle a customer request." },
+  { term: "actions", group: "action", tip: "Things AI Agent can do in connected apps, such as canceling an order." },
 ];
 
 function GlossaryTip({ tip, children }) {
