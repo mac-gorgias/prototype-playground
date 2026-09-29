@@ -62,5 +62,13 @@
     "description": "M1 — Gorgias Trial variant with Gorgias-style test panel, skill instructions for Customer Feedback and Marketing, no batch 2 skills, onboarding checklist, and updated closing screen. Self-contained, no API keys required.",
     "file": "intake-gorgias-trial-m1/index.html",
     "image": "intake-gorgias-trial-m1.svg"
+  },
+  {
+    "name": "Intent-based Enablement",
+    "author": "Mac",
+    "date": "2026-09-29",
+    "description": "Explores intent-based AI Agent enablement with a skills-and-intents introduction, configurable intent coverage, inbox connection, and an expandable setup recap before activation.",
+    "file": "intake-gorgias-trial-intent-enablement/index.html",
+    "image": "intake-gorgias-trial-intent-enablement.svg"
   }
 ]

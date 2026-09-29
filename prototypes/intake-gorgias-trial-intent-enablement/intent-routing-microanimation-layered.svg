@@ -1,0 +1,117 @@
+<svg width="760" height="276" viewBox="0 0 760 276" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title description">
+  <title id="title">How AI Agent handles incoming tickets</title>
+  <desc id="description">Three shopper questions are classified by intent, then answered with a matching skill or handed over to the support team.</desc>
+  <metadata id="framer-motion-map"><![CDATA[
+    LOOP_DURATION: 12s
+    SEQUENCE_1: question-order > connector-incoming-dot > intent-order-status > connector-response-dot > outcome-response
+    SEQUENCE_2: question-return > connector-incoming-dot > intent-return-request > connector-handover-dot > outcome-handover
+    SEQUENCE_3: question-shipping > connector-incoming-dot > intent-international-shipping > connector-response-dot > outcome-response
+    MOTION: All dots travel left to right. Reset each dot to its origin only while opacity is 0.
+  ]]></metadata>
+  <defs>
+    <filter id="card-shadow" x="-10%" y="-20%" width="120%" height="150%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#1E242E" flood-opacity="0.06"/>
+    </filter>
+    <style>
+      text { font-family: Inter, Arial, sans-serif; }
+      .body { fill: #1e242e; font-size: 13px; font-weight: 500; }
+      .title { font-size: 13px; font-weight: 650; }
+      .detail { fill: #1e242e; font-size: 10px; font-weight: 600; }
+      .support { fill: #6b7280; font-size: 10px; font-weight: 400; }
+      .caption { fill: #5c6370; font-size: 11px; font-weight: 400; }
+      .stroke { vector-effect: non-scaling-stroke; }
+    </style>
+  </defs>
+
+  <g id="microanimation-background" data-framer-name="Microanimation background">
+    <rect x="1" y="1" width="758" height="274" rx="8" fill="#ffffff" stroke="#e8e8e5"/>
+  </g>
+
+  <g id="questions" data-framer-name="Questions">
+    <g id="question-order" data-framer-name="Question / Order status">
+      <rect id="question-order-card" x="18" y="24" width="160" height="44" rx="7" fill="#f4f0ff" stroke="#9f82f7" filter="url(#card-shadow)"/>
+      <text x="30" y="51" class="body" fill="#5c3cc4">Where is my order?</text>
+    </g>
+    <g id="question-return" data-framer-name="Question / Return request">
+      <rect id="question-return-card" x="18" y="78" width="160" height="44" rx="7" fill="#ffffff" stroke="#e5e7eb" filter="url(#card-shadow)"/>
+      <text x="30" y="105" class="body">Can I return this?</text>
+    </g>
+    <g id="question-shipping" data-framer-name="Question / International shipping">
+      <rect id="question-shipping-card" x="18" y="132" width="160" height="44" rx="7" fill="#ffffff" stroke="#e5e7eb" filter="url(#card-shadow)"/>
+      <text x="30" y="159" class="body">Do you ship to Canada?</text>
+    </g>
+  </g>
+
+  <g id="connector-incoming" data-framer-name="Connector / Question to intent">
+    <path id="connector-incoming-line" d="M186 100H220" stroke="#e4e0ec" stroke-width="1.4" class="stroke"/>
+    <circle id="connector-incoming-dot" data-framer-name="Motion dot / Incoming" cx="186" cy="100" r="4.5" fill="#7e55f6" stroke="#ffffff" stroke-width="2" opacity="0" class="stroke"/>
+  </g>
+
+  <g id="ai-agent" data-framer-name="AI Agent intent detection">
+    <rect id="ai-agent-card" x="220" y="22" width="160" height="158" rx="10" fill="#f8f6fe" stroke="#c7b8f5"/>
+    <g id="ai-agent-icon" data-framer-name="AI Agent icon">
+      <rect x="276" y="44" width="48" height="48" rx="12" fill="#ede8f8"/>
+      <image x="288" y="56" width="24" height="24" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHN0eWxlPnBhdGggeyBmaWxsOiAjN2U1NWY2OyB9PC9zdHlsZT4KPHBhdGggZD0iTTEyLjAwMDIgMjRDMTEuMDE1MyAyNCAxMC4xMzIyIDIzLjQ5NjggOS42MzcwNyAyMi42NTM2QzkuNjMzMyAyMi42NDcxIDkuNjI5NTIgMjIuNjQwNiA5LjYyNTc0IDIyLjYzNDFMOS42MjY4MiAyMi42MzZMOS42MjExNSAyMi42MjYzQzguOTc1NzMgMjEuNTA4NyA4LjgzNjc3IDIwLjE4NjUgOS4yMTkzOCAxOC44MDMxQzkuNTExMzMgMTcuNzQ3NiAxMC4wODUzIDE2LjczNTUgMTAuODk2MSAxNS44MzhDMTAuNjQwOCAxNS42NDcyIDEwLjM3MTMgMTUuNDcgMTAuMDkwMSAxNS4zMDc1QzkuODA5MjIgMTUuMTQ1NCA5LjUyMDc4IDE1LjAwMSA5LjIyNzc1IDE0Ljg3NUM4Ljg1NTY2IDE2LjAyNjEgOC4yNjYwOCAxNy4wMjkzIDcuNDk3ODkgMTcuODA5OUM2LjQ5MDg5IDE4LjgzMjggNS4yNzY2OCAxOS4zNzM2IDMuOTg2MDkgMTkuMzczNkgzLjk1NjE0QzIuOTc3NzUgMTkuMzY3MSAyLjA5OTQ3IDE4Ljg1MzkgMS42MDY3NiAxOC4wMDA0QzEuMTE1NDEgMTcuMTQ5NCAxLjEwODY2IDE2LjEzNDggMS41ODg2OCAxNS4yODU3QzEuNTk0MzUgMTUuMjc1MiAxLjYwMjcyIDE1LjI2MDYgMS42MTI5NyAxNS4yNDMzQzIuMjU4NjYgMTQuMTMwOCAzLjMzMjAzIDEzLjM1MjkgNC43MTczMiAxMi45OTM1QzUuNzc2OTMgMTIuNzE4NSA2Ljk0MDQzIDEyLjcwOTQgOC4xMjMwOCAxMi45NjIyQzguMTYwNTggMTIuNjQ1NCA4LjE3OTc0IDEyLjMyMzggOC4xNzk3NCAxMkM4LjE3OTc0IDExLjY3NjIgOC4xNjA4NSAxMS4zNTQ2IDguMTIzMDggMTEuMDM3OEM2Ljk0MDQzIDExLjI5MDkgNS43NzY5MyAxMS4yODE3IDQuNzE3MzIgMTEuMDA2NUMzLjMyNzk5IDEwLjY0NiAyLjI1MjczIDkuODY0NTkgMS42MDc1NyA4Ljc0Njk3TDEuNjAyNzIgOC43Mzg2QzEuNTk4MTMgOC43MzA3OCAxLjU5MzgxIDguNzIzNDkgMS41OTAwMyA4LjcxNjIxQzEuMTA4OTMgNy44NjY1MyAxLjExNTE0IDYuODUxMTcgMS42MDcwMyA1Ljk5OTMzQzIuMDk5NzQgNS4xNDYxMyAyLjk3ODAyIDQuNjMyNjUgMy45NTY0MSA0LjYyNjE4SDMuOTg2MzZDNS4yNzY5NSA0LjYyNjE4IDYuNDkxMTcgNS4xNjY5MSA3LjQ5ODE2IDYuMTg5ODJDOC4yNjYzNSA2Ljk3MDE2IDguODU1OTMgNy45NzM2NSA5LjIyODI5IDkuMTI0NzNDOS41MjE4NiA4Ljk5ODcyIDkuODEwMyA4Ljg1NDA5IDEwLjA5MDcgOC42OTIyQzEwLjM3MTggOC41Mjk3NiAxMC42NDExIDguMzUyNDggMTAuODk2NiA4LjE2MTcyQzEwLjA4NTggNy4yNjQyNyA5LjUxMTYgNi4yNTIxNSA5LjIxOTkyIDUuMTk2NTlDOC44Mzc4NSAzLjgxNTA4IDguOTc2IDIuNDk0ODIgOS42MTg3MyAxLjM3ODI3QzkuNjIyNSAxLjM3MTggOS42MjYyOCAxLjM2NTMyIDkuNjMwMDYgMS4zNTg4NUw5LjYzNzA3IDEuMzQ2N0MxMC4xMzE5IDAuNTAzNDk2IDExLjAxNTEgMCAxMS45OTk5IDBIMTIuMDAwOEMxMi45ODUxIDAuMDAwMjY5ODI3IDEzLjg2OCAwLjUwMzQ5NyAxNC4zNjMxIDEuMzQ1OUMxNC4zNjcxIDEuMzUyOTEgMTQuMzcxMiAxLjM1OTkzIDE0LjM3NTUgMS4zNjcyMUwxNC4zNzMzIDEuMzYzN0wxNC4zNzkgMS4zNzM0MkMxNS4wMjQyIDIuNDkxMDQgMTUuMTYzNCAzLjgxMjY1IDE0Ljc4MTMgNS4xOTYwNUMxNC40ODk2IDYuMjUxMzQgMTMuOTE1NyA3LjI2NCAxMy4xMDUyIDguMTYxOTlDMTMuMzYwMSA4LjM1MjQ4IDEzLjYyOTQgOC41MzAwMyAxMy45MTA2IDguNjkyNDZDMTQuMTkxNSA4Ljg1NDM2IDE0LjQ3OTcgOC45OTg5OSAxNC43NzI3IDkuMTI0NzNDMTUuMTQ0OCA3Ljk3MzY1IDE1LjczNDYgNi45NzA0MyAxNi41MDI4IDYuMTg5ODJDMTcuNTA5NSA1LjE2NjkxIDE4LjcyNCA0LjYyNjE4IDIwLjAxNDYgNC42MjYxOEgyMC4wNDM3QzIxLjAyMjQgNC42MzI2NSAyMS45MDEgNS4xNDY0IDIyLjM5MzcgNi4wMDA0QzIyLjg4NjEgNi44NTQxNCAyMi44OTEyIDcuODcxNjUgMjIuNDA2OSA4LjcyMjE1TDIyLjM5NzcgOC43Mzc4QzIyLjM5NTMgOC43NDIxMSAyMi4zOTI5IDguNzQ2MTYgMjIuMzkwNyA4Ljc0OTk0QzIxLjc0NTMgOS44NjU0IDIwLjY3MDYgMTAuNjQ1NyAxOS4yODI4IDExLjAwNkMxOC4yMjMyIDExLjI4MDkgMTcuMDU5NyAxMS4yOTA0IDE1Ljg3NzQgMTEuMDM3NUMxNS44Mzk4IDExLjM1NDMgMTUuODIwNyAxMS42NzU5IDE1LjgyMDcgMTEuOTk5N0MxNS44MjA3IDEyLjMyMzUgMTUuODM5NiAxMi42NDUyIDE1Ljg3NzQgMTIuOTYxOUMxNy4wNiAxMi43MDkxIDE4LjIyMzIgMTIuNzE4MyAxOS4yODI4IDEyLjk5MzVDMjAuNjcwMyAxMy4zNTM3IDIxLjc0NSAxNC4xMzM1IDIyLjM5MDQgMTUuMjQ5QzIyLjM5MzEgMTUuMjUzNiAyMi4zOTU4IDE1LjI1ODIgMjIuMzk4MyAxNS4yNjI3TDIyLjQwNjkgMTUuMjc3M0MyMi44OTEyIDE2LjEyNzggMjIuODg2MSAxNy4xNDUzIDIyLjM5MzcgMTcuOTk5MUMyMS45MDEgMTguODUyOCAyMS4wMjI3IDE5LjM2NjUgMjAuMDQ0IDE5LjM3M0gyMC4wMTQ5QzE4LjcyNDMgMTkuMzczIDE3LjUxMDEgMTguODMyMyAxNi41MDMxIDE3LjgwOTRDMTUuNzM0OSAxNy4wMjkgMTUuMTQ1MyAxNi4wMjU1IDE0Ljc3MyAxNC44NzQ1QzE0LjQ3OTkgMTUuMDAwMiAxNC4xOTE1IDE1LjE0NDggMTMuOTEwMyAxNS4zMDczQzEzLjYyOTQgMTUuNDY5NyAxMy4zNjA0IDE1LjY0NyAxMy4xMDU0IDE1LjgzNzVDMTMuOTE2IDE2LjczNTUgMTQuNDg5OSAxNy43NDgxIDE0Ljc4MTYgMTguODAzN0MxNS4xNjM3IDIwLjE4NzEgMTUuMDI0NCAyMS41MDg3IDE0LjM3OTMgMjIuNjI2TDE0LjM3NTggMjIuNjMyMkMxNC4zNzEyIDIyLjY0MDMgMTQuMzY3NCAyMi42NDY4IDE0LjM2MzYgMjIuNjUzQzEzLjg2ODggMjMuNDk2MiAxMi45ODU0IDIzLjk5OTUgMTIuMDAwNSAyMy45OTk1TDEyLjAwMDIgMjRaTTEwLjkyMDEgMjEuODkwMkwxMC45MjM5IDIxLjg5NjRDMTEuMTQ3OCAyMi4yNzg4IDExLjU1MDEgMjIuNTA2OCAxMi4wMDAyIDIyLjUwNjhDMTIuNDUwMyAyMi41MDY4IDEyLjg1MjYgMjIuMjc4NSAxMy4wNzY2IDIxLjg5NjRMMTMuMDc3MSAyMS44OTU0QzEzLjA4MTEgMjEuODg4MyAxMy4wODQ0IDIxLjg4MjQgMTMuMDg3NiAyMS44NzY3QzEzLjUyNzIgMjEuMTE0MiAxMy42MTUxIDIwLjE4OTIgMTMuMzQyMSAxOS4yMDExQzEzLjExNjggMTguMzg1MiAxMi42NDg2IDE3LjU2NjggMTIuMDAwNSAxNi44NDM3QzExLjM1MjEgMTcuNTY2MyAxMC44ODM3IDE4LjM4NDQgMTAuNjU4MSAxOS4yMDA2QzEwLjM4NSAyMC4xODg0IDEwLjQ3MjcgMjEuMTEzNyAxMC45MTIgMjEuODc2NUMxMC45MTUgMjEuODgxNiAxMC45MTgyIDIxLjg4NyAxMC45MjEyIDIxLjg5MjRMMTAuOTE5OCAyMS44OUwxMC45MjAxIDIxLjg5MDJaTTE2LjE5NjMgMTQuNDIxN0MxNi40OTgyIDE1LjM0NDUgMTYuOTcyNiAxNi4xNTkxIDE3LjU2NjcgMTYuNzYyNEMxOC4yODY2IDE3LjQ5MzkgMTkuMTMzMSAxNy44ODAzIDIwLjAxNDYgMTcuODgwM0gyMC4wMzU5QzIwLjQ3ODIgMTcuODc2OCAyMC44NzYyIDE3LjY0MjMgMjEuMTAwNyAxNy4yNTMzQzIxLjMyNDMgMTYuODY1MiAyMS4zMjg5IDE2LjQwNTUgMjEuMTEyOCAxNi4wMjE1QzIxLjEwOTggMTYuMDE2NCAyMS4xMDY5IDE2LjAxMTIgMjEuMTAzOSAxNi4wMDYxTDIxLjEwNTUgMTYuMDA4OEwyMS4wOTk4IDE1Ljk5OTFDMjAuNjU5IDE1LjIzNiAxOS45MDEgMTQuNjk2NCAxOC45MDggMTQuNDM4NEMxOC4wODg5IDE0LjIyNTggMTcuMTQ2MyAxNC4yMjIgMTYuMTk2OCAxNC40MjE0TDE2LjE5NjMgMTQuNDIxN1pNMy45NjQ1MSAxNy44ODA2SDMuOTg2MzZDNC44Njc4OSAxNy44ODA2IDUuNzE0MzMgMTcuNDkzOSA2LjQzNDIzIDE2Ljc2MjdDNy4wMjgxMiAxNi4xNTk0IDcuNTAyNDggMTUuMzQ0NSA3LjgwNDQxIDE0LjQyMkM2Ljg1NDM1IDE0LjIyMjMgNS45MTE4NSAxNC4yMjYxIDUuMDkyNjUgMTQuNDM4N0M0LjA5OTE1IDE0LjY5NjQgMy4zNDEyMSAxNS4yMzYgMi45MDA1OCAxNS45OTk0TDIuODkwMzMgMTYuMDE3NEMyLjY3MTUgMTYuNDAyNSAyLjY3NTAxIDE2Ljg2NDcgMi45MDAwNCAxNy4yNTQxQzMuMTI0NTQgMTcuNjQzMiAzLjUyMjUzIDE3Ljg3NzEgMy45NjQ1MSAxNy44ODA5VjE3Ljg4MDZaTTkuNTcwOTcgMTMuNDAxN0MxMC4wMDMgMTMuNTczMSAxMC40MjY5IDEzLjc3ODIgMTAuODM3IDE0LjAxNDVDMTEuMjQwNCAxNC4yNDc3IDExLjYyMzggMTQuNTA3IDExLjk4MjQgMTQuNzg5NUwxMi4wMDE2IDE0Ljc3MTlMMTIuMDIwMiAxNC43ODg5QzEyLjM3OCAxNC41MDcgMTIuNzYwNiAxNC4yNDc3IDEzLjE2MzQgMTQuMDE0OEMxMy41NzM4IDEzLjc3NzkgMTMuOTk4IDEzLjU3MjggMTQuNDMgMTMuNDAxNUMxNC4zNjIzIDEyLjk0MTQgMTQuMzI4IDEyLjQ3MjIgMTQuMzI4IDExLjk5OTdDMTQuMzI4IDExLjUyNzMgMTQuMzYyMyAxMS4wNTggMTQuNDMgMTAuNTk4QzEzLjk5NzcgMTAuNDI2NiAxMy41NzQxIDEwLjIyMTYgMTMuMTY0IDkuOTg0OTNDMTIuNzYwOSA5Ljc1MTggMTIuMzc4IDkuNDkyNSAxMi4wMTk5IDkuMjEwNTNMMTIuMDAxMyA5LjIyNzUzTDExLjk4MjEgOS4yMDk5OUMxMS42MjMzIDkuNDkyNzcgMTEuMjQwMSA5Ljc1MjA3IDEwLjgzNyA5Ljk4NDkzQzEwLjQyNzkgMTAuMjIxMyAxMC4wMDQgMTAuNDI2NCA5LjU3MDcgMTAuNTk4QzkuNjM4NDIgMTEuMDU4IDkuNjcyNjkgMTEuNTI3NSA5LjY3MjY5IDExLjk5OTdDOS42NzI2OSAxMi40NzE5IDkuNjM4NDIgMTIuOTQxNCA5LjU3MDcgMTMuNDAxNUw5LjU3MDk3IDEzLjQwMTdaTTIuOTAzMDEgOC4wMDQ2OEMzLjM0NDE4IDguNzY1ODYgNC4xMDEzMSA5LjMwNDE2IDUuMDkyOTIgOS41NjE1OEM1LjkxMjEyIDkuNzc0MiA2Ljg1NDg5IDkuNzc3OTggNy44MDQ2OCA5LjU3ODA0QzcuNTAyNzUgOC42NTUyMyA3LjAyODM5IDcuODQwMzUgNi40MzQyMyA3LjIzNzAyQzUuNzE0MzMgNi41MDU1MiA0Ljg2Nzg5IDYuMTE5MTMgMy45ODYzNiA2LjExOTEzSDMuOTYzOTdDMy41MjE5OSA2LjEyMjkxIDMuMTI0NTQgNi4zNTcxMiAyLjkwMDA0IDYuNzQ1OTRDMi42NzUyOCA3LjEzNTMgMi42NzE1IDcuNTk3NzggMi44OTAzMyA3Ljk4MjU1TDIuODkxOTUgNy45ODU1MkMyLjg5NTcyIDcuOTkyMjcgMi44OTk1IDcuOTk4NDcgMi45MDMwMSA4LjAwNDQxVjguMDA0NjhaTTE2LjE5NjMgOS41NzgwNEMxNy4xNDYxIDkuNzc3NDQgMTguMDg4MyA5Ljc3MzkzIDE4LjkwNzUgOS41NjEwNEMxOS45MDA3IDkuMzAzMDggMjAuNjU4NyA4Ljc2MzQzIDIxLjA5OTMgOC4wMDAzNkwyMS4xMDMxIDcuOTkzODhDMjEuMTA2MyA3Ljk4ODIyIDIxLjEwOTMgNy45ODMwOSAyMS4xMTIzIDcuOTc3OTZDMjEuMzI4MSA3LjU5NCAyMS4zMjM4IDcuMTM0MjIgMjEuMTAwMSA2Ljc0NjIxQzIwLjg3NTYgNi4zNTcxMiAyMC40Nzc5IDYuMTIyOTEgMjAuMDM1OSA2LjExODg2SDIwLjAxNDFDMTkuMTMyNSA2LjExODg2IDE4LjI4NjEgNi41MDU1MiAxNy41NjYyIDcuMjM2NzVDMTYuOTcyMyA3Ljg0MDA4IDE2LjQ5OCA4LjY1NDk2IDE2LjE5NiA5LjU3NzVMMTYuMTk2MyA5LjU3ODA0Wk0xMC45MTkzIDIuMTEwODVMMTAuOTEzOSAyLjEyMDAzQzEwLjQ3MyAyLjg4MzM3IDEwLjM4NDggMy44MDk2OCAxMC42NTgxIDQuNzk4ODdDMTAuODgzNyA1LjYxNTA5IDExLjM1MjEgNi40MzMyMSAxMi4wMDA1IDcuMTU1OEMxMi42NDg2IDYuNDMyNjcgMTMuMTE2NSA1LjYxNDU1IDEzLjM0MjEgNC43OTg2QzEzLjYxNDkgMy44MTA3NiAxMy41MjY5IDIuODg1NTMgMTMuMDg3MyAyLjEyMjczQzEzLjA4NDEgMi4xMTcwNiAxMy4wODA2IDIuMTExMTIgMTMuMDc3NCAyLjEwNTQ2TDEzLjA3OTUgMi4xMDg5N0wxMy4wNzYzIDIuMTAzNTdDMTIuODUyMyAxLjcyMTQ5IDEyLjQ1IDEuNDkzMjIgMTEuOTk5OSAxLjQ5MzIySDExLjk5OTdDMTEuNTUyIDEuNDkzMjIgMTEuMTUxMyAxLjcxOTA3IDEwLjkyNjggMi4wOTc5QzEwLjkyNDQgMi4xMDIyMiAxMC45MjE3IDIuMTA2ODEgMTAuOTE5MyAyLjExMTEyVjIuMTEwODVaIiBmaWxsPSIjN2U1NWY2Ii8+Cjwvc3ZnPgo="/>
+    </g>
+    <g id="intents" data-framer-name="Intent labels">
+      <g id="intent-order-status" data-framer-name="Intent / Order status">
+        <text x="300" y="126" text-anchor="middle" fill="#5c3cc4" font-size="12" font-weight="600">Intent: order status</text>
+      </g>
+      <g id="intent-return-request" data-framer-name="Intent / Return request" opacity="0">
+        <text x="300" y="126" text-anchor="middle" fill="#5c3cc4" font-size="12" font-weight="600">Intent: return request</text>
+      </g>
+      <g id="intent-international-shipping" data-framer-name="Intent / International shipping" opacity="0">
+        <text x="300" y="126" text-anchor="middle" fill="#5c3cc4" font-size="12" font-weight="600">Intent: international shipping</text>
+      </g>
+    </g>
+  </g>
+
+  <g id="connector-outcomes" data-framer-name="Connector / Intent to outcomes">
+    <path id="connector-outcomes-trunk" d="M380 100H392" stroke="#b9aedf" stroke-width="1.4" class="stroke"/>
+    <path id="connector-response-line" d="M392 100C400 100 400 64 408 64H430" stroke="#76b9a2" stroke-width="1.4" class="stroke"/>
+    <path id="connector-handover-line" d="M392 100C400 100 400 140 408 140H430" stroke="#a98cf8" stroke-width="1.4" class="stroke"/>
+    <circle id="connector-response-dot" data-framer-name="Motion dot / Response" cx="380" cy="100" r="4.5" fill="#147656" stroke="#ffffff" stroke-width="2" opacity="0" class="stroke"/>
+    <circle id="connector-handover-dot" data-framer-name="Motion dot / Handover" cx="380" cy="100" r="4.5" fill="#7e55f6" stroke="#ffffff" stroke-width="2" opacity="0" class="stroke"/>
+  </g>
+
+  <g id="outcomes" data-framer-name="Outcomes">
+    <g id="outcome-response" data-framer-name="Outcome / Response">
+      <rect id="outcome-response-card" x="430" y="28" width="312" height="72" rx="7" fill="#f8fbfa" stroke="#b8d8cd" filter="url(#card-shadow)"/>
+      <g id="outcome-response-icon" data-framer-name="Icon / Check circle" stroke="#147656" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" class="stroke">
+        <circle cx="452" cy="64" r="7"/>
+        <path d="M448.8 64.2L450.8 66.2L455.2 61.8"/>
+      </g>
+      <g id="outcome-response-copy" data-framer-name="Copy / Response">
+        <text x="470" y="51" class="title" fill="#147656">Response</text>
+        <text x="470" y="67" class="detail">When a skill matches the intent</text>
+        <text x="470" y="82" class="support">AI Agent handles the conversation</text>
+      </g>
+    </g>
+    <g id="outcome-handover" data-framer-name="Outcome / Handover">
+      <rect id="outcome-handover-card" x="430" y="108" width="312" height="72" rx="7" fill="#fbfaff" stroke="#d2c7f5" filter="url(#card-shadow)"/>
+      <g id="outcome-handover-icon" data-framer-name="Icon / Team" stroke="#5c3cc4" stroke-width="1.3" stroke-linecap="round" class="stroke">
+        <circle cx="449.5" cy="137" r="2.2"/>
+        <path d="M445.5 144C446 142 447.4 141 449.5 141C451.6 141 453 142 453.5 144M454 135.5C455.3 136.3 455.3 138.2 454 139.2M454.5 141C456.2 141.3 457.3 142.3 457.7 144"/>
+      </g>
+      <g id="outcome-handover-copy" data-framer-name="Copy / Handover">
+        <text x="470" y="131" class="title" fill="#5c3cc4">Handover</text>
+        <text x="470" y="147" class="detail">When AI Agent can't answer</text>
+        <text x="470" y="162" fill="#6b5a9e" font-size="10">Your team takes over</text>
+      </g>
+    </g>
+  </g>
+
+  <g id="captions" data-framer-name="Captions">
+    <path id="caption-divider" d="M18 204H742" stroke="#e8e8e5" class="stroke"/>
+    <text id="caption-question" data-framer-name="Caption / Question" x="98" y="222" text-anchor="middle" class="caption">Your customer submits a ticket.</text>
+    <g id="caption-intent" data-framer-name="Caption / Intent" text-anchor="middle" class="caption">
+      <text x="300" y="222">AI Agent determines</text>
+      <text x="300" y="237">the customer's intent.</text>
+    </g>
+    <g id="caption-outcome" data-framer-name="Caption / Outcome" text-anchor="middle" class="caption">
+      <text x="586" y="222">AI Agent responds using</text>
+      <text x="586" y="237">a matching skill or hands the ticket</text>
+      <text x="586" y="252">over to your team.</text>
+    </g>
+  </g>
+</svg>
