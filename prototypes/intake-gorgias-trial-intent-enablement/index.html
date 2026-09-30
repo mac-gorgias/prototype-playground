@@ -12,7 +12,7 @@
 <body>
 <div id="root"></div>
 <script type="text/babel" data-type="module">
-const { useState, useEffect, useRef, useCallback } = React;
+const { useState, useEffect, useLayoutEffect, useRef, useCallback } = React;
 
 /* ─── Google Fonts ─── */
 const fontLink = document.createElement("link");
@@ -3908,6 +3908,8 @@ function IntakePage() {
   const [devMenuOpen, setDevMenuOpen] = useState(false);
 
   const resetAllState = () => {
+    userScrolledUpRef.current = false;
+    userScrollIntentRef.current = false;
     setSignupDone(false);
     setCinematicPhase("playing");
     setLandingClosing(false);
@@ -4070,6 +4072,8 @@ function IntakePage() {
   };
 
   const handleContinueSetup = () => {
+    userScrolledUpRef.current = false;
+    userScrollIntentRef.current = false;
     setShowHomePage(false);
     if (channelsPhase === "done" && !channelConnected) {
       setChannelsPhase("shown");
@@ -4279,6 +4283,18 @@ function IntakePage() {
   const [showConfetti, setShowConfetti] = useState(false);
 
   const chatEndRef = useRef(null);
+  const chatScrollRef = useRef(null);
+  const userScrolledUpRef = useRef(false);
+  const userScrollIntentRef = useRef(false);
+  const handleChatScroll = (event) => {
+    const el = event.currentTarget;
+    if (el.scrollHeight - el.scrollTop - el.clientHeight <= 80) {
+      userScrolledUpRef.current = false;
+      userScrollIntentRef.current = false;
+    } else if (userScrollIntentRef.current) {
+      userScrolledUpRef.current = true;
+    }
+  };
 
   /* Landing → setup transition: phase advances on user click of Start setup (no auto-play animation) */
   /* Disabled cinematic (kept structure, gated to never run) */
@@ -4598,22 +4614,25 @@ function IntakePage() {
     return () => clearTimeout(startDelay);
   }, [channelsPhase, channelConnectMethod, emailOtherComplete]);
 
-  // Match the conversational intake: scroll after every render.
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  });
+  // Follow the thread without restarting a smooth scroll on every typed character.
+  // Scrolling the container directly also avoids moving the page or a side panel.
+  const scrollChatToEnd = () => {
+    const el = chatScrollRef.current;
+    if (!el || userScrolledUpRef.current) return;
+    userScrollIntentRef.current = false;
+    el.scrollTop = el.scrollHeight - el.clientHeight;
+  };
+  useLayoutEffect(scrollChatToEnd);
 
-  // Match the conversational intake: also scroll for child-local typing mutations.
+  // Child-owned typing and late-loading card content can grow without a parent render.
+  // Observe layout size, not every DOM mutation (including the animated artifact's nodes).
   useEffect(() => {
-    const endEl = chatEndRef.current;
-    if (!endEl) return;
-    const container = endEl.parentElement && endEl.parentElement.parentElement;
-    if (!container) return;
-    const scroll = () => {
-      endEl.scrollIntoView({ behavior: "smooth", block: "end" });
-    };
-    const observer = new MutationObserver(scroll);
-    observer.observe(container, { childList: true, subtree: true, characterData: true });
+    const content = chatEndRef.current?.parentElement;
+    const scroller = chatScrollRef.current;
+    if (!content || !scroller || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(scrollChatToEnd);
+    observer.observe(content);
+    observer.observe(scroller);
     return () => observer.disconnect();
   }, [signupDone, cinematicPhase, showHomePage, showSkillsScreen]);
 
@@ -4964,7 +4983,12 @@ function IntakePage() {
         {/* Chat thread */}
         {!showSkillsScreen && <React.Fragment><div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 24, background: "linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.72) 100%)", zIndex: 2, pointerEvents: "none" }} />
-        <div data-chat-scroll style={{ height: "100%", overflowY: "auto", padding: "48px 0 36px" }}>
+        <div data-chat-scroll ref={chatScrollRef}
+          onScroll={handleChatScroll}
+          onWheel={() => { userScrollIntentRef.current = true; }}
+          onTouchMove={() => { userScrollIntentRef.current = true; }}
+          onKeyDown={(e) => { if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(e.key)) userScrollIntentRef.current = true; }}
+          style={{ height: "100%", overflowY: "auto", overflowAnchor: "none", padding: "48px 0 36px" }}>
           <div style={{ maxWidth: 740, margin: "0 auto", padding: "0 24px" }}>
             {/* Welcome messages */}
             {chatMessages.map((msg, i) => (
