@@ -5,11 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AI Agent intent routing microanimation</title>
   <!--
-    12-second loop for Framer implementation:
-    0-4s: Where is my order? > Intent: order status > Response
-    4-8s: Can I return this? > Intent: return request > Handover
-    8-12s: Do you ship to Canada? > Intent: international shipping > Response
+    12-second infinite loop (keyframe % × 0.12 = seconds):
+    0-4s:  Where is my order?               > Intent: order status           > Response
+    4-8s:  An item is missing from my order > Intent: missing item           > Handover
+    8-12s: Do you ship to Canada?           > Intent: international shipping > Response
     Motion dots always travel left to right and reset only while hidden.
+    Easing: question cards, dots, outcome cards = linear; AI Agent icon + intent labels = cubic-bezier(.16,1,.3,1).
+
+    Timing (seconds, "a→b" = transition)   SEQ 1                 SEQ 2                 SEQ 3
+    Question highlight                     on 0, off 1.32→1.68   on 3.84→4.08, off 5.28→5.64   on 7.80→8.04, off 9.24→9.60
+    Incoming dot                           in 0.36→0.60, travel 0.60→1.32, out 1.32→1.56 (repeats +3.96s, +7.92s)
+    AI Agent icon tilt (8deg, 1.08)        1.20→1.56→2.16        5.16→5.52→6.12        9.12→9.48→10.08
+    Intent label                           in 1.20→1.56, out 3.72→3.96   in 5.16→5.52, out 7.68→7.92   in 9.12→9.48, out 11.64→11.88
+    Branch dot                             response 2.04→3.24    handover 6.00→7.20    response 9.96→11.16
+                                           (each: fade in 0.24s, travel 0.72s, fade out 0.24s)
+    Outcome highlight                      response on 2.76→3.12, off 3.72→3.96   handover on 6.72→7.08, off 7.68→7.92   response on 10.68→11.04, off 11.64→11.88
   -->
   <style>
     * { box-sizing: border-box; }
@@ -74,7 +84,7 @@
       0%, 10%, 33%, 100% { opacity: 0; transform: translateY(4px); }
       13%, 31% { opacity: 1; transform: translateY(0); }
     }
-    @keyframes intentReturn {
+    @keyframes intentMissing {
       0%, 43%, 66%, 100% { opacity: 0; transform: translateY(4px); }
       46%, 64% { opacity: 1; transform: translateY(0); }
     }
@@ -123,7 +133,7 @@
       box-shadow: 0 2px 6px rgba(30,36,46,.06);
     }
     .question.order { animation: questionFocus1 12s linear infinite both; }
-    .question.return { animation: questionFocus2 12s linear infinite both; }
+    .question.missing { animation: questionFocus2 12s linear infinite both; }
     .question.shipping { animation: questionFocus3 12s linear infinite both; }
     .wire { position: relative; display: block; height: 1px; background: #e4e0ec; }
     .incoming-dot, .branch-dot {
@@ -178,7 +188,7 @@
       line-height: 16px;
     }
     .intent.order { animation: intentOrder 12s cubic-bezier(.16,1,.3,1) infinite both; }
-    .intent.return { animation: intentReturn 12s cubic-bezier(.16,1,.3,1) infinite both; }
+    .intent.missing { animation: intentMissing 12s cubic-bezier(.16,1,.3,1) infinite both; }
     .intent.shipping { animation: intentShipping 12s cubic-bezier(.16,1,.3,1) infinite both; }
     .fork { position: relative; display: block; width: 42px; height: 144px; }
     .fork svg { display: block; width: 100%; height: 100%; overflow: visible; }
@@ -240,7 +250,7 @@
     <div class="stage">
       <div class="column" aria-label="Customer questions">
         <span class="question order">Where is my order?</span>
-        <span class="question return">Can I return this?</span>
+        <span class="question missing">An item is missing from my order</span>
         <span class="question shipping">Do you ship to Canada?</span>
       </div>
 
@@ -252,7 +262,7 @@
         </span>
         <span class="intent-stack" aria-live="polite">
           <span class="intent order">Intent: order status</span>
-          <span class="intent return">Intent: return request</span>
+          <span class="intent missing">Intent: missing item</span>
           <span class="intent shipping">Intent: international shipping</span>
         </span>
       </div>

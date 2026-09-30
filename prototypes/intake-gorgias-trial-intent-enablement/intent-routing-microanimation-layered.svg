@@ -2,11 +2,20 @@
   <title id="title">How AI Agent handles incoming tickets</title>
   <desc id="description">Three shopper questions are classified by intent, then answered with a matching skill or handed over to the support team.</desc>
   <metadata id="framer-motion-map"><![CDATA[
-    LOOP_DURATION: 12s
-    SEQUENCE_1: question-order > connector-incoming-dot > intent-order-status > connector-response-dot > outcome-response
-    SEQUENCE_2: question-return > connector-incoming-dot > intent-return-request > connector-handover-dot > outcome-handover
-    SEQUENCE_3: question-shipping > connector-incoming-dot > intent-international-shipping > connector-response-dot > outcome-response
+    LOOP_DURATION: 12s (infinite)
+    SEQUENCE_1 (0-4s):  question-order > connector-incoming-dot > intent-order-status > connector-response-dot > outcome-response
+    SEQUENCE_2 (4-8s):  question-missing-item > connector-incoming-dot > intent-missing-item > connector-handover-dot > outcome-handover
+    SEQUENCE_3 (8-12s): question-shipping > connector-incoming-dot > intent-international-shipping > connector-response-dot > outcome-response
     MOTION: All dots travel left to right. Reset each dot to its origin only while opacity is 0.
+    EASING: question cards, dots, outcome cards = linear. AI Agent icon + intent labels = cubic-bezier(.16,1,.3,1).
+    TIMING (seconds; "a→b" = transition from a to b):
+                               SEQ 1         SEQ 2         SEQ 3
+      Question highlight       on 0, off 1.32→1.68   on 3.84→4.08, off 5.28→5.64   on 7.80→8.04, off 9.24→9.60
+      Incoming dot             fade in 0.36→0.60, travel 0.60→1.32, fade out 1.32→1.56   (+3.96s, +7.92s for seq 2/3)
+      AI Agent icon tilt       1.20→1.56 (rotate 8deg, scale 1.08)→2.16   5.16→5.52→6.12   9.12→9.48→10.08
+      Intent label             in 1.20→1.56 (translateY 4→0), out 3.72→3.96   in 5.16→5.52, out 7.68→7.92   in 9.12→9.48, out 11.64→11.88
+      Branch dot               response: in 2.04→2.28, travel 2.28→3.00, out 3.00→3.24   handover: in 6.00→6.24, travel 6.24→6.96, out 6.96→7.20   response: in 9.96→10.20, travel 10.20→10.92, out 10.92→11.16
+      Outcome highlight        response on 2.76→3.12, off 3.72→3.96   handover on 6.72→7.08, off 7.68→7.92   response on 10.68→11.04, off 11.64→11.88
   ]]></metadata>
   <defs>
     <filter id="card-shadow" x="-10%" y="-20%" width="120%" height="150%" color-interpolation-filters="sRGB">
@@ -29,16 +38,19 @@
 
   <g id="questions" data-framer-name="Questions">
     <g id="question-order" data-framer-name="Question / Order status">
-      <rect id="question-order-card" x="18" y="24" width="160" height="44" rx="7" fill="#f4f0ff" stroke="#9f82f7" filter="url(#card-shadow)"/>
-      <text x="30" y="51" class="body" fill="#5c3cc4">Where is my order?</text>
+      <rect id="question-order-card" x="18" y="19" width="160" height="44" rx="7" fill="#f4f0ff" stroke="#9f82f7" filter="url(#card-shadow)"/>
+      <text x="30" y="46" class="body" fill="#5c3cc4">Where is my order?</text>
     </g>
-    <g id="question-return" data-framer-name="Question / Return request">
-      <rect id="question-return-card" x="18" y="78" width="160" height="44" rx="7" fill="#ffffff" stroke="#e5e7eb" filter="url(#card-shadow)"/>
-      <text x="30" y="105" class="body">Can I return this?</text>
+    <g id="question-missing-item" data-framer-name="Question / Missing item">
+      <rect id="question-missing-item-card" x="18" y="71" width="160" height="58" rx="7" fill="#ffffff" stroke="#e5e7eb" filter="url(#card-shadow)"/>
+      <text class="body">
+        <tspan x="30" y="95.5">An item is missing</tspan>
+        <tspan x="30" y="113.5">from my order</tspan>
+      </text>
     </g>
     <g id="question-shipping" data-framer-name="Question / International shipping">
-      <rect id="question-shipping-card" x="18" y="132" width="160" height="44" rx="7" fill="#ffffff" stroke="#e5e7eb" filter="url(#card-shadow)"/>
-      <text x="30" y="159" class="body">Do you ship to Canada?</text>
+      <rect id="question-shipping-card" x="18" y="137" width="160" height="44" rx="7" fill="#ffffff" stroke="#e5e7eb" filter="url(#card-shadow)"/>
+      <text x="30" y="164" class="body">Do you ship to Canada?</text>
     </g>
   </g>
 
@@ -57,8 +69,8 @@
       <g id="intent-order-status" data-framer-name="Intent / Order status">
         <text x="300" y="126" text-anchor="middle" fill="#5c3cc4" font-size="12" font-weight="600">Intent: order status</text>
       </g>
-      <g id="intent-return-request" data-framer-name="Intent / Return request" opacity="0">
-        <text x="300" y="126" text-anchor="middle" fill="#5c3cc4" font-size="12" font-weight="600">Intent: return request</text>
+      <g id="intent-missing-item" data-framer-name="Intent / Missing item" opacity="0">
+        <text x="300" y="126" text-anchor="middle" fill="#5c3cc4" font-size="12" font-weight="600">Intent: missing item</text>
       </g>
       <g id="intent-international-shipping" data-framer-name="Intent / International shipping" opacity="0">
         <text x="300" y="126" text-anchor="middle" fill="#5c3cc4" font-size="12" font-weight="600">Intent: international shipping</text>
