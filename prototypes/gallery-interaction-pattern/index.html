@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#eaece7">
+  <meta name="description" content="A gallery interaction pattern presented as a quiet walk through imagined portfolio work.">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Gallery Interaction Pattern — The Light Between Places</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Italiana&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #343e39;
+      --muted: #67736e;
+      --wall: #e9ece8;
+      --floor-height: 94px;
+      --journey-height: 600vw;
+      font-family: 'Manrope', sans-serif;
+      color: var(--ink);
+      background: var(--wall);
+      -webkit-font-smoothing: antialiased;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; overflow-x: hidden; }
+    body.dialog-open { overflow: hidden; }
+    body.choosing-character, body.entering-gallery { overflow: hidden; }
+    [hidden] { display: none !important; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    button { font: inherit; }
+    a { color: inherit; }
+    ::selection { background: #a7b9ad; color: #202c25; }
+    :focus-visible { outline: 2px solid #657f70; outline-offset: 5px; }
+    ::-webkit-scrollbar { width: 7px; height: 7px; }
+    ::-webkit-scrollbar-track { background: #e5e9e3; }
+    ::-webkit-scrollbar-thumb { background: #9fab9f; border-radius: 10px; }
+
+    .journey { height: var(--journey-height); }
+    .stage {
+      --sprite-width: 138px;
+      --sprite-height: 279px;
+      --sprite-scale: 1;
+      --visitor-x: 22vw;
+      --visitor-bottom: 54px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      height: 100svh;
+      overflow: clip;
+      isolation: isolate;
+      background: var(--wall);
+    }
+    .stage::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 92px;
+      z-index: 2;
+      background: linear-gradient(to bottom, rgba(246, 247, 241, .65), transparent);
+      pointer-events: none;
+    }
+    .track {
+      display: flex;
+      width: max-content;
+      height: calc(100% - var(--floor-height));
+      will-change: transform;
+      background: linear-gradient(to bottom, #e8ece8, #edf0eb 48%, #e6ebe5);
+    }
+    .wall-segment {
+      position: relative;
+      flex: none;
+      height: 100%;
+    }
+    .segment--entry { width: 980px; }
+    .segment--studies { width: 760px; }
+    .segment--feature { width: 770px; }
+    .segment--pair { width: 790px; }
+    .segment--exit { width: max(760px, 100vw); }
+
+    .topbar {
+      position: absolute;
+      z-index: 10;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 94px;
+      padding: 0 clamp(28px, 4.3vw, 76px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      pointer-events: none;
+    }
+    .topbar > * { pointer-events: auto; }
+    .wordmark {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border: 0;
+      background: transparent;
+      color: var(--ink);
+      text-align: left;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .mark { font-family: 'Italiana', Georgia, serif; font-size: 31px; line-height: 1; letter-spacing: -.06em; }
+    .wordmark-label { font-size: 13px; font-weight: 600; letter-spacing: -.01em; line-height: 1.25; }
+    .topnav { display: flex; align-items: center; gap: 27px; }
+    .topnav button {
+      padding: 9px 0;
+      border: 0;
+      background: transparent;
+      color: var(--ink);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: .035em;
+      border-bottom: 1px solid transparent;
+      transition: border-color .25s ease;
+    }
+    .topnav button:hover, .topnav button:focus-visible { border-color: var(--ink); }
+
+    .entry-copy { position: absolute; left: 112px; top: 29%; width: 450px; z-index: 1; }
+    h1, h2, h3, p { margin: 0; }
+    h1, h2, .exit-title { font-family: 'Italiana', Georgia, serif; font-weight: 400; }
+    h1 { font-size: 70px; line-height: 1.04; letter-spacing: -.025em; }
+    h1 em { font-weight: 400; font-style: normal; }
+    .entry-lede { max-width: 390px; margin-top: 25px; font-size: 15px; line-height: 1.65; color: #44564a; }
+    .entry-note { max-width: 390px; margin-top: 15px; font-size: 13px; line-height: 1.65; color: #4e6253; }
+    .begin-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 15px;
+      margin-top: 26px;
+      padding: 0 0 10px;
+      border: 0;
+      border-bottom: 1px solid #82968a;
+      background: transparent;
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .01em;
+      cursor: pointer;
+    }
+    .begin-link svg { width: 20px; transition: transform .3s cubic-bezier(.2,.7,.2,1); }
+    .begin-link:hover svg { transform: translateX(5px); }
+    .art {
+      position: absolute;
+      display: block;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: var(--ink);
+      text-align: left;
+      cursor: pointer;
+      z-index: 1;
+    }
+    .frame {
+      display: block;
+      width: 100%;
+      height: 100%;
+      padding: 5px;
+      background: #938f84;
+      box-shadow: 3px 8px 19px rgba(47, 57, 47, .16);
+      transition: transform .35s cubic-bezier(.2,.75,.2,1), box-shadow .35s ease;
+    }
+    .art:hover .frame, .art:focus-visible .frame { transform: translateY(-3px); box-shadow: 4px 12px 23px rgba(47,57,47,.19); }
+    .mat {
+      position: relative;
+      display: block;
+      width: 100%;
+      height: 100%;
+      padding: 10px;
+      background: #f3f2eb;
+    }
+    .image-wrap { position: relative; display: block; width: 100%; height: 100%; overflow: hidden; background: #c5d0c8; }
+    .image-wrap img { display: block; width: 100%; height: 100%; object-fit: cover; filter: saturate(.82) contrast(.96); transition: filter .4s ease, transform .6s cubic-bezier(.2,.75,.2,1); }
+    .art:hover img, .art:focus-visible img { filter: saturate(.9); transform: scale(1.025); }
+    .image-wrap::after { content: ''; position: absolute; inset: 0; box-shadow: inset 0 0 0 1px rgba(43,60,48,.14); pointer-events: none; }
+    .art-overlay {
+      position: absolute;
+      inset: auto 0 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 13px 15px;
+      background: rgba(239, 244, 237, .92);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity .28s ease, transform .35s cubic-bezier(.2,.7,.2,1);
+    }
+    .art:hover .art-overlay, .art:focus-visible .art-overlay { opacity: 1; transform: translateY(0); }
+    .overlay-number, .overlay-action { display: none; }
+    .overlay-title { font-family: 'Italiana', Georgia, serif; font-size: 27px; line-height: 1.08; }
+    .overlay-description { margin-top: 6px; font-size: 12px; line-height: 1.45; color: #43574a; }
+    .plaque { display: flex; align-items: baseline; gap: 7px; margin: 12px 0 0 2px; font-size: 13px; color: #34473a; letter-spacing: .005em; }
+    .plaque span { color: #4e6253; font-size: 11px; }
+    .art--entry { width: 315px; height: 380px; top: 24%; left: 625px; }
+    .art--entry .image-wrap img { object-position: 48% 50%; }
+    .four-grid { position: absolute; left: 135px; top: 22%; width: 600px; height: 430px; }
+    .four-grid .art { position: absolute; }
+    .four-grid .art:nth-child(1) { left: 0; top: 33px; width: 235px; height: 196px; }
+    .four-grid .art:nth-child(2) { left: 291px; top: 0; width: 260px; height: 180px; }
+    .four-grid .art:nth-child(3) { left: 29px; top: 263px; width: 209px; height: 155px; }
+    .four-grid .art:nth-child(4) { left: 310px; top: 217px; width: 240px; height: 208px; }
+    .four-grid .mat { padding: 7px; }
+    .four-grid .art-overlay { padding: 9px 11px; }
+    .four-grid .overlay-title { font-size: 22px; }
+    .four-grid .overlay-description { font-size: 11px; line-height: 1.35; }
+    .four-grid .plaque { margin-top: 8px; }
+
+    .art--feature { left: 100px; top: 20%; width: 585px; height: min(55vh, 490px); }
+    .art--feature .frame { padding: 7px; }
+    .art--feature .mat { padding: 15px; }
+    .art--feature .overlay-title { font-size: 35px; }
+    .pair-set { position: absolute; left: 85px; top: 24%; width: 650px; height: 430px; }
+    .pair-set .art { position: absolute; }
+    .pair-set .art:first-child { left: 0; top: 0; width: 308px; height: 345px; }
+    .pair-set .art:last-child { left: 415px; top: 86px; width: 230px; height: 260px; }
+    .pair-set .art:last-child .overlay-title { font-size: 24px; }
+
+    .spotlight { position: absolute; top: 14%; z-index: 0; width: 420px; height: 430px; pointer-events: none; background: radial-gradient(ellipse at 50% 8%, rgba(255,255,239,.38), transparent 66%); }
+    .spotlight::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 42px; height: 6px; border-radius: 1px 1px 5px 5px; background: #8e958a; box-shadow: 0 3px 5px rgba(56,65,55,.12); }
+    .spotlight::after { content: ''; position: absolute; top: 5px; left: 50%; transform: translateX(-50%); width: 28px; height: 3px; border-radius: 50%; background: #fcf6d9; box-shadow: 0 3px 9px 3px rgba(255,249,216,.47); }
+    .spotlight--entry { left: 575px; width: 420px; }
+    .spotlight--grid { left: 218px; width: 430px; top: 15%; }
+    .spotlight--feature { left: 195px; top: 13%; width: 430px; height: 500px; }
+    .spotlight--pair-a { left: 65px; top: 17%; width: 410px; }
+
+    .exit-copy { position: absolute; left: 110px; top: 28%; z-index: 1; width: 490px; }
+    .exit-title { font-size: 62px; line-height: 1.05; letter-spacing: -.025em; }
+    .exit-copy p { margin-top: 23px; max-width: 410px; color: #4e6152; font-size: 15px; line-height: 1.7; }
+    .contact-link { display: inline-flex; align-items: center; gap: 17px; margin-top: 29px; padding-bottom: 10px; border-bottom: 1px solid #809587; text-decoration: none; font-size: 13px; font-weight: 600; letter-spacing: .01em; }
+    .contact-link svg { width: 22px; transition: transform .3s ease; }
+    .contact-link:hover svg { transform: translateX(5px); }
+    .exit-small { position: absolute; bottom: 9%; right: 6vw; font-size: 12px; letter-spacing: .01em; color: #4e6253; }
+
+    .floor {
+      position: absolute;
+      z-index: 3;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: var(--floor-height);
+      background: linear-gradient(to bottom, #dadad1, #e4e3da 23px, #e8e7df);
+      cursor: e-resize;
+    }
+    .floor::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 8px; background: linear-gradient(#b9c0b6, #e8eae1 40%, #b6bdb2); box-shadow: 0 -7px 15px rgba(73,81,66,.08); }
+    .visitor { position: absolute; z-index: 5; left: var(--visitor-x); bottom: var(--visitor-bottom); width: calc(var(--sprite-width) * var(--sprite-scale)); height: calc(var(--sprite-height) * var(--sprite-scale)); pointer-events: none; filter: drop-shadow(4px 5px 4px rgba(56,65,51,.13)); }
+    .visitor.is-hidden, body.choosing-character .visitor { visibility: hidden; }
+    .visitor svg { overflow: visible; width: 100%; height: 100%; transform: scaleX(var(--facing, 1)); }
+    .visitor .leg-line { fill: none; stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; }
+    .visitor-speech {
+      position: absolute; z-index: 6;
+      left: calc(var(--visitor-x) + var(--sprite-width) * var(--sprite-scale) - 4px);
+      bottom: calc(var(--floor-height) + 6px);
+      width: max-content; max-width: min(200px, calc(100vw - var(--visitor-x) - var(--sprite-width) * var(--sprite-scale) - 12px)); padding: 12px 16px;
+      border: 1px solid #bac6b8; border-radius: 16px 16px 16px 3px;
+      background: #f5f5ed; color: #405548; font-size: 13px; line-height: 1.5;
+      text-align: center; pointer-events: none; opacity: 0;
+      transform: translateY(6px); transition: opacity .2s ease, transform .25s ease;
+    }
+    .visitor-speech.is-visible { opacity: 1; transform: translateY(0); }
+    .character-switch { border: 0; padding: 8px 0; color: #405548; background: transparent; border-bottom: 1px solid #91a18f; font-size: 12px; font-weight: 600; cursor: pointer; }
+    .character-switch:hover { color: #223c2c; border-color: currentColor; }
+
+    .character-picker {
+      position: fixed; inset: 0; width: 100%; max-width: none; height: 100%; max-height: none;
+      margin: 0; padding: 0; border: 0; background: #e9ece8; color: var(--ink);
+      overflow: auto; overscroll-behavior: contain; transition: background-color .28s ease;
+    }
+    .character-picker::backdrop { background: transparent; }
+    .picker-layout { min-height: 100%; display: grid; align-content: center; justify-items: center; padding: 52px 24px 36px; transition: opacity .2s ease; }
+    .picker-heading { text-align: center; }
+    .picker-heading h2 { font-size: clamp(38px, 4.3vw, 56px); line-height: 1.08; letter-spacing: -.025em; }
+    .picker-heading p { margin: 14px auto 28px; max-width: 360px; color: #536457; font-size: 14px; line-height: 1.65; }
+    .character-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; width: min(100%, 590px); }
+    .sprite-option { --preview-scale: .48; min-width: 0; display: grid; justify-items: center; gap: 14px; padding: 19px 10px 17px; border: 1px solid #c5cec2; border-radius: 12px; background: rgba(247,248,241,.45); color: var(--ink); cursor: pointer; transition: background-color .18s ease, border-color .18s ease; }
+    .sprite-option:hover, .sprite-option:focus-visible, .sprite-option.is-selected { background: #f5f6ef; border-color: #829781; }
+    .sprite-option:disabled { cursor: default; }
+    .sprite-preview { display: flex; align-items: flex-end; justify-content: center; width: 100%; height: 136px; pointer-events: none; }
+    .sprite-preview svg { display: block; flex: none; overflow: visible; width: calc(var(--preview-width) * var(--preview-scale)); height: calc(var(--preview-height) * var(--preview-scale)); }
+    .sprite-name { font-size: 13px; line-height: 1.5; font-weight: 600; }
+    .picker-note { margin-top: 22px; color: #586a5b; font-size: 12px; line-height: 1.6; text-align: center; }
+    .picker-close { position: fixed; right: 24px; top: 20px; display: grid; place-items: center; width: 40px; height: 40px; padding: 0; background: #f5f6ef; color: #405548; border: 1px solid #bac6b8; border-radius: 50%; cursor: pointer; }
+    .picker-close svg { width: 18px; height: 18px; }
+    .character-picker.is-leaving { background: transparent; overflow: hidden; }
+    .character-picker.is-leaving .picker-layout, .character-picker.is-leaving .picker-close { opacity: 0; pointer-events: none; }
+    .sprite-flight { position: fixed; z-index: 2; pointer-events: none; transform-origin: 50% 100%; }
+    .sprite-flight svg { display: block; overflow: visible; width: 100%; height: 100%; }
+    .sprite-flight ellipse[class$="shadow"] { opacity: 0; }
+
+    .hud { position: absolute; z-index: 8; left: clamp(28px, 4.3vw, 76px); right: clamp(28px, 4.3vw, 76px); bottom: 20px; display: flex; align-items: flex-end; justify-content: space-between; pointer-events: none; }
+    .hud > * { pointer-events: auto; }
+    .progress-block { width: 235px; }
+    .progress-meta { display: flex; justify-content: space-between; align-items: baseline; color: #44584a; font-size: 11px; font-weight: 600; letter-spacing: .01em; }
+    .progress-meta .current-position { font-weight: 500; }
+    .progress-track { width: 100%; height: 1px; margin-top: 13px; background: rgba(70,84,74,.27); }
+    .progress-fill { width: 0%; height: 2px; background: #485e50; transform: translateY(-.5px); }
+    .journey-controls { display: flex; gap: 16px; align-items: center; color: #5d6d61; }
+    .hint { margin-right: 7px; font-size: 11px; letter-spacing: .01em; font-weight: 500; }
+    .arrow-control { width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid rgba(70,84,74,.4); border-radius: 50%; background: rgba(247,247,240,.2); color: var(--ink); cursor: pointer; transition: background .2s ease, transform .2s ease; }
+    .arrow-control:hover { background: rgba(255,255,255,.7); transform: translateY(-2px); }
+    .arrow-control:disabled { opacity: .35; cursor: default; transform: none; }
+    .arrow-control svg { width: 16px; }
+
+    .art-dialog { width: min(850px, calc(100vw - 36px)); max-height: min(88vh, 800px); padding: 0; border: 1px solid rgba(245,246,238,.75); background: #f2f4ee; color: var(--ink); box-shadow: 0 32px 90px rgba(21,37,27,.25); overflow: auto; }
+    .art-dialog::backdrop { background: rgba(35,53,42,.52); backdrop-filter: blur(8px); }
+    .dialog-layout { display: grid; grid-template-columns: 1.05fr 1fr; min-height: 490px; }
+    .dialog-image { width: 100%; height: 100%; max-height: 650px; object-fit: cover; filter: saturate(.75); }
+    .dialog-content { display: flex; flex-direction: column; justify-content: center; padding: 68px 56px; }
+    .dialog-number { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #526b5d; }
+    .dialog-content h2 { margin-top: 26px; font-size: clamp(55px, 5.2vw, 75px); line-height: 1; }
+    .dialog-content p { margin-top: 24px; font-size: 14px; line-height: 1.85; color: #5c6d60; }
+    .dialog-foot { margin-top: 47px; padding-top: 15px; border-top: 1px solid #c7d2c8; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #526b5d; }
+    .dialog-close { position: absolute; right: 18px; top: 18px; width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid #a8b9aa; border-radius: 50%; background: #f3f5f0; color: var(--ink); font-size: 22px; font-weight: 400; cursor: pointer; z-index: 2; }
+    .dialog-close:hover { background: #dce8dc; }
+
+    @media (max-width: 1100px) {
+      .segment--entry { width: 870px; }
+      .entry-copy { left: 74px; width: 410px; }
+      h1 { font-size: 64px; }
+      .art--entry { left: 555px; width: 270px; height: 345px; }
+      .spotlight--entry { left: 510px; }
+    }
+    @media (max-width: 700px) {
+      :root { --floor-height: 82px; }
+      .topbar { height: 68px; padding: 0 22px; }
+      .wordmark { gap: 8px; }
+      .mark { font-size: 27px; }
+      .wordmark-label { font-size: 12px; }
+      .topnav { gap: 18px; }
+      .topnav button { font-size: 12px; }
+      .topnav button:first-child { display: none; }
+      .segment--entry { width: 560px; }
+      .segment--studies { width: 620px; }
+      .segment--feature { width: 520px; }
+      .segment--pair { width: 650px; }
+      .segment--exit { width: 100vw; }
+      .entry-copy { left: 27px; top: 17%; width: 340px; }
+      h1 { font-size: 52px; }
+      .entry-lede { max-width: 310px; margin-top: 15px; font-size: 13px; line-height: 1.6; }
+      .entry-note { max-width: 315px; margin-top: 9px; font-size: 12px; line-height: 1.5; }
+      .begin-link { margin-top: 16px; padding-bottom: 7px; }
+      .art--entry { top: 62%; left: 38vw; width: min(220px, calc(62vw - 20px)); height: min(25vh, 190px); }
+      .art--entry .plaque span { display: none; }
+      .art--entry .art-overlay { padding: 8px; }
+      .art--entry .overlay-title { font-size: 20px; }
+      .art--entry .overlay-description { margin-top: 4px; font-size: 10px; line-height: 1.3; }
+      .spotlight--entry { top: 55%; left: 118px; width: 340px; height: 300px; }
+      .four-grid { left: 75px; top: 22%; }
+      .four-grid .art:nth-child(1) { width: 215px; height: 180px; }
+      .four-grid .art:nth-child(2) { left: 255px; width: 225px; height: 168px; }
+      .four-grid .art:nth-child(3) { left: 20px; top: 252px; width: 185px; height: 145px; }
+      .four-grid .art:nth-child(4) { left: 270px; top: 220px; width: 210px; height: 190px; }
+      .spotlight--grid { left: 112px; }
+      .art--feature { left: 70px; top: 23%; width: min(440px, calc(100vw - 48px)); height: min(50vh, 410px); }
+      .spotlight--feature { left: 90px; }
+      .pair-set { left: 60px; top: 25%; }
+      .pair-set .art:first-child { width: 255px; height: 310px; }
+      .pair-set .art:last-child { left: 350px; top: 95px; width: 210px; height: 235px; }
+      .spotlight--pair-a { left: 55px; }
+      .exit-copy { left: 28px; top: 25%; width: calc(100vw - 56px); }
+      .exit-title { font-size: min(11vw, 48px); }
+      .exit-copy p { max-width: 335px; font-size: 13px; }
+      .exit-small { left: 28px; right: auto; }
+      .stage { --sprite-scale: .83; --visitor-x: 8vw; --visitor-bottom: 58px; }
+      .visitor-speech { padding: 8px 12px; font-size: 12px; line-height: 1.45; }
+      .picker-layout { padding: 48px 20px 30px; }
+      .picker-heading h2 { font-size: 40px; }
+      .picker-heading p { max-width: 290px; margin: 12px auto 24px; font-size: 13px; }
+      .character-grid { max-width: 390px; gap: 8px; }
+      .sprite-option { --preview-scale: .35; gap: 12px; padding: 15px 6px 12px; border-radius: 10px; }
+      .sprite-preview { height: 100px; }
+      .sprite-name { font-size: 12px; }
+      .picker-note { max-width: 260px; margin-top: 20px; }
+      .picker-close { top: 14px; right: 16px; }
+      .hud { left: 22px; right: 22px; bottom: 15px; }
+      .progress-block { width: 135px; }
+      .progress-meta .current-position { display: none; }
+      .hint { display: none; }
+      .journey-controls { gap: 8px; }
+      .arrow-control { width: 34px; height: 34px; }
+      .dialog-layout { grid-template-columns: 1fr; }
+      .dialog-image { height: min(34vh, 300px); }
+      .dialog-content { padding: 32px 30px 38px; }
+      .dialog-content h2 { font-size: 55px; margin-top: 16px; }
+      .dialog-content p { margin-top: 15px; font-size: 12px; }
+      .dialog-foot { margin-top: 25px; }
+    }
+    @media (max-height: 700px) {
+      .picker-layout { padding-top: 28px; padding-bottom: 24px; }
+      .picker-heading h2 { font-size: 38px; }
+      .picker-heading p { margin-bottom: 18px; }
+      .sprite-option { --preview-scale: .34; padding-top: 12px; gap: 9px; }
+      .sprite-preview { height: 96px; }
+      .picker-note { margin-top: 15px; }
+      .entry-copy { top: 19%; }
+      h1 { font-size: 58px; }
+      .entry-lede { margin-top: 14px; font-size: 13px; line-height: 1.55; }
+      .entry-note { display: none; }
+      .begin-link { margin-top: 16px; }
+      .art--entry { top: 21%; height: min(49vh, 335px); }
+      .four-grid { top: 14%; transform: scale(.78); transform-origin: top left; }
+      .art--feature { top: 18%; height: min(54vh, 335px); }
+      .pair-set { top: 18%; transform: scale(.82); transform-origin: top left; }
+      .exit-copy { top: 20%; }
+      .exit-title { font-size: 54px; }
+      .exit-copy p { margin-top: 16px; line-height: 1.55; }
+      .contact-link { margin-top: 18px; }
+    }
+    @media (max-width: 700px) and (max-height: 700px) {
+      .entry-copy { top: 14%; }
+      h1 { font-size: 47px; }
+      .entry-lede { margin-top: 10px; font-size: 12px; line-height: 1.5; max-width: 265px; }
+      .begin-link { margin-top: 13px; }
+      .art--entry { top: 62%; left: 40vw; width: min(170px, calc(60vw - 20px)); height: min(25vh, 145px); }
+      .spotlight--entry { top: 59%; }
+      .four-grid { top: 13%; transform: scale(.7); }
+      .art--feature { top: 19%; height: min(50vh, 300px); }
+      .pair-set { top: 20%; transform: scale(.72); }
+      .exit-copy { left: 28px; top: 18%; width: calc(100vw - 56px); }
+      .exit-title { font-size: min(11vw, 48px); }
+      .exit-copy p { max-width: 265px; }
+      .exit-small { left: 32px; }
+    }
+    @media (max-width: 700px) and (max-height: 620px) {
+      :root { --floor-height: 120px; }
+      h1 { font-size: 40px; }
+      .entry-lede { margin-top: 8px; }
+      .art--entry { height: min(17vh, 88px); }
+      .visitor-speech { left: calc(50% - 6px); right: 12px; bottom: 64px; width: auto; max-width: none; padding: 8px 10px; font-size: 12px; line-height: 1.45; }
+      .stage[data-character="snake"] .visitor-speech { bottom: 96px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="journey" id="journey">
+    <div class="stage" id="stage" tabindex="-1" aria-label="The Light Between Places gallery">
+      <header class="topbar">
+        <button class="wordmark" type="button" data-go="entry" aria-label="Go to gallery entrance">
+          <span class="mark" aria-hidden="true">g.</span><span class="wordmark-label">Gallery<br>interaction pattern</span>
+        </button>
+        <nav class="topnav" aria-label="Gallery navigation">
+          <button type="button" data-go="entry">About</button>
+          <button type="button" data-go="studies">The works</button>
+          <button type="button" data-go="exit">Contact</button>
+        </nav>
+      </header>
+
+      <div class="track" id="track">
+        <section class="wall-segment segment--entry" id="entry" aria-labelledby="exhibition-title">
+          <div class="entry-copy">
+            <h1 id="exhibition-title">The light<br>between<br><em>places.</em></h1>
+            <p class="entry-lede">A study of atmosphere, memory, and the places we nearly pass by.</p>
+            <p class="entry-note">I’m Ari. This is a portfolio in progress, with placeholder images standing in for the work to come.</p>
+            <button class="begin-link" type="button" data-go="studies">Explore the work
+              <svg viewBox="0 0 24 12" fill="none" aria-hidden="true"><path d="M1 6h20m-6-5 6 5-6 5" stroke="currentColor" stroke-width="1.25"/></svg>
+            </button>
+          </div>
+          <div class="spotlight spotlight--entry" aria-hidden="true"></div>
+          <button class="art art--entry" type="button" data-number="Prelude" data-title="A softer beginning" data-description="An opening study in filtered light. The kind of scene that asks you to pause before the day begins." data-image="assets/soft-beginning.jpg" aria-label="Open A softer beginning, a concept study">
+            <span class="frame"><span class="mat"><span class="image-wrap"><img src="assets/soft-beginning.jpg" alt="Sunlit forest dissolving into soft green mist"><span class="art-overlay"><span class="overlay-number">Prelude · Concept study</span><span class="overlay-title">A softer beginning</span><span class="overlay-description">Filtered light, held for a moment.</span><span class="overlay-action">View the study ↗</span></span></span></span></span>
+            <span class="plaque">A softer beginning <span>— an opening study</span></span>
+          </button>
+        </section>
+
+        <section class="wall-segment segment--studies" id="studies" aria-label="Four framed studies">
+          <div class="spotlight spotlight--grid" aria-hidden="true"></div>
+          <div class="four-grid">
+            <button class="art" type="button" data-number="Study 01" data-title="Where the pines meet" data-description="A quiet look at distance and depth, where the trees open onto still water and a mountain beyond." data-image="assets/pines.jpg" aria-label="Open Where the pines meet, a concept study">
+              <span class="frame"><span class="mat"><span class="image-wrap"><img src="assets/pines.jpg" alt="Pine trees framing a still lake and distant mountains"><span class="art-overlay"><span class="overlay-number">Study 01</span><span class="overlay-title">Where the pines meet</span><span class="overlay-description">Trees open onto still water.</span><span class="overlay-action">View study ↗</span></span></span></span></span><span class="plaque">Where the pines meet <span>· 01</span></span>
+            </button>
+            <button class="art" type="button" data-number="Study 02" data-title="The hours before" data-description="A shoreline catching the last low light, held somewhere between afternoon and evening." data-image="assets/golden-field.jpg" aria-label="Open The hours before, a concept study">
+              <span class="frame"><span class="mat"><span class="image-wrap"><img src="assets/golden-field.jpg" alt="Low sun above a grassy shoreline and calm water"><span class="art-overlay"><span class="overlay-number">Study 02</span><span class="overlay-title">The hours before</span><span class="overlay-description">The shoreline in the last low light.</span><span class="overlay-action">View study ↗</span></span></span></span></span><span class="plaque">The hours before <span>· 02</span></span>
+            </button>
+            <button class="art" type="button" data-number="Study 03" data-title="Through the mist" data-description="A passing landscape made softer by fog, the edges almost disappearing." data-image="assets/mist.jpg" aria-label="Open Through the mist, a concept study">
+              <span class="frame"><span class="mat"><span class="image-wrap"><img src="assets/mist.jpg" alt="Fog drifting across a forest canopy"><span class="art-overlay"><span class="overlay-number">Study 03</span><span class="overlay-title">Through the mist</span><span class="overlay-description">A landscape softened by fog.</span><span class="overlay-action">View study ↗</span></span></span></span></span><span class="plaque">Through the mist <span>· 03</span></span>
+            </button>
+            <button class="art" type="button" data-number="Study 04" data-title="Almost spring" data-description="A gentle study of new color returning, one small bloom at a time." data-image="assets/blooms.jpg" aria-label="Open Almost spring, a concept study">
+              <span class="frame"><span class="mat"><span class="image-wrap"><img src="assets/blooms.jpg" alt="Yellow flowers against a clear blue sky"><span class="art-overlay"><span class="overlay-number">Study 04</span><span class="overlay-title">Almost spring</span><span class="overlay-description">New color returning, one bloom at a time.</span><span class="overlay-action">View study ↗</span></span></span></span></span><span class="plaque">Almost spring <span>· 04</span></span>
+            </button>
+          </div>
+        </section>
+
+        <section class="wall-segment segment--feature" id="feature" aria-label="Large framed study">
+          <div class="spotlight spotlight--feature" aria-hidden="true"></div>
+          <button class="art art--feature" type="button" data-number="Study 05" data-title="After the rain" data-description="The water is still, the air is clear, and everything feels newly possible. A study of reflection, spaciousness, and time passing slowly." data-image="assets/quiet-water.jpg" aria-label="Open After the rain, a concept study">
+            <span class="frame"><span class="mat"><span class="image-wrap"><img src="assets/quiet-water.jpg" alt="Mountain lake reflecting the sky in calm morning light"><span class="art-overlay"><span class="overlay-number">Study 05 · Concept study</span><span class="overlay-title">After the rain</span><span class="overlay-description">The water is still, the air is clear, and everything feels newly possible.</span><span class="overlay-action">View the study ↗</span></span></span></span></span><span class="plaque">After the rain <span>— a study in stillness</span></span>
+          </button>
+        </section>
+
+        <section class="wall-segment segment--pair" id="pair" aria-label="Pair of framed studies">
+          <div class="spotlight spotlight--pair-a" aria-hidden="true"></div>
+          <div class="pair-set">
+            <button class="art" type="button" data-number="Study 06" data-title="A blue kind of quiet" data-description="A soft horizon with nowhere in particular to be. An imagined study of open water and open thought." data-image="assets/blue-quiet.jpg" aria-label="Open A blue kind of quiet, a concept study">
+              <span class="frame"><span class="mat"><span class="image-wrap"><img src="assets/blue-quiet.jpg" alt="A soft blue ocean horizon with pale light"><span class="art-overlay"><span class="overlay-number">Study 06</span><span class="overlay-title">A blue kind of quiet</span><span class="overlay-description">A horizon with nowhere in particular to be.</span><span class="overlay-action">View the study ↗</span></span></span></span></span><span class="plaque">A blue kind of quiet <span>· 06</span></span>
+            </button>
+            <button class="art" type="button" data-number="Study 07" data-title="Somewhere, slowly" data-description="The hills stretch out, almost endless. A note on finding your own pace in a wide-open landscape." data-image="assets/slowly.jpg" aria-label="Open Somewhere, slowly, a concept study">
+              <span class="frame"><span class="mat"><span class="image-wrap"><img src="assets/slowly.jpg" alt="Sun setting over layered mountain ridges"><span class="art-overlay"><span class="overlay-number">Study 07</span><span class="overlay-title">Somewhere, slowly</span><span class="overlay-description">Finding your own pace in a wide-open landscape.</span><span class="overlay-action">View study ↗</span></span></span></span></span><span class="plaque">Somewhere, slowly <span>· 07</span></span>
+            </button>
+          </div>
+        </section>
+
+        <section class="wall-segment segment--exit" id="exit" aria-labelledby="exit-title">
+          <div class="exit-copy"><h2 class="exit-title" id="exit-title">Leave the door<br>open.</h2><p>Thanks for walking through. This is a layout study with placeholder projects, ready for real work when it arrives.</p><a class="contact-link" href="mailto:hello@example.com?subject=Hello%20from%20the%20gallery" aria-label="Send an email to the placeholder portfolio address">Say hello <svg viewBox="0 0 24 12" fill="none" aria-hidden="true"><path d="M1 6h20m-6-5 6 5-6 5" stroke="currentColor" stroke-width="1.25"/></svg></a></div>
+          <span class="exit-small">The light between places &nbsp; / &nbsp; Ari Vale</span>
+        </section>
+      </div>
+
+      <div class="floor" id="floor" aria-hidden="true"></div>
+      <div class="visitor" id="visitor" aria-hidden="true"></div>
+      <div class="visitor-speech" id="visitor-speech" role="status" aria-live="polite"></div>
+      <div class="hud">
+        <div class="progress-block" aria-label="Gallery progress"><div class="progress-meta"><span>Along the wall</span><span class="current-position" id="current-position">0% explored</span></div><div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div></div>
+        <div class="journey-controls"><span class="hint">Scroll, swipe, or use ← →</span><button class="character-switch" id="change-character" type="button" aria-label="Change character">Character</button><button class="arrow-control" id="previous" type="button" aria-label="Walk left"><svg viewBox="0 0 24 12" fill="none" aria-hidden="true"><path d="M23 6H3m6-5L3 6l6 5" stroke="currentColor" stroke-width="1.5"/></svg></button><button class="arrow-control" id="next" type="button" aria-label="Walk right"><svg viewBox="0 0 24 12" fill="none" aria-hidden="true"><path d="M1 6h20m-6-5 6 5-6 5" stroke="currentColor" stroke-width="1.5"/></svg></button></div>
+      </div>
+    </div>
+  </main>
+
+  <dialog class="character-picker" id="character-picker" aria-labelledby="picker-title" aria-describedby="picker-description">
+    <div class="picker-layout">
+      <div class="picker-heading">
+        <h2 id="picker-title">A little company.</h2>
+        <p id="picker-description">Choose your character for a wander<br>through the gallery.</p>
+      </div>
+      <div class="character-grid" id="character-grid" role="group" aria-label="Choose a character"></div>
+      <p class="picker-note">Pick anyone. You can always change your company.</p>
+    </div>
+    <button class="picker-close" id="picker-close" type="button" aria-label="Return to gallery" hidden><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+  </dialog>
+  <dialog class="art-dialog" id="art-dialog" aria-labelledby="dialog-title"><button class="dialog-close" id="dialog-close" type="button" aria-label="Close artwork details">×</button><div class="dialog-layout"><img class="dialog-image" id="dialog-image" alt=""><div class="dialog-content"><span class="dialog-number" id="dialog-number"></span><h2 id="dialog-title"></h2><p id="dialog-description"></p><span class="dialog-foot">An imaginary portfolio study &nbsp; · &nbsp; Ari Vale</span></div></div></dialog>
+
+  <script src="sprites.js"></script>
+  <script>
+    (() => {
+      const track = document.getElementById('track');
+      const journey = document.getElementById('journey');
+      const stage = document.getElementById('stage');
+      const visitor = document.getElementById('visitor');
+      const speech = document.getElementById('visitor-speech');
+      const picker = document.getElementById('character-picker');
+      const characterGrid = document.getElementById('character-grid');
+      const pickerClose = document.getElementById('picker-close');
+      const characterSwitch = document.getElementById('change-character');
+      const sprites = window.GallerySprites;
+      let selectedSprite = sprites.catalog[0];
+      let entryState = 'choosing';
+      let hasEntered = false;
+      let entranceAnimation = null;
+      let welcomeFrame = 0;
+      let welcomeTimer = 0;
+      let speechTimer = 0;
+      let creatureAmount = 0;
+      let settleAmount = 0;
+      visitor.innerHTML = sprites.markup(selectedSprite.id);
+      visitor.dataset.character = selectedSprite.id;
+      stage.dataset.character = selectedSprite.id;
+      let creatureRenderer = sprites.createRenderer(visitor.querySelector('svg'), selectedSprite.id);
+      const progressFill = document.getElementById('progress-fill');
+      const currentPosition = document.getElementById('current-position');
+      const previous = document.getElementById('previous');
+      const next = document.getElementById('next');
+      const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+      let maxTravel = 0;
+      let ticking = false;
+      let lastPosition = 0;
+      let touchStartX = 0;
+      let touchStartY = 0;
+
+      // Contact → down → passing → up, with opposite limbs half a cycle apart.
+      // References: animatorisland.com/secret-of-animation-walks-simplified/
+      // and the ~60% stance / 40% swing gait described in PMC9248303.
+      const TAU = Math.PI * 2;
+      const radians = degrees => degrees * Math.PI / 180;
+      const lerp = (a, b, t) => a + (b - a) * t;
+      const ease = t => t * t * (3 - 2 * t);
+      let body, head, shadow, limbs;
+      function bindSpriteRig() {
+        body = visitor.querySelector('.visitor-body');
+        head = visitor.querySelector('.visitor-head');
+        shadow = visitor.querySelector('.visitor-shadow');
+        limbs = ['front', 'back'].map(side => ({
+          leg: visitor.querySelector(`.leg--${side} .leg-line`),
+          shoe: visitor.querySelector(`.leg--${side} .shoe`),
+          arm: visitor.querySelector(`.arm--${side}`),
+          forearm: visitor.querySelector(`.arm--${side} .forearm`),
+        }));
+      }
+      bindSpriteRig();
+      const footRoll = [[0, -14], [.1, 0], [.38, 0], [.6, 32], [.73, 8], [.87, -16], [1, -14]];
+      const neutralPose = () => ({
+        hipX: 29, hipY: 73, lean: 0, swing: 0, elbow: -12,
+        feet: [{ x: 32.5, lift: 0, angle: 0 }, { x: 25.5, lift: 0, angle: 0 }],
+      });
+      let pose = neutralPose();
+      let motionFrame = 0;
+      let lastFrame = 0;
+      let lastInput = 0;
+      let pendingDistance = 0;
+      let speed = 0;
+      let phase = 0;
+      let facing = 1;
+      let motion = 'idle';
+      let transitionStart = 0;
+      let transitionFrom = pose;
+      let settleTarget;
+      let supportFoot = 0;
+
+      function mixPose(from, to, t) {
+        const feet = from.feet.map((foot, i) => ({
+          x: lerp(foot.x, to.feet[i].x, t), lift: lerp(foot.lift, to.feet[i].lift, t),
+          angle: lerp(foot.angle, to.feet[i].angle, t),
+        }));
+        // An interrupted settling step must not blend into two airborne feet.
+        const supportLift = Math.min(...feet.map(foot => foot.lift));
+        feet.forEach(foot => { foot.lift -= supportLift; });
+        return {
+          hipX: lerp(from.hipX, to.hipX, t), hipY: lerp(from.hipY, to.hipY, t),
+          lean: lerp(from.lean, to.lean, t), swing: lerp(from.swing, to.swing, t),
+          elbow: lerp(from.elbow, to.elbow, t),
+          feet,
+        };
+      }
+
+      function sampleFoot(t, stride) {
+        // The support foot travels steadily backward; the swing clears the floor.
+        // Matching the endpoint tangents avoids a hitch at heel-strike or toe-off.
+        const u = Math.max(0, (t - .6) / .4);
+        const reach = 13;
+        const tangent = -2 * reach * .4 / .6;
+        const x = t <= .6 ? reach - 2 * reach * t / .6
+          : (2 * u ** 3 - 3 * u ** 2 + 1) * -reach
+            + (u ** 3 - 2 * u ** 2 + u) * tangent
+            + (-2 * u ** 3 + 3 * u ** 2) * reach
+            + (u ** 3 - u ** 2) * tangent;
+        const end = footRoll.findIndex(key => key[0] > t);
+        const a = footRoll[end - 1];
+        const b = footRoll[end];
+        return {
+          x: 29 + x * stride,
+          lift: 7 * Math.sin(Math.PI * u) ** 1.6,
+          angle: lerp(a[1], b[1], ease((t - a[0]) / (b[0] - a[0]))),
+        };
+      }
+
+      function walkingPose() {
+        const stride = .78 + Math.min(speed / 900, .22);
+        return {
+          hipX: 29, hipY: 73 + Math.sin(phase * TAU * 2),
+          lean: 1.1, swing: 17 * Math.cos(phase * TAU - .18) * stride,
+          elbow: -12 + 4 * Math.sin(phase * TAU),
+          feet: [sampleFoot(phase, stride), sampleFoot((phase + .5) % 1, stride)],
+        };
+      }
+
+      function renderPose(current) {
+        if (selectedSprite.kind !== 'human') {
+          creatureRenderer(phase, creatureAmount);
+          return;
+        }
+        body.setAttribute('transform', `translate(${current.hipX - 29} ${current.hipY - 73}) rotate(${current.lean} 29 73)`);
+        head.setAttribute('transform', `translate(0 ${(73 - current.hipY) * .3}) rotate(${-current.lean * .6} 28 32)`);
+        shadow.setAttribute('cx', current.hipX);
+        current.feet.forEach((foot, i) => {
+          const angle = radians(foot.angle);
+          // Rotate around the lowest sole point, keeping heel/toe contact at y=115.
+          const sole = Math.max(-4 * Math.sin(angle), 9 * Math.sin(angle)) + 3 * Math.cos(angle);
+          const ankleY = 115 - sole - foot.lift;
+          const hipX = current.hipX + (i ? -1 : 1);
+          const dx = foot.x - hipX;
+          const dy = ankleY - current.hipY;
+          const distance = Math.hypot(dx, dy);
+          // Two 20.5-unit bones, knee bending forward rather than rigid scissors.
+          const bend = Math.sqrt(Math.max(0, 20.5 ** 2 - (distance / 2) ** 2));
+          const kneeX = (hipX + foot.x) / 2 + dy / distance * bend;
+          const kneeY = (current.hipY + ankleY) / 2 - dx / distance * bend;
+          limbs[i].leg.setAttribute('d', `M${hipX} ${current.hipY} L${kneeX} ${kneeY} L${foot.x} ${ankleY}`);
+          limbs[i].shoe.setAttribute('transform', `translate(${foot.x} ${ankleY}) rotate(${foot.angle})`);
+          limbs[i].arm.setAttribute('transform', `translate(${i ? 24 : 34} ${i ? 42 : 43}) rotate(${i ? -current.swing : current.swing})`);
+          limbs[i].forearm.setAttribute('transform', `translate(0 17) rotate(${i ? -24 - current.elbow : current.elbow})`);
+        });
+      }
+
+      function beginSettle(now) {
+        motion = 'settling';
+        transitionStart = now;
+        transitionFrom = pose;
+        settleAmount = creatureAmount;
+        supportFoot = pose.feet[0].lift <= pose.feet[1].lift ? 0 : 1;
+        const support = pose.feet[supportFoot];
+        const pivot = support.angle > 0 ? 9 : -4;
+        const angle = radians(support.angle);
+        const plantedX = support.x + pivot * (Math.cos(angle) - 1) - 3 * Math.sin(angle);
+        const otherX = plantedX + (pose.feet[1 - supportFoot].x >= support.x ? 7 : -7);
+        settleTarget = neutralPose();
+        settleTarget.feet[supportFoot].x = plantedX;
+        settleTarget.feet[1 - supportFoot].x = otherX;
+        settleTarget.hipX = (plantedX + otherX) / 2;
+      }
+
+      function animateVisitor(now) {
+        motionFrame = 0;
+        const dt = Math.min(Math.max((now - lastFrame) / 1000, .001), .04);
+        lastFrame = now;
+        speed = lerp(speed, Math.min(pendingDistance / dt, 1200), 1 - Math.exp(-dt / .12));
+        pendingDistance = 0;
+        if (motion === 'walking') {
+          // Follow scroll intensity, with a walking-speed ceiling for big wheel jumps.
+          phase = (phase + dt * (.6 + Math.min(speed / 650, .8))) % 1;
+          creatureAmount = ease(Math.max(0, Math.min((now - transitionStart) / 180, 1)));
+          pose = mixPose(transitionFrom, walkingPose(), creatureAmount);
+          if (now - lastInput > 110) beginSettle(now);
+        }
+        if (motion === 'settling') {
+          const t = Math.min((now - transitionStart) / 280, 1);
+          creatureAmount = settleAmount * (1 - ease(t));
+          pose = mixPose(transitionFrom, settleTarget, ease(t));
+          // Keep the support heel/toe fixed while the free foot takes a final small step.
+          const source = transitionFrom.feet[supportFoot];
+          const pivot = source.angle > 0 ? 9 : -4;
+          const anchor = source.x + pivot * Math.cos(radians(source.angle)) - 3 * Math.sin(radians(source.angle));
+          const foot = pose.feet[supportFoot];
+          foot.x = anchor - pivot * Math.cos(radians(foot.angle)) + 3 * Math.sin(radians(foot.angle));
+          pose.feet[1 - supportFoot].lift += 3 * Math.sin(Math.PI * t);
+          if (t === 1) {
+            motion = 'idle';
+            visitor.classList.remove('walking');
+          }
+        }
+        renderPose(pose);
+        if (motion !== 'idle') motionFrame = requestAnimationFrame(animateVisitor);
+      }
+
+      function moveVisitor(delta) {
+        if (entryState !== 'gallery' || reducedMotion.matches || document.hidden || document.body.classList.contains('dialog-open')) return;
+        const now = performance.now();
+        const direction = delta > 0 ? 1 : -1;
+        if (direction !== facing) {
+          // Rebase the pose before mirroring, preserving each shoe's ground contact.
+          // Five units is twice the sole's center offset from the ankle (2.5).
+          pose = {
+            ...pose, hipX: 58 - pose.hipX - 5, lean: -pose.lean, swing: -pose.swing,
+            feet: pose.feet.map(foot => ({
+              ...foot, x: 58 - foot.x - 5 * Math.cos(radians(foot.angle)), angle: -foot.angle,
+            })),
+          };
+          facing = direction;
+          phase = (phase + .5) % 1;
+          transitionFrom = pose;
+          transitionStart = now;
+          visitor.style.setProperty('--facing', facing);
+          renderPose(pose);
+        }
+        pendingDistance += Math.abs(delta);
+        lastInput = now;
+        if (motion !== 'walking') {
+          transitionFrom = pose;
+          transitionStart = now;
+          motion = 'walking';
+          visitor.classList.add('walking');
+        }
+        if (!motionFrame) {
+          lastFrame = now;
+          motionFrame = requestAnimationFrame(animateVisitor);
+        }
+      }
+
+      function pauseVisitor() {
+        cancelAnimationFrame(motionFrame);
+        motionFrame = 0;
+        motion = 'idle';
+        speed = pendingDistance = 0;
+        creatureAmount = 0;
+        pose = neutralPose();
+        visitor.classList.remove('walking');
+        renderPose(pose);
+      }
+
+      function update(animate = true) {
+        const position = Math.min(Math.max(window.scrollY, 0), maxTravel);
+        track.style.transform = `translate3d(${-position}px, 0, 0)`;
+        progressFill.style.width = `${maxTravel ? position / maxTravel * 100 : 0}%`;
+        currentPosition.textContent = `${maxTravel ? Math.round(position / maxTravel * 100) : 0}% explored`;
+        previous.disabled = position < 2;
+        next.disabled = position >= maxTravel - 2;
+        if (animate && Math.abs(position - lastPosition) > .1) moveVisitor(position - lastPosition);
+        lastPosition = position;
+        ticking = false;
+      }
+
+      function measure() {
+        maxTravel = Math.max(0, track.scrollWidth - innerWidth);
+        journey.style.height = `${maxTravel + innerHeight}px`;
+        update(false);
+      }
+
+      function onScroll() {
+        if (!ticking) { requestAnimationFrame(() => update()); ticking = true; }
+      }
+
+      function walk(distance) {
+        if (entryState !== 'gallery') return;
+        stopWelcomeWalk();
+        window.scrollBy({ top: distance, behavior: reducedMotion.matches ? 'auto' : 'smooth' });
+      }
+
+      function stopWelcomeWalk() {
+        clearTimeout(welcomeTimer);
+        cancelAnimationFrame(welcomeFrame);
+        welcomeTimer = welcomeFrame = 0;
+      }
+
+      function startWelcomeWalk() {
+        if (reducedMotion.matches || document.hidden || entryState !== 'gallery') return;
+        const origin = window.scrollY;
+        const distance = Math.min(160, innerWidth * .22, maxTravel - origin);
+        const started = performance.now();
+        function stroll(now) {
+          const t = Math.max(0, Math.min((now - started) / 1600, 1));
+          window.scrollTo({ top: origin + distance * ease(t), behavior: 'instant' });
+          welcomeFrame = t < 1 ? requestAnimationFrame(stroll) : 0;
+        }
+        welcomeFrame = requestAnimationFrame(stroll);
+      }
+
+      function hideSpeech() {
+        clearTimeout(speechTimer);
+        speech.classList.remove('is-visible');
+        speech.textContent = '';
+      }
+
+      function openPicker() {
+        stopWelcomeWalk();
+        pauseVisitor();
+        hideSpeech();
+        window.scrollTo({ top: window.scrollY, behavior: 'instant' });
+        entryState = 'choosing';
+        document.body.classList.add('choosing-character');
+        journey.inert = true;
+        pickerClose.hidden = !hasEntered;
+        characterGrid.querySelectorAll('button').forEach(button => {
+          button.classList.toggle('is-selected', hasEntered && button.dataset.sprite === selectedSprite.id);
+        });
+        picker.showModal();
+        characterGrid.querySelector(`[data-sprite="${selectedSprite.id}"]`).focus({ preventScroll: true });
+      }
+
+      function closePicker() {
+        if (!hasEntered || entryState !== 'choosing') return;
+        entryState = 'gallery';
+        picker.close();
+        journey.inert = false;
+        document.body.classList.remove('choosing-character');
+        characterSwitch.focus({ preventScroll: true });
+      }
+
+      function chooseCharacter(sprite, button) {
+        if (entryState !== 'choosing') return;
+        const from = button.querySelector('svg').getBoundingClientRect();
+        const firstEntrance = !hasEntered;
+        entryState = 'entering';
+        stopWelcomeWalk();
+        pauseVisitor();
+        selectedSprite = sprite;
+        visitor.innerHTML = sprites.markup(sprite.id);
+        visitor.dataset.character = sprite.id;
+        stage.dataset.character = sprite.id;
+        creatureRenderer = sprites.createRenderer(visitor.querySelector('svg'), sprite.id);
+        bindSpriteRig();
+        facing = 1;
+        phase = 0;
+        visitor.style.setProperty('--facing', '1');
+        stage.style.setProperty('--sprite-width', `${sprite.width}px`);
+        stage.style.setProperty('--sprite-height', `${sprite.height}px`);
+        pose = neutralPose();
+        renderPose(pose);
+        if (firstEntrance) {
+          window.scrollTo({ top: 0, behavior: 'instant' });
+          update(false);
+        }
+        visitor.classList.add('is-hidden');
+        document.body.classList.remove('choosing-character');
+        document.body.classList.add('entering-gallery');
+        characterGrid.querySelectorAll('button').forEach(option => { option.disabled = true; });
+
+        const flight = document.createElement('div');
+        flight.className = 'sprite-flight';
+        flight.setAttribute('aria-hidden', 'true');
+        flight.innerHTML = sprites.markup(sprite.id);
+        sprites.createRenderer(flight.querySelector('svg'), sprite.id)(0, 0);
+        Object.assign(flight.style, { left: `${from.left}px`, top: `${from.top}px`, width: `${from.width}px`, height: `${from.height}px` });
+        picker.append(flight);
+        const destination = visitor.getBoundingClientRect();
+        const dx = destination.left + destination.width / 2 - from.left - from.width / 2;
+        const dy = destination.bottom - from.bottom;
+        const sx = destination.width / from.width;
+        const sy = destination.height / from.height;
+
+        function finishEntrance() {
+          if (entryState !== 'entering') return;
+          entranceAnimation = null;
+          flight.remove();
+          visitor.classList.remove('is-hidden');
+          picker.close();
+          picker.classList.remove('is-leaving');
+          characterGrid.querySelectorAll('button').forEach(option => { option.disabled = false; });
+          document.body.classList.remove('entering-gallery');
+          journey.inert = false;
+          entryState = 'gallery';
+          hasEntered = true;
+          characterSwitch.setAttribute('aria-label', `Change character, currently ${sprite.label}`);
+          stage.focus({ preventScroll: true });
+          speech.textContent = sprite.catchphrase;
+          speech.classList.add('is-visible');
+          speechTimer = setTimeout(hideSpeech, 3200);
+          if (firstEntrance && !reducedMotion.matches && !document.hidden) welcomeTimer = setTimeout(startWelcomeWalk, 280);
+        }
+
+        if (reducedMotion.matches || document.hidden) {
+          finishEntrance();
+          return;
+        }
+        picker.classList.add('is-leaving');
+        entranceAnimation = flight.animate([
+          { transform: 'translate(0, 0) scale(1)', offset: 0 },
+          { transform: `translate(${dx * .05}px, -28px) scale(.94, 1.06)`, offset: .16 },
+          { transform: `translate(${dx * .78}px, ${dy * .62 - 42}px) scale(${sx * .94}, ${sy * 1.04})`, offset: .64 },
+          { transform: `translate(${dx}px, ${dy}px) scale(${sx * 1.08}, ${sy * .91})`, offset: .88 },
+          { transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`, offset: 1 },
+        ], { duration: 860, easing: 'cubic-bezier(.35, 0, .55, 1)', fill: 'forwards' });
+        entranceAnimation.finished.then(finishEntrance, finishEntrance);
+      }
+
+      sprites.catalog.forEach(sprite => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'sprite-option';
+        button.dataset.sprite = sprite.id;
+        button.setAttribute('aria-label', `Enter gallery as ${sprite.label}`);
+        button.style.setProperty('--preview-width', `${sprite.width}px`);
+        button.style.setProperty('--preview-height', `${sprite.height}px`);
+        button.innerHTML = `<span class="sprite-preview">${sprites.markup(sprite.id)}</span><span class="sprite-name">${sprite.label}</span>`;
+        sprites.createRenderer(button.querySelector('svg'), sprite.id)(0, 0);
+        button.addEventListener('click', () => chooseCharacter(sprite, button));
+        characterGrid.append(button);
+      });
+      characterGrid.addEventListener('keydown', event => {
+        const offsets = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: 3, ArrowUp: -3 };
+        if (!(event.key in offsets) || entryState !== 'choosing') return;
+        event.preventDefault();
+        const buttons = [...characterGrid.querySelectorAll('button')];
+        const index = buttons.indexOf(document.activeElement);
+        buttons[(index + offsets[event.key] + buttons.length) % buttons.length].focus();
+      });
+      characterSwitch.addEventListener('click', openPicker);
+      pickerClose.addEventListener('click', closePicker);
+      picker.addEventListener('cancel', event => { event.preventDefault(); closePicker(); });
+      ['wheel', 'touchstart', 'pointerdown', 'keydown'].forEach(type => {
+        window.addEventListener(type, stopWelcomeWalk, { passive: true });
+      });
+
+      document.querySelectorAll('[data-go]').forEach(button => {
+        button.addEventListener('click', () => {
+          if (entryState !== 'gallery') return;
+          stopWelcomeWalk();
+          const target = document.getElementById(button.dataset.go);
+          window.scrollTo({ top: target.offsetLeft, behavior: reducedMotion.matches ? 'auto' : 'smooth' });
+        });
+      });
+      previous.addEventListener('click', () => walk(-innerWidth * .72));
+      next.addEventListener('click', () => walk(innerWidth * .72));
+      window.addEventListener('keydown', event => {
+        if (entryState !== 'gallery' || dialog.open || event.altKey || event.ctrlKey || event.metaKey || /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) return;
+        if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
+          event.preventDefault();
+          walk((event.key === 'ArrowRight' ? 1 : -1) * Math.max(220, innerWidth * .38));
+        }
+      });
+      document.getElementById('floor').addEventListener('click', event => {
+        const visitorX = visitor.getBoundingClientRect().left + visitor.getBoundingClientRect().width / 2;
+        walk((event.clientX - visitorX) * 1.35);
+      });
+      document.getElementById('stage').addEventListener('touchstart', event => {
+        touchStartX = event.touches[0].clientX;
+        touchStartY = event.touches[0].clientY;
+      }, { passive: true });
+      document.getElementById('stage').addEventListener('touchend', event => {
+        const dx = touchStartX - event.changedTouches[0].clientX;
+        const dy = touchStartY - event.changedTouches[0].clientY;
+        if (Math.abs(dx) > 35 && Math.abs(dx) > Math.abs(dy) * 1.3) walk(dx * 1.6);
+      }, { passive: true });
+      document.getElementById('stage').addEventListener('focusin', event => {
+        const focusTarget = event.target.closest('.art, .contact-link');
+        if (!focusTarget) return;
+        const bounds = focusTarget.getBoundingClientRect();
+        const wallLeft = bounds.left - track.getBoundingClientRect().left;
+        const centeredLeft = Math.max(18, (innerWidth - bounds.width) / 2);
+        const destination = Math.min(maxTravel, Math.max(0, wallLeft - centeredLeft));
+        const previousBehavior = document.documentElement.style.scrollBehavior;
+        document.documentElement.style.scrollBehavior = 'auto';
+        window.scrollTo({ top: destination, behavior: 'auto' });
+        document.documentElement.style.scrollBehavior = previousBehavior;
+        update();
+      });
+
+      const dialog = document.getElementById('art-dialog');
+      const dialogImage = document.getElementById('dialog-image');
+      document.querySelectorAll('.art').forEach(art => {
+        art.addEventListener('click', () => {
+          document.getElementById('dialog-number').textContent = `${art.dataset.number} / Concept study`;
+          document.getElementById('dialog-title').textContent = art.dataset.title;
+          document.getElementById('dialog-description').textContent = art.dataset.description;
+          dialogImage.src = art.dataset.image;
+          dialogImage.alt = art.querySelector('img').alt;
+          dialog.showModal();
+          stopWelcomeWalk();
+          pauseVisitor();
+          document.body.classList.add('dialog-open');
+          document.getElementById('dialog-close').focus();
+        });
+      });
+      document.getElementById('dialog-close').addEventListener('click', () => dialog.close());
+      dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });
+      dialog.addEventListener('close', () => document.body.classList.remove('dialog-open'));
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', () => { measure(); if (entranceAnimation) entranceAnimation.finish(); });
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) { stopWelcomeWalk(); pauseVisitor(); if (entranceAnimation) entranceAnimation.finish(); }
+      });
+      reducedMotion.addEventListener('change', () => {
+        if (reducedMotion.matches) { stopWelcomeWalk(); pauseVisitor(); if (entranceAnimation) entranceAnimation.finish(); }
+      });
+      document.fonts.ready.then(measure);
+      renderPose(pose);
+      measure();
+      openPicker();
+    })();
+  </script>
+</body>
+</html>
