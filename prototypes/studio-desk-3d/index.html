@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#F4F4F6">
-  <meta name="description" content="A technique study of a procedural 3D desk: smooth click-to-focus, ambient idle motion, and a lamp that turns the room to evening.">
+  <meta name="theme-color" content="#EFE9E1">
+  <meta name="description" content="A technique study of a procedural 3D desk in a soft-focus apartment: smooth click-to-focus, ambient idle motion, and a lamp that turns the room to evening.">
   <meta name="robots" content="noindex, nofollow">
   <title>A Quiet Desk — 3D technique study</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -32,19 +32,19 @@
   <style>
     :root {
       --accent: #683FCF;
-      --ink: #1A1A1A;
-      --ink-2: #6B6B6B;
-      --ink-3: #9A9A9A;
+      --ink: #2B2622;
+      --ink-2: #6E655C;
+      --ink-3: #9A9087;
       --font: 'Inter', system-ui, sans-serif;
-      --hand: 'Caveat', cursive;
       --ease: cubic-bezier(.22, .61, .36, 1);
+      --bleed: 48px;
     }
     *, *::before, *::after { box-sizing: border-box; }
     html, body { margin: 0; height: 100%; }
     body {
       font-family: var(--font);
       color: var(--ink);
-      background: #F4F4F6;
+      background: #EFE9E1;
       -webkit-font-smoothing: antialiased;
       overflow: hidden;
     }
@@ -61,12 +61,24 @@
       isolation: isolate;
     }
     .bg { position: absolute; inset: 0; z-index: -1; transition: opacity .9s var(--ease); }
-    .bg-day { background: radial-gradient(120% 90% at 50% 45%, #FFFFFF 0%, #F4F4F6 55%, #E8E8EC 100%); }
+    .bg-day { background: radial-gradient(120% 90% at 50% 45%, #F6F1EA 0%, #ECE5DB 55%, #E2D9CC 100%); }
     .bg-evening {
       background: radial-gradient(75% 65% at 40% 55%, #6B5442 0%, #47392F 36%, #2E2620 70%, #221C18 100%);
       opacity: 0;
     }
     .is-evening .bg-evening { opacity: 1; }
+
+    /* The apartment: its own canvas, drawn with the desk's camera, then blurred like a shallow depth of field.
+       It bleeds past the viewport so the blur never pulls in a soft edge. */
+    #backdrop {
+      position: absolute;
+      inset: calc(var(--bleed) * -1);
+      opacity: 0;
+      transition: opacity 1.1s var(--ease);
+      pointer-events: none;
+    }
+    #backdrop.is-ready { opacity: 1; }
+    #backdrop canvas { display: block; width: 100%; height: 100%; }
 
     #stage {
       position: absolute;
@@ -81,7 +93,7 @@
     .intro {
       position: absolute;
       inset: 0 0 auto;
-      padding: calc(2.75rem + env(safe-area-inset-top)) 24px 0;
+      padding: calc(2.75rem + 64px + env(safe-area-inset-top)) 24px 0;
       text-align: center;
       pointer-events: none;
       transition: opacity .5s var(--ease), transform .6s var(--ease);
@@ -114,7 +126,7 @@
       z-index: 3;
       padding: 6px 10px;
       border-radius: 999px;
-      background: rgba(255, 255, 255, .92);
+      background: rgba(255, 252, 247, .94);
       border: 1px solid rgba(0, 0, 0, .08);
       box-shadow: 0 2px 20px rgba(0, 0, 0, .06);
       font-size: 12px;
@@ -139,7 +151,7 @@
       width: min(340px, calc(100% - 48px));
       padding: 16px 18px;
       border-radius: 12px;
-      background: rgba(255, 255, 255, .94);
+      background: rgba(255, 252, 247, .95);
       border: 1px solid rgba(0, 0, 0, .08);
       box-shadow: 0 2px 20px rgba(0, 0, 0, .06);
       opacity: 0;
@@ -162,7 +174,7 @@
       padding: 0 14px;
       border-radius: 999px;
       border: 1px solid rgba(0, 0, 0, .1);
-      background: #fff;
+      background: #FFFCF7;
       font-size: 13px;
       font-weight: 500;
       cursor: pointer;
@@ -179,9 +191,10 @@
       display: flex;
       padding: 3px;
       border-radius: 999px;
-      background: rgba(255, 255, 255, .8);
+      background: rgba(255, 252, 247, .8);
       border: 1px solid rgba(0, 0, 0, .08);
       backdrop-filter: blur(8px);
+      transition: opacity .3s;
     }
     .mode button {
       height: 28px;
@@ -194,13 +207,12 @@
       color: var(--ink-2);
       cursor: pointer;
     }
-    .mode button[aria-pressed="true"] { background: #fff; color: var(--ink); box-shadow: 0 1px 4px rgba(0, 0, 0, .1); }
+    .mode button[aria-pressed="true"] { background: #FFFCF7; color: var(--ink); box-shadow: 0 1px 4px rgba(0, 0, 0, .1); }
     .mode button:disabled { opacity: .4; cursor: not-allowed; }
     .is-evening .mode { background: rgba(40, 33, 28, .7); border-color: rgba(255, 240, 220, .12); }
     .is-evening .mode button { color: #B9A792; }
     .is-evening .mode button[aria-pressed="true"] { background: #4A3D33; color: #F3E9DA; }
     .is-focused .mode { opacity: 0; pointer-events: none; }
-    .mode { transition: opacity .3s; }
 
     .credit {
       position: absolute;
@@ -208,7 +220,7 @@
       bottom: calc(30px + env(safe-area-inset-bottom));
       margin: 0;
       font-size: 12px;
-      color: var(--ink-3);
+      color: var(--ink-2);
       transition: opacity .3s, color .7s;
     }
     .is-evening .credit { color: #9C8A76; }
@@ -230,34 +242,35 @@
     }
 
     /* ---------- Static desk: an illustration with its own ambient motion ---------- */
-    .static {
-      position: absolute;
-      inset: 0;
-      display: grid;
-      place-items: center;
-      padding: 150px 16px 70px;
-    }
-    .static svg { width: min(980px, 100%); height: auto; max-height: 100%; overflow: visible; }
-    .s-float { animation: s-float 7s ease-in-out infinite; transform-box: view-box; }
+    .static { position: absolute; inset: 0; }
+    .static svg { display: block; width: 100%; height: 100%; }
+    .s-drift { animation: s-drift 16s ease-in-out infinite; }
     .s-sway { animation: s-sway 5.5s ease-in-out infinite; transform-box: fill-box; transform-origin: 50% 100%; }
     .s-steam path { animation: s-steam 3.6s ease-in infinite; opacity: 0; transform-box: fill-box; transform-origin: 50% 100%; }
     .s-steam path:nth-child(2) { animation-delay: 1.2s; }
     .s-steam path:nth-child(3) { animation-delay: 2.4s; }
     .s-cursor { animation: s-cursor 9s var(--ease) infinite; }
     .s-select { animation: s-select 9s steps(1) infinite; transform-box: fill-box; transform-origin: 0 0; }
+    .s-walk { animation: s-walk 34s linear infinite; transform-box: fill-box; transform-origin: 50% 100%; }
+    .s-step { animation: s-step .5s ease-in-out infinite alternate; }
+    .s-tail { animation: s-tail 3.2s ease-in-out infinite; transform-box: fill-box; transform-origin: 0% 100%; }
     .s-night { opacity: 0; transition: opacity .9s var(--ease); }
     .is-evening .s-night { opacity: 1; }
+    .s-day { transition: opacity .9s var(--ease); }
+    .is-evening .s-day { opacity: 0; }
+    .s-dusk { opacity: 0; transition: opacity .9s var(--ease); }
+    .is-evening .s-dusk { opacity: .74; }
     .s-glow { animation: s-glow 4s ease-in-out infinite; }
     .s-bulb { fill: #E9E4DA; transition: fill .6s; }
     .is-evening .s-bulb { fill: #FFE3AE; }
+    .s-screen-dark { opacity: 0; transition: opacity .4s; }
+    .is-evening .s-screen-dark { opacity: 1; }
     .s-lamp-hit { cursor: pointer; }
     .s-lamp-hit:hover ~ .s-lamp .s-shade, .s-lamp-hit:focus-visible ~ .s-lamp .s-shade { fill: #3A3B3F; }
     .s-steam path { stroke: #B9B2A8; }
     .is-evening .s-steam path { stroke: #E8DCCB; }
-    .s-shadow { fill: #000; opacity: .1; }
-    .is-evening .s-shadow { opacity: .3; }
 
-    @keyframes s-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+    @keyframes s-drift { 0%, 100% { transform: translateX(-7px); } 50% { transform: translateX(7px); } }
     @keyframes s-sway { 0%, 100% { transform: rotate(-1.6deg); } 50% { transform: rotate(1.6deg); } }
     @keyframes s-steam {
       0% { opacity: 0; transform: translateY(6px) scaleY(.7); }
@@ -276,19 +289,27 @@
       55% { transform: translate(62px, 40px) scale(.857, .46); }
       88% { transform: translate(0, 0); }
     }
+    @keyframes s-walk {
+      0%, 6% { transform: translateX(0) scaleX(1); }
+      44% { transform: translateX(300px) scaleX(1); }
+      50%, 56% { transform: translateX(300px) scaleX(-1); }
+      94% { transform: translateX(0) scaleX(-1); }
+      100% { transform: translateX(0) scaleX(1); }
+    }
+    @keyframes s-step { from { transform: translateY(0); } to { transform: translateY(-1.5px); } }
+    @keyframes s-tail { 0%, 100% { transform: rotate(-10deg); } 50% { transform: rotate(14deg); } }
     @keyframes s-glow { 0%, 100% { opacity: .85; } 50% { opacity: 1; } }
 
     @media (max-width: 640px) {
-      .intro { padding-top: calc(2rem + env(safe-area-inset-top)); }
+      .intro { padding-top: calc(2rem + 64px + env(safe-area-inset-top)); }
       .caption { left: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); width: calc(100% - 32px); }
       .mode { right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); }
       .credit { display: none; }
-      .static { padding: 140px 0 60px; }
     }
     @media (prefers-reduced-motion: reduce) {
-      .s-float, .s-sway, .s-steam path, .s-cursor, .s-select, .s-glow { animation: none; }
+      .s-drift, .s-sway, .s-steam path, .s-cursor, .s-select, .s-glow, .s-walk, .s-step, .s-tail { animation: none; }
       .s-steam path { opacity: .35; }
-      .intro, .caption, .bg, #stage { transition-duration: .01s; }
+      .intro, .caption, .bg, #stage, #backdrop { transition-duration: .01s; }
     }
   </style>
 </head>
@@ -297,15 +318,24 @@
     <div class="bg bg-day" aria-hidden="true"></div>
     <div class="bg bg-evening" aria-hidden="true"></div>
 
-    <div id="stage" aria-label="A 3D desk with a laptop, sketchbook, mug, lamp and a plant" role="img"></div>
+    <div id="backdrop" aria-hidden="true"></div>
+    <div id="stage" aria-label="A 3D desk with a laptop, sketchbook, mug, lamp and a plant, in a softly blurred apartment" role="img"></div>
 
     <!-- Static desk: shown without WebGL, with ?static, or from the toggle -->
     <div id="static" class="static" hidden>
-      <svg viewBox="0 0 900 560" role="img" aria-label="Illustrated desk with a laptop, lamp, mug, sketchbook and a plant">
+      <svg viewBox="-200 -160 1300 780" preserveAspectRatio="xMidYMax slice" role="img" aria-label="Illustrated desk in a softly blurred apartment, with a laptop, lamp, mug, sketchbook, a plant and two cats">
         <defs>
           <linearGradient id="s-wood" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stop-color="#D2AC86" />
             <stop offset="1" stop-color="#C39A72" />
+          </linearGradient>
+          <linearGradient id="s-sky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#C3D5E4" />
+            <stop offset="1" stop-color="#F3EADC" />
+          </linearGradient>
+          <linearGradient id="s-sky-night" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#121A2E" />
+            <stop offset="1" stop-color="#2A3656" />
           </linearGradient>
           <linearGradient id="s-beam" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stop-color="#FFD596" stop-opacity=".55" />
@@ -315,13 +345,112 @@
             <stop offset="0" stop-color="#FFD596" stop-opacity=".5" />
             <stop offset="1" stop-color="#FFD596" stop-opacity="0" />
           </radialGradient>
+          <filter id="s-room-blur" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="5" /></filter>
           <filter id="s-blur" x="-20%" y="-200%" width="140%" height="500%"><feGaussianBlur stdDeviation="10" /></filter>
         </defs>
 
-        <ellipse class="s-shadow" cx="450" cy="520" rx="370" ry="20" filter="url(#s-blur)" />
+        <!-- The apartment, out of focus. It drifts slowly against the desk, like a breathing camera. -->
+        <g filter="url(#s-room-blur)">
+          <g class="s-drift">
+            <rect x="120" y="-200" width="660" height="485" fill="#E9E2D6" />
+            <path d="M120 -200 V285 L-260 560 V-200 Z" fill="#E1D9CB" />
+            <path d="M780 -200 V285 L1160 560 V-200 Z" fill="#E5DDD0" />
+            <path d="M120 285 H780 L1160 560 V660 H-260 V560 Z" fill="#6B4A35" />
+            <g stroke="#4E3526" stroke-width="2" opacity=".7">
+              <path d="M202 285 L-40 660" /><path d="M285 285 L170 660" /><path d="M367 285 L340 660" />
+              <path d="M450 285 L450 660" /><path d="M532 285 L560 660" /><path d="M615 285 L730 660" /><path d="M697 285 L940 660" />
+            </g>
+            <rect x="120" y="275" width="660" height="10" fill="#F2EDE5" />
 
-        <g class="s-float">
-          <!-- desk -->
+            <!-- door -->
+            <rect x="170" y="20" width="120" height="265" fill="#EFE9DF" />
+            <rect x="178" y="28" width="104" height="257" fill="#D9D0C2" />
+            <rect x="190" y="44" width="80" height="90" fill="none" stroke="#CBC1B1" stroke-width="3" />
+            <rect x="190" y="150" width="80" height="115" fill="none" stroke="#CBC1B1" stroke-width="3" />
+            <circle cx="270" cy="160" r="6" fill="#B8955A" />
+
+            <!-- shelves -->
+            <g>
+              <rect x="476" y="84" width="10" height="34" fill="#7E9A84" />
+              <rect x="488" y="78" width="12" height="40" fill="#C27A5A" />
+              <rect x="502" y="88" width="9" height="30" fill="#E8E1D3" />
+              <rect x="513" y="82" width="11" height="36" fill="#5E6B7A" />
+              <rect x="540" y="90" width="10" height="28" fill="#D9B25F" transform="rotate(12 545 118)" />
+              <rect x="610" y="80" width="12" height="38" fill="#3E4A43" />
+              <rect x="624" y="86" width="10" height="32" fill="#683FCF" />
+              <rect x="636" y="82" width="11" height="36" fill="#E8E1D3" />
+              <path d="M672 118 l4 -18 h18 l4 18 Z" fill="#D9D1C4" />
+              <path d="M680 100 l5 -20 l4 20 Z M686 100 l8 -16 l1 16 Z" fill="#6E8F68" />
+              <rect x="466" y="118" width="246" height="7" fill="#7A5A40" />
+              <circle cx="498" cy="164" r="9" fill="#C9C2B6" />
+              <rect x="494" y="172" width="8" height="8" fill="#B5AC9E" />
+              <rect x="540" y="142" width="12" height="38" fill="#5E6B7A" />
+              <rect x="554" y="148" width="10" height="32" fill="#D9B25F" />
+              <rect x="566" y="144" width="12" height="36" fill="#7E9A84" />
+              <rect x="640" y="150" width="11" height="30" fill="#C27A5A" />
+              <rect x="653" y="146" width="12" height="34" fill="#E8E1D3" />
+              <rect x="466" y="180" width="246" height="7" fill="#7A5A40" />
+            </g>
+
+            <!-- art on the left wall -->
+            <path d="M-10 30 L70 56 V196 L-10 206 Z" fill="#F6F1E9" />
+            <circle cx="28" cy="110" r="20" fill="#7E9A84" opacity=".85" />
+            <path d="M18 150 L60 140 V176 L18 182 Z" fill="#C27A5A" opacity=".8" />
+
+            <!-- window on the right wall -->
+            <g>
+              <path d="M836 20 L972 -26 V318 L836 246 Z" fill="#F4F0E8" />
+              <path d="M846 34 L962 -6 V300 L846 234 Z" fill="url(#s-sky)" />
+              <path class="s-night" d="M846 34 L962 -6 V300 L846 234 Z" fill="url(#s-sky-night)" />
+              <g class="s-night" fill="#F5C779">
+                <rect x="870" y="190" width="5" height="7" /><rect x="884" y="200" width="5" height="7" /><rect x="930" y="214" width="5" height="7" />
+              </g>
+              <path d="M904 14 V266" stroke="#F4F0E8" stroke-width="7" />
+              <path d="M846 132 L962 118" stroke="#F4F0E8" stroke-width="7" />
+              <path d="M830 246 L978 322 L978 334 L828 254 Z" fill="#EDE6DA" />
+              <path class="s-day" d="M820 300 L1060 360 L930 470 L680 400 Z" fill="#FFF6E3" opacity=".35" />
+            </g>
+
+            <!-- rug under the desk -->
+            <path d="M-20 470 H920 L1040 640 H-140 Z" fill="#E0D6C6" />
+            <path d="M6 486 H894 L996 628 H-96 Z" fill="none" stroke="#CDBDA5" stroke-width="4" />
+
+            <!-- cats -->
+            <g transform="translate(250 285)">
+              <g class="s-walk">
+                <g class="s-step" fill="#1C1B1D">
+                  <ellipse cx="0" cy="-27" rx="30" ry="11" />
+                  <circle cx="31" cy="-37" r="10" />
+                  <path d="M25 -44 L27 -55 L32 -45 Z M32 -45 L38 -54 L39 -42 Z" />
+                  <rect x="-24" y="-20" width="5" height="20" rx="2" /><rect x="-15" y="-20" width="5" height="20" rx="2" />
+                  <rect x="13" y="-20" width="5" height="20" rx="2" /><rect x="21" y="-20" width="5" height="20" rx="2" />
+                  <path d="M-28 -30 q-16 -6 -12 -28" stroke="#1C1B1D" stroke-width="5" fill="none" stroke-linecap="round" />
+                </g>
+              </g>
+            </g>
+            <g transform="translate(700 285)" fill="#1C1B1D">
+              <ellipse cx="0" cy="-20" rx="18" ry="22" />
+              <circle cx="2" cy="-50" r="11" />
+              <path d="M-6 -57 L-5 -69 L1 -59 Z M4 -59 L10 -69 L11 -56 Z" />
+              <g class="s-tail"><path d="M14 -4 q22 2 22 -18" stroke="#1C1B1D" stroke-width="5" fill="none" stroke-linecap="round" /></g>
+            </g>
+          </g>
+
+          <!-- evening: the room falls into shadow, the lamp warms the wall -->
+          <rect class="s-dusk" x="-260" y="-200" width="1420" height="860" fill="#1B1511" />
+          <ellipse class="s-night" cx="320" cy="210" rx="300" ry="190" fill="url(#s-pool)" />
+        </g>
+
+        <!-- the desk, in focus -->
+        <g>
+          <ellipse cx="450" cy="600" rx="400" ry="30" fill="#000" opacity=".12" filter="url(#s-blur)" />
+          <!-- legs + apron -->
+          <path d="M196 450 H208 L205 530 H199 Z" fill="#9E7853" />
+          <path d="M692 450 H704 L701 530 H695 Z" fill="#9E7853" />
+          <path d="M100 450 H800 V466 H100 Z" fill="#9C7652" />
+          <path d="M88 450 H106 L102 640 H92 Z" fill="#B08760" />
+          <path d="M794 450 H812 L808 640 H798 Z" fill="#B08760" />
+          <!-- top -->
           <path d="M180 300 H720 L820 430 V446 Q820 450 816 450 H84 Q80 450 80 446 V430 Z" fill="#A9825E" />
           <path d="M180 300 H720 L820 430 H80 Z" fill="url(#s-wood)" />
           <path d="M80 430 H820" stroke="#B8916B" stroke-width="1" />
@@ -332,19 +461,17 @@
             <ellipse class="s-glow" cx="420" cy="405" rx="170" ry="34" fill="url(#s-pool)" />
           </g>
 
-          <!-- plant (back right) -->
+          <!-- plant (back right): low-poly, faceted -->
           <g>
-            <ellipse cx="652" cy="306" rx="34" ry="6" fill="#000" opacity=".12" />
-            <path d="M622 262 H682 L674 304 Q652 310 630 304 Z" fill="#D9D3C9" />
-            <path d="M620 258 H684 V266 H620 Z" fill="#CFC8BC" />
+            <ellipse cx="652" cy="308" rx="30" ry="6" fill="#000" opacity=".12" />
+            <path d="M630 268 H674 L668 306 H636 Z" fill="#D9D1C4" />
+            <path d="M652 268 H674 L668 306 H652 Z" fill="#C9C0B2" />
+            <path d="M628 262 H676 V270 H628 Z" fill="#4E3D30" />
             <g class="s-sway">
-              <path d="M652 262 C640 240 630 222 618 214 C628 232 636 248 646 262 Z" fill="#5C7E58" />
-              <path d="M652 262 C664 240 676 224 690 218 C680 236 668 250 658 262 Z" fill="#6A8D64" />
-              <path d="M650 262 C646 236 646 214 652 196 C656 216 658 238 656 262 Z" fill="#7A9E73" />
-              <path d="M648 262 C632 252 616 248 602 250 C618 256 632 260 644 264 Z" fill="#4F7050" />
-              <path d="M656 262 C672 252 690 250 704 254 C688 258 672 262 660 265 Z" fill="#577954" />
-              <path d="M650 262 C640 246 634 232 636 218 C642 234 648 246 654 262 Z" fill="#87A97F" />
-              <path d="M654 262 C662 244 670 232 680 226 C672 242 664 252 658 263 Z" fill="#84A67D" />
+              <path d="M648 266 L630 206 L652 258 Z" fill="#5E7F59" />
+              <path d="M652 266 L656 186 L662 262 Z" fill="#6E8F68" />
+              <path d="M656 266 L684 214 L662 264 Z" fill="#7B9C74" />
+              <path d="M650 266 L642 222 L656 262 Z" fill="#87A97F" />
             </g>
           </g>
 
@@ -358,7 +485,7 @@
             <path d="M340 214 H550 L560 350 H330 Z" fill="#CDD0D5" />
             <path d="M346 221 H544 L553 344 H337 Z" fill="#111214" />
             <path d="M352 228 H538 L546 338 H344 Z" fill="#F4F4F5" />
-            <!-- screen ui -->
+            <!-- screen ui (light) -->
             <path d="M352 228 H538 V236 H352 Z" fill="#FFFFFF" />
             <path d="M352 236 H382 L381 338 H344 Z" fill="#FFFFFF" />
             <path d="M510 236 H538 L546 338 H511 Z" fill="#FFFFFF" />
@@ -371,6 +498,22 @@
             <rect x="456" y="288" width="44" height="38" rx="4" fill="#fff" />
             <rect x="460" y="253" width="20" height="4" rx="2" fill="#D4D4D8" />
             <rect x="460" y="293" width="30" height="16" rx="2" fill="#E8E1F7" />
+            <!-- screen ui (dark, follows the lamp) -->
+            <g class="s-screen-dark">
+              <path d="M352 228 H538 L546 338 H344 Z" fill="#1E1E21" />
+              <path d="M352 228 H538 V236 H352 Z" fill="#2A2A2E" />
+              <path d="M352 236 H382 L381 338 H344 Z" fill="#2A2A2E" />
+              <path d="M510 236 H538 L546 338 H511 Z" fill="#2A2A2E" />
+              <rect x="394" y="248" width="52" height="78" rx="4" fill="#323237" />
+              <rect x="398" y="254" width="44" height="22" rx="2" fill="#3D4A3F" />
+              <rect x="398" y="281" width="34" height="4" rx="2" fill="#4A4A50" />
+              <rect x="398" y="289" width="26" height="4" rx="2" fill="#3F3F45" />
+              <rect x="398" y="312" width="44" height="9" rx="3" fill="#7B57E0" />
+              <rect x="456" y="248" width="44" height="34" rx="4" fill="#323237" />
+              <rect x="456" y="288" width="44" height="38" rx="4" fill="#323237" />
+              <rect x="460" y="253" width="20" height="4" rx="2" fill="#4A4A50" />
+              <rect x="460" y="293" width="30" height="16" rx="2" fill="#3F3756" />
+            </g>
             <g class="s-select">
               <rect x="392" y="246" width="56" height="82" rx="5" fill="none" stroke="#683FCF" stroke-width="1.5" />
             </g>
@@ -426,7 +569,7 @@
 
     <header class="intro">
       <h1>A quiet desk.</h1>
-      <p>Everything on it is drawn in code, except the plant. Click around, and try the lamp.</p>
+      <p>Everything here is drawn in code except the plant, a low-poly model. Click around, and try the lamp.</p>
     </header>
 
     <div id="tag" class="tag" aria-hidden="true"></div>
@@ -474,12 +617,13 @@
 
       function applyEvening() {
         room.classList.toggle('is-evening', evening);
-        themeMeta.content = evening ? '#2E2620' : '#F4F4F6';
+        themeMeta.content = evening ? '#2E2620' : '#EFE9E1';
       }
       function applyMode() {
         room.dataset.mode = mode;
         document.getElementById('static').hidden = mode !== 'static';
         document.getElementById('stage').hidden = mode !== '3d';
+        document.getElementById('backdrop').hidden = mode !== '3d';
         document.getElementById('a11y').hidden = mode !== '3d';
         document.querySelectorAll('.mode button').forEach(function (b) {
           b.setAttribute('aria-pressed', String(b.dataset.mode === mode));
@@ -551,6 +695,7 @@
     const ui = window.DeskUI;
     const room = document.getElementById('room');
     const stageEl = document.getElementById('stage');
+    const backdropEl = document.getElementById('backdrop');
     const tagEl = document.getElementById('tag');
     const captionEl = document.getElementById('caption');
 
@@ -619,28 +764,41 @@
     }
 
     // ---------------------------------------------------------------------------------------------
-    // Renderer, scene, camera, light
+    // Two renderers share one camera: the desk (sharp, transparent) over the apartment (blurred).
     // ---------------------------------------------------------------------------------------------
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+    function makeRenderer(el, opts) {
+      const r = new THREE.WebGLRenderer({ powerPreference: 'high-performance', ...opts });
+      r.outputColorSpace = THREE.SRGBColorSpace;
+      r.toneMapping = THREE.ACESFilmicToneMapping;
+      r.toneMappingExposure = 1.0;
+      el.appendChild(r.domElement);
+      return r;
+    }
+    const renderer = makeRenderer(stageEl, { antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setClearColor(0x000000, 0);
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.0;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    stageEl.appendChild(renderer.domElement);
+
+    // The room is blurred anyway, so it renders at half resolution.
+    const roomRenderer = makeRenderer(backdropEl, { antialias: false, alpha: false });
+    roomRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2) * 0.5);
+    const BLEED = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--bleed')) || 48;
 
     const scene = new THREE.Scene();
-    const pmrem = new THREE.PMREMGenerator(renderer);
-    scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-    scene.environmentIntensity = 0.9;
+    scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
+    scene.environmentIntensity = 0.75;
+    const roomScene = new THREE.Scene();
+    roomScene.environment = new THREE.PMREMGenerator(roomRenderer).fromScene(new RoomEnvironment(), 0.04).texture;
+    roomScene.environmentIntensity = 0.35;
+    roomScene.background = new THREE.Color(0xe9e2d6);
 
-    const camera = new THREE.PerspectiveCamera(30, 1, 0.02, 20);
+    const camera = new THREE.PerspectiveCamera(42, 1, 0.02, 30);
+    const roomCamera = new THREE.PerspectiveCamera(42, 1, 0.05, 30);
 
-    const hemi = new THREE.HemisphereLight(0xffffff, 0xd9ccb9, 0.7);
+    const hemi = new THREE.HemisphereLight(0xfff6ea, 0xd9c7ae, 0.7);
     scene.add(hemi);
-    const key = new THREE.DirectionalLight(0xfff4e8, 2.4);
+    const key = new THREE.DirectionalLight(0xffecd8, 2.3);
     key.position.set(1.0, 2.6, 1.6);
     key.castShadow = true;
     key.shadow.mapSize.set(2048, 2048);
@@ -648,7 +806,7 @@
     key.shadow.bias = -0.0004;
     key.shadow.normalBias = 0.015;
     scene.add(key);
-    const dayKeyColor = new THREE.Color(0xfff4e8);
+    const dayKeyColor = new THREE.Color(0xffecd8);
     const nightKeyColor = new THREE.Color(0x9db0d8);
 
     const maxAniso = renderer.capabilities.getMaxAnisotropy();
@@ -665,15 +823,21 @@
     }
     const shadowed = (m) => { m.castShadow = true; m.receiveShadow = true; return m; };
     const mesh = (geo, mat) => shadowed(new THREE.Mesh(geo, mat));
+    const radialBlob = (stops) => canvasTexture(256, 256, (g, w, h) => {
+      const grad = g.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2);
+      stops.forEach(([at, c]) => grad.addColorStop(at, c));
+      g.fillStyle = grad;
+      g.fillRect(0, 0, w, h);
+    });
 
-    // The desk floats as one rig; ambient motion is applied to the whole rig, like drei's <Float>.
+    // Everything on and under the desk lives in one rig (the note re-parents to it when it falls).
     const rig = new THREE.Group();
     scene.add(rig);
 
     // ---------------------------------------------------------------------------------------------
-    // Desk
+    // Desk: top, apron, and four tapered legs down to the apartment floor
     // ---------------------------------------------------------------------------------------------
-    const DESK_W = 1.3, DESK_D = 0.7;
+    const DESK_W = 1.3, DESK_D = 0.7, TOP_T = 0.045, FLOOR = -0.74;
     const wood = canvasTexture(1024, 512, (g, w, h) => {
       const r = rng(7);
       g.fillStyle = '#C9A07A';
@@ -692,26 +856,28 @@
       }
     });
     const desk = mesh(
-      new RoundedBoxGeometry(DESK_W, 0.045, DESK_D, 4, 0.012),
+      new RoundedBoxGeometry(DESK_W, TOP_T, DESK_D, 4, 0.012),
       new THREE.MeshStandardMaterial({ map: wood.tex, roughness: 0.62 })
     );
-    desk.position.y = -0.0225;
+    desk.position.y = -TOP_T / 2;
     rig.add(desk);
 
-    // Soft blob shadow on the "floor" below. It stays still while the rig floats, so the desk reads as hovering.
-    const blob = canvasTexture(256, 256, (g, w, h) => {
-      const grad = g.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2);
-      grad.addColorStop(0, 'rgba(0,0,0,0.5)');
-      grad.addColorStop(0.55, 'rgba(0,0,0,0.18)');
-      grad.addColorStop(1, 'rgba(0,0,0,0)');
-      g.fillStyle = grad;
-      g.fillRect(0, 0, w, h);
+    const frameWood = new THREE.MeshStandardMaterial({ color: 0xb48b63, roughness: 0.6 });
+    const LEG_X = DESK_W / 2 - 0.07, LEG_Z = DESK_D / 2 - 0.06, LEG_H = -TOP_T - FLOOR;
+    [[1, 1], [1, -1], [-1, 1], [-1, -1]].forEach(([sx, sz]) => {
+      const leg = mesh(new THREE.CylinderGeometry(0.021, 0.014, LEG_H, 16), frameWood);
+      leg.position.set(sx * LEG_X, -TOP_T - LEG_H / 2, sz * LEG_Z);
+      rig.add(leg);
     });
-    const blobMat = new THREE.MeshBasicMaterial({ map: blob.tex, transparent: true, depthWrite: false, opacity: 0.45 });
-    const blobMesh = new THREE.Mesh(new THREE.PlaneGeometry(2.1, 1.25), blobMat);
-    blobMesh.rotation.x = -Math.PI / 2;
-    blobMesh.position.y = -0.28;
-    scene.add(blobMesh);
+    const apronFront = mesh(new THREE.BoxGeometry(2 * LEG_X, 0.06, 0.018), frameWood);
+    [-1, 1].forEach((s) => {
+      const a = apronFront.clone();
+      a.position.set(0, -TOP_T - 0.03, s * LEG_Z);
+      rig.add(a);
+      const side = mesh(new THREE.BoxGeometry(0.018, 0.06, 2 * LEG_Z), frameWood);
+      side.position.set(s * LEG_X, -TOP_T - 0.03, 0);
+      rig.add(side);
+    });
 
     // ---------------------------------------------------------------------------------------------
     // Item registry: every clickable thing has a group, an invisible hit box, an anchor for its label
@@ -737,6 +903,7 @@
 
     // ---------------------------------------------------------------------------------------------
     // Laptop — the screen is a canvas redrawn ~20×/s: a small design tool with a wandering cursor.
+    // Its appearance follows the lamp: light by day, dark in the evening.
     // ---------------------------------------------------------------------------------------------
     const alu = new THREE.MeshPhysicalMaterial({ color: 0xd4d6da, metalness: 0.55, roughness: 0.32, clearcoat: 0.2 });
     const laptop = new THREE.Group();
@@ -787,39 +954,51 @@
     bezel.position.set(0, 0.1075, 0.0003);
     hinge.add(bezel);
 
+    const SCREEN_THEMES = {
+      light: {
+        canvas: '#E9E9EC', dots: '#D6D6DB', panel: '#FFFFFF', border: '#E4E4E7', text: '#1A1A1A', muted: '#6B6B6B',
+        caption: '#9A9A9A', frame: '#FFFFFF', rowSel: '#EEE9FB', idle: '#9A9A9A', field: '#F1F1F3',
+        line1: '#D4D4D8', line2: '#E4E4E7', img0: '#DCE3DA', img1: '#E8E1F7', accent: '#683FCF', handle: '#FFFFFF',
+        shadow: 'rgba(0,0,0,0.08)', cursor: '#111111', cursorEdge: '#FFFFFF',
+      },
+      dark: {
+        canvas: '#1E1E21', dots: '#2C2C31', panel: '#2A2A2E', border: '#38383D', text: '#ECECEE', muted: '#A1A1AA',
+        caption: '#8A8A92', frame: '#323237', rowSel: '#3A3150', idle: '#6B6B73', field: '#36363B',
+        line1: '#4A4A50', line2: '#3F3F45', img0: '#3D4A3F', img1: '#3F3756', accent: '#7B57E0', handle: '#2A2A2E',
+        shadow: 'rgba(0,0,0,0.4)', cursor: '#FFFFFF', cursorEdge: '#111111',
+      },
+    };
     const SCREEN_FRAMES = [
       { x: 230, y: 92, w: 190, h: 310, name: 'Onboarding' },
       { x: 450, y: 92, w: 180, h: 140, name: 'Card' },
       { x: 450, y: 262, w: 180, h: 140, name: 'Empty state' },
     ];
-    function drawScreen(g, w, h, t = 0) {
-      g.fillStyle = '#E9E9EC';
+    function drawScreen(g, w, h, t, c) {
+      g.fillStyle = c.canvas;
       g.fillRect(0, 0, w, h);
-      // dot grid
-      g.fillStyle = '#D6D6DB';
+      g.fillStyle = c.dots;
       for (let y = 60; y < h; y += 22) for (let x = 190; x < w - 200; x += 22) g.fillRect(x, y, 2, 2);
       // top bar
-      g.fillStyle = '#FFFFFF';
+      g.fillStyle = c.panel;
       g.fillRect(0, 0, w, 40);
-      g.fillStyle = '#E4E4E7';
+      g.fillStyle = c.border;
       g.fillRect(0, 40, w, 1);
-      ['#FF5F57', '#FEBC2E', '#28C840'].forEach((c, i) => { g.fillStyle = c; g.beginPath(); g.arc(22 + i * 20, 20, 6, 0, Math.PI * 2); g.fill(); });
-      g.fillStyle = '#6B6B6B';
+      ['#FF5F57', '#FEBC2E', '#28C840'].forEach((dot, i) => { g.fillStyle = dot; g.beginPath(); g.arc(22 + i * 20, 20, 6, 0, Math.PI * 2); g.fill(); });
+      g.fillStyle = c.muted;
       g.font = '500 15px Inter, sans-serif';
       g.textAlign = 'center';
       g.fillText('quiet-desk — Studio', w / 2, 26);
       g.textAlign = 'left';
       // side panels
-      g.fillStyle = '#FFFFFF';
+      g.fillStyle = c.panel;
       g.fillRect(0, 41, 170, h);
       g.fillRect(w - 190, 41, 190, h);
-      g.fillStyle = '#E4E4E7';
+      g.fillStyle = c.border;
       g.fillRect(170, 41, 1, h);
       g.fillRect(w - 191, 41, 1, h);
 
       const cycle = 3.2;
-      const step = Math.floor(t / cycle);
-      const sel = step % SCREEN_FRAMES.length;
+      const sel = Math.floor(t / cycle) % SCREEN_FRAMES.length;
       const prev = (sel + SCREEN_FRAMES.length - 1) % SCREEN_FRAMES.length;
       const local = (t % cycle) / 1.4;
       const arrived = local >= 1;
@@ -827,38 +1006,39 @@
       g.font = '500 14px Inter, sans-serif';
       SCREEN_FRAMES.forEach((f, i) => {
         const y = 66 + i * 34;
-        if (i === sel && arrived) { g.fillStyle = '#EEE9FB'; g.fillRect(8, y - 18, 154, 28); }
-        g.strokeStyle = i === sel && arrived ? '#683FCF' : '#9A9A9A';
+        const on = i === sel && arrived;
+        if (on) { g.fillStyle = c.rowSel; g.fillRect(8, y - 18, 154, 28); }
+        g.strokeStyle = on ? c.accent : c.idle;
         g.lineWidth = 1.6;
         g.strokeRect(18, y - 9, 12, 12);
-        g.fillStyle = '#1A1A1A';
+        g.fillStyle = c.text;
         g.fillText(f.name, 40, y + 2);
       });
+      g.fillStyle = c.field;
       for (let i = 0; i < 7; i++) {
-        g.fillStyle = '#F1F1F3';
         g.beginPath(); g.roundRect(w - 176, 64 + i * 40, 70, 24, 5); g.fill();
         g.beginPath(); g.roundRect(w - 98, 64 + i * 40, 84, 24, 5); g.fill();
       }
 
       // frames
       SCREEN_FRAMES.forEach((f, i) => {
-        g.fillStyle = '#9A9A9A';
+        g.fillStyle = c.caption;
         g.font = '500 12px Inter, sans-serif';
         g.fillText(f.name, f.x, f.y - 8);
-        g.shadowColor = 'rgba(0,0,0,0.08)';
+        g.shadowColor = c.shadow;
         g.shadowBlur = 14;
-        g.fillStyle = '#FFFFFF';
+        g.fillStyle = c.frame;
         g.beginPath(); g.roundRect(f.x, f.y, f.w, f.h, 10); g.fill();
         g.shadowBlur = 0;
-        g.fillStyle = i === 0 ? '#DCE3DA' : '#E8E1F7';
+        g.fillStyle = i === 0 ? c.img0 : c.img1;
         g.beginPath(); g.roundRect(f.x + 12, f.y + 12, f.w - 24, i === 0 ? 120 : 46, 6); g.fill();
-        g.fillStyle = '#D4D4D8';
         const ty = f.y + (i === 0 ? 148 : 72);
+        g.fillStyle = c.line1;
         g.beginPath(); g.roundRect(f.x + 12, ty, f.w * 0.6, 10, 5); g.fill();
-        g.fillStyle = '#E4E4E7';
+        g.fillStyle = c.line2;
         g.beginPath(); g.roundRect(f.x + 12, ty + 18, f.w * 0.45, 10, 5); g.fill();
         if (i === 0) {
-          g.fillStyle = '#683FCF';
+          g.fillStyle = c.accent;
           g.beginPath(); g.roundRect(f.x + 12, f.y + f.h - 46, f.w - 24, 32, 8); g.fill();
         }
       });
@@ -866,17 +1046,17 @@
       // selection
       if (arrived) {
         const f = SCREEN_FRAMES[sel];
-        g.strokeStyle = '#683FCF';
+        g.strokeStyle = c.accent;
         g.lineWidth = 2;
         g.strokeRect(f.x - 3, f.y - 3, f.w + 6, f.h + 6);
-        g.fillStyle = '#fff';
+        g.fillStyle = c.handle;
         [[f.x - 3, f.y - 3], [f.x + f.w + 3, f.y - 3], [f.x - 3, f.y + f.h + 3], [f.x + f.w + 3, f.y + f.h + 3]].forEach(([x, y]) => {
           g.fillRect(x - 5, y - 5, 10, 10); g.strokeRect(x - 5, y - 5, 10, 10);
         });
         const label = `${f.w} × ${f.h}`;
         g.font = '600 12px Inter, sans-serif';
         const lw = g.measureText(label).width + 14;
-        g.fillStyle = '#683FCF';
+        g.fillStyle = c.accent;
         g.beginPath(); g.roundRect(f.x + f.w / 2 - lw / 2, f.y + f.h + 12, lw, 22, 5); g.fill();
         g.fillStyle = '#fff';
         g.textAlign = 'center';
@@ -895,13 +1075,23 @@
       g.beginPath();
       g.moveTo(0, 0); g.lineTo(0, 17); g.lineTo(4.5, 13); g.lineTo(7.5, 20); g.lineTo(10, 19); g.lineTo(7, 12.5); g.lineTo(13, 12.5);
       g.closePath();
-      g.fillStyle = '#111';
-      g.strokeStyle = '#fff';
+      g.fillStyle = c.cursor;
+      g.strokeStyle = c.cursorEdge;
       g.lineWidth = 1.2;
       g.fill(); g.stroke();
       g.restore();
     }
-    const screenTex = canvasTexture(1024, 640, drawScreen);
+    // Cross-fade between the two appearances so the switch reads as a quick fade, not a cut.
+    function drawScreenFrame(g, w, h, t, dark) {
+      drawScreen(g, w, h, t, SCREEN_THEMES.light);
+      if (dark > 0.01) {
+        g.globalAlpha = dark;
+        drawScreen(g, w, h, t, SCREEN_THEMES.dark);
+        g.globalAlpha = 1;
+      }
+    }
+    const screenDark = new Damp1(ui.evening ? 1 : 0);
+    const screenTex = canvasTexture(1024, 640, (g, w, h) => drawScreenFrame(g, w, h, 0, screenDark.value));
     const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.296, 0.185), new THREE.MeshBasicMaterial({ map: screenTex.tex, toneMapped: false }));
     screen.position.set(0, 0.112, 0.0006);
     hinge.add(screen);
@@ -916,8 +1106,8 @@
       anchor: laptopAnchor,
       labelAnchor: laptopAnchor,
       label: () => ['Laptop', 'look closer'],
-      focus: { normalOf: laptopAnchor, up: 0.12, dist: 0.46, size: 0.36 },
-      caption: { eyebrow: 'Laptop', title: 'Work in progress', body: 'A canvas that’s never quite finished. The screen is a 2D canvas redrawn twenty times a second and mapped onto the lid.' },
+      focus: { normalOf: laptopAnchor, up: 0.12, dist: 0.36, size: 0.36 },
+      caption: { eyebrow: 'Laptop', title: 'Work in progress', body: 'A canvas that’s never quite finished. The screen is a 2D canvas redrawn twenty times a second, and it switches to dark mode with the lamp.' },
     });
 
     // ---------------------------------------------------------------------------------------------
@@ -954,9 +1144,8 @@
     // Bend the strip progressively from the top edge (stuck) to the bottom edge (lifted).
     function setNoteCurl(c) {
       const pos = noteGeo.attributes.position;
-      const rows = [];
+      const rows = [[0, 0]];
       let y = 0, z = 0;
-      rows.push([0, 0]);
       const ds = NOTE / NOTE_ROWS;
       for (let j = 1; j <= NOTE_ROWS; j++) {
         const s = (j - 0.5) / NOTE_ROWS;
@@ -1084,8 +1273,10 @@
       g.strokeStyle = 'rgba(55,55,55,0.75)';
       g.lineWidth = 2;
       g.lineJoin = 'round';
-      // desk in perspective with little objects
+      // the desk in perspective, now with legs
       sketchLine(g, [[90, 300], [420, 300], [470, 380], [40, 380], [90, 300]], r);
+      sketchLine(g, [[52, 380], [56, 430]], r);
+      sketchLine(g, [[458, 380], [454, 430]], r);
       sketchLine(g, [[180, 300], [180, 230], [300, 230], [300, 300]], r);
       sketchLine(g, [[100, 300], [96, 200], [150, 170]], r);
       sketchLine(g, [[150, 170], [180, 200], [140, 214], [150, 170]], r);
@@ -1097,15 +1288,15 @@
       g.fillText('desk v2', 40, 80);
       g.font = '500 30px Caveat, cursive';
       g.fillText('lamp = mood', 240, 180);
-      g.fillText('ease in, ease out', 40, 450);
-      g.fillText('smoothDamp ≈ 0.4s', 40, 495);
-      g.fillText('hover lift 1.5cm?', 40, 540);
-      g.fillText('nothing snaps.', 40, 620);
+      g.fillText('ease in, ease out', 40, 480);
+      g.fillText('smoothDamp ≈ 0.4s', 40, 525);
+      g.fillText('room: blur it, keep it', 40, 570);
+      g.fillText('nothing snaps.', 40, 640);
       sketchLine(g, [[230, 172], [170, 196]], r);
       sketchLine(g, [[178, 186], [170, 196], [182, 199]], r);
       g.strokeStyle = '#683FCF';
       g.lineWidth = 3;
-      sketchLine(g, [[38, 632], [120, 626], [214, 634]], r);
+      sketchLine(g, [[38, 652], [120, 646], [214, 654]], r);
       g.beginPath(); g.ellipse(110, 70, 82, 34, -0.05, 0, Math.PI * 2); g.stroke();
     });
     const page = new THREE.Mesh(new THREE.PlaneGeometry(BW - 0.008, BD - 0.01), new THREE.MeshStandardMaterial({ map: sketch.tex, roughness: 0.9 }));
@@ -1189,7 +1380,7 @@
       anchor: bookAnchor,
       labelAnchor: bookAnchor,
       label: () => ['Sketchbook', 'open it'],
-      focus: { dir: new THREE.Vector3(0, 1, 0.42), dist: 0.5, size: 0.36 },
+      focus: { dir: new THREE.Vector3(0, 1, 0.42), dist: 0.4, size: 0.36 },
       caption: { eyebrow: 'Sketchbook', title: 'Thinking on paper', body: 'The cover swings open on the same damped spring as the camera. Both start slowly and settle without snapping.' },
     });
 
@@ -1203,8 +1394,7 @@
     const ceramic = new THREE.MeshPhysicalMaterial({ color: 0xede8e1, roughness: 0.28, clearcoat: 0.6, clearcoatRoughness: 0.2 });
     const profile = [[0, 0], [0.033, 0], [0.037, 0.003], [0.039, 0.09], [0.0368, 0.0925], [0.035, 0.09], [0.034, 0.012], [0, 0.012]]
       .map(([x, y]) => new THREE.Vector2(x, y));
-    const mugBody = mesh(new THREE.LatheGeometry(profile, 48), ceramic);
-    mug.add(mugBody);
+    mug.add(mesh(new THREE.LatheGeometry(profile, 48), ceramic));
     const handle = mesh(new THREE.TorusGeometry(0.022, 0.0058, 14, 32, Math.PI), ceramic);
     handle.rotation.z = -Math.PI / 2;
     handle.position.set(0.037, 0.048, 0);
@@ -1214,13 +1404,7 @@
     coffee.position.y = 0.072;
     mug.add(coffee);
 
-    const puff = canvasTexture(128, 128, (g, w, h) => {
-      const grad = g.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2);
-      grad.addColorStop(0, 'rgba(255,255,255,0.9)');
-      grad.addColorStop(1, 'rgba(255,255,255,0)');
-      g.fillStyle = grad;
-      g.fillRect(0, 0, w, h);
-    });
+    const puff = radialBlob([[0, 'rgba(255,255,255,0.9)'], [1, 'rgba(255,255,255,0)']]);
     const steam = Array.from({ length: 4 }, (_, i) => {
       const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: puff.tex, color: 0xf2ede6, transparent: true, depthWrite: false, opacity: 0 }));
       s.userData.phase = i / 4;
@@ -1246,7 +1430,7 @@
       anchor: mugAnchor,
       labelAnchor: mugAnchor,
       label: () => ['Mug', 'look closer'],
-      focus: { dir: new THREE.Vector3(0.1, 0.62, 1), dist: 0.36, size: 0.22 },
+      focus: { dir: new THREE.Vector3(0.1, 0.62, 1), dist: 0.28, size: 0.22 },
       caption: { eyebrow: 'Mug', title: 'Third refill', body: 'Still warm. The steam is four soft sprites on a loop, rising and fading. It shows up best once the lamp’s on.' },
     });
 
@@ -1287,8 +1471,7 @@
     head.position.y = 0.2;
     head.rotation.z = -1.0;
     arm2.add(head);
-    const cap = mesh(new THREE.SphereGeometry(0.022, 24, 16), lampMat);
-    head.add(cap);
+    head.add(mesh(new THREE.SphereGeometry(0.022, 24, 16), lampMat));
     const shade = mesh(new THREE.CylinderGeometry(0.062, 0.022, 0.085, 48, 1, true), lampMatSide);
     shade.position.y = 0.045;
     head.add(shade);
@@ -1324,9 +1507,11 @@
     });
 
     // ---------------------------------------------------------------------------------------------
-    // Plant — the one imported model (Poly Haven potted_plant_04, CC0). A procedural stand-in shows
-    // until it loads, and stays if it can't (e.g. opened from file://).
+    // Plant — the one imported model: Kenney's low-poly potted plant (CC0), recoloured to the desk's
+    // palette. A procedural stand-in shows until it loads, and stays if it can't (e.g. from file://).
     // ---------------------------------------------------------------------------------------------
+    const PLANT_URL = './assets/kenney/pottedPlant.glb';
+    const PLANT_COLORS = { wood: 0xd9d1c4, woodDark: 0x4e3d30, plant: 0x6e8f68 };
     const plant = new THREE.Group();
     plant.position.set(0.45, 0, -0.19);
     plant.rotation.y = 0.5;
@@ -1335,32 +1520,41 @@
     plant.add(plantSway);
 
     const standIn = new THREE.Group();
-    const potProfile = [[0, 0], [0.05, 0], [0.058, 0.08], [0.062, 0.088], [0.056, 0.09], [0.052, 0.078], [0, 0.078]].map(([x, y]) => new THREE.Vector2(x, y));
-    standIn.add(mesh(new THREE.LatheGeometry(potProfile, 40), new THREE.MeshStandardMaterial({ color: 0xd9d3c9, roughness: 0.8 })));
-    const leafMat = new THREE.MeshStandardMaterial({ color: 0x5c7e58, roughness: 0.55 });
-    for (let i = 0; i < 16; i++) {
-      const leaf = mesh(new THREE.ConeGeometry(0.012, 0.09, 8), leafMat);
-      const a = i * 2.4, tilt = 0.25 + (i % 4) * 0.22;
-      leaf.position.set(Math.cos(a) * 0.012, 0.11, Math.sin(a) * 0.012);
+    const potProfile = [[0, 0], [0.045, 0], [0.052, 0.08], [0.056, 0.088], [0.05, 0.09], [0.047, 0.078], [0, 0.078]].map(([x, y]) => new THREE.Vector2(x, y));
+    standIn.add(mesh(new THREE.LatheGeometry(potProfile, 6), new THREE.MeshStandardMaterial({ color: PLANT_COLORS.wood, roughness: 0.8, flatShading: true })));
+    const leafMat = new THREE.MeshStandardMaterial({ color: PLANT_COLORS.plant, roughness: 0.6, flatShading: true });
+    for (let i = 0; i < 6; i++) {
+      const leaf = mesh(new THREE.ConeGeometry(0.014, 0.12, 4), leafMat);
+      const a = i * 1.05, tilt = 0.15 + (i % 3) * 0.18;
+      leaf.position.set(Math.cos(a) * 0.01, 0.12, Math.sin(a) * 0.01);
       leaf.rotation.set(Math.sin(a) * tilt, 0, -Math.cos(a) * tilt);
-      leaf.translateY(0.02);
       standIn.add(leaf);
     }
     plantSway.add(standIn);
 
-    new GLTFLoader().load('./assets/potted_plant_04/potted_plant_04_1k.gltf', (gltf) => {
-      const model = gltf.scene;
+    // Load once; the desk plant and the shelf plant in the room share the parsed model.
+    const plantModel = new Promise((resolve, reject) => new GLTFLoader().load(PLANT_URL, (gltf) => {
+      gltf.scene.traverse((o) => {
+        if (!o.isMesh) return;
+        const color = PLANT_COLORS[o.material.name];
+        if (color !== undefined) o.material = new THREE.MeshStandardMaterial({ color, roughness: 0.65, flatShading: true });
+        o.castShadow = true;
+        o.receiveShadow = true;
+      });
+      resolve(gltf.scene);
+    }, undefined, reject));
+    function fitModel(model, height) {
       const box = new THREE.Box3().setFromObject(model);
-      const size = box.getSize(new THREE.Vector3());
-      const s = 0.2 / size.y;
-      model.scale.setScalar(s);
+      model.scale.setScalar(height / box.getSize(_v).y);
       box.setFromObject(model);
-      const c = box.getCenter(new THREE.Vector3());
+      const c = box.getCenter(_v);
       model.position.set(-c.x, -box.min.y, -c.z);
-      model.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+      return model;
+    }
+    plantModel.then((model) => {
       plantSway.remove(standIn);
-      plantSway.add(model);
-    }, undefined, (err) => console.warn('Plant model not loaded; keeping the stand-in.', err));
+      plantSway.add(fitModel(model.clone(), 0.2));
+    }).catch((err) => console.warn('Plant model not loaded; keeping the stand-in.', err));
 
     const plantWobble = new Spring(70, 4.5);
     const plantAnchor = new THREE.Object3D();
@@ -1368,27 +1562,364 @@
     plant.add(plantAnchor);
     addItem('plant', {
       group: plant,
-      proxySize: [0.17, 0.22, 0.17],
+      proxySize: [0.15, 0.22, 0.15],
       anchor: plantAnchor,
       labelAnchor: plantAnchor,
       label: () => ['Plant', 'give it a nudge'],
-      focus: { dir: new THREE.Vector3(-0.25, 0.5, 1), dist: 0.42, size: 0.3 },
+      focus: { dir: new THREE.Vector3(-0.25, 0.5, 1), dist: 0.32, size: 0.3 },
       onClick: () => plantWobble.kick(1.1),
-      caption: { eyebrow: 'Plant', title: 'The only real thing here', body: 'A scanned haworthia from Poly Haven (CC0), loaded as glTF. Everything else on the desk is primitives and canvas textures.' },
+      caption: { eyebrow: 'Plant', title: 'The only imported thing here', body: 'Kenney’s low-poly potted plant (CC0), loaded as glTF and recoloured to match. Everything else on the desk is primitives and canvas textures.' },
     });
 
     // ---------------------------------------------------------------------------------------------
-    // Camera: overview pose fits the desk to the viewport; focus poses frame one object.
+    // The apartment (its own scene, drawn on the blurred backdrop canvas)
+    // Back wall with a door and two shelves, a window on the right wall, a rug, and two cats.
     // ---------------------------------------------------------------------------------------------
-    const OVERVIEW_DIR = new THREE.Vector3(0, 0.62, 1).normalize();
+    const SIDE = 1.9, BACK = -3.2, FRONT = 5, CEIL = 1.9;
+    const WALL_H = CEIL - FLOOR;
+    const wallMat = new THREE.MeshStandardMaterial({ color: 0xe9e2d6, roughness: 0.95 });
+    const sideWallMat = new THREE.MeshStandardMaterial({ color: 0xe4dccf, roughness: 0.95 });
+    const trimMat = new THREE.MeshStandardMaterial({ color: 0xf2ede5, roughness: 0.7 });
+    const add = (parent, geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); parent.add(m); return m; };
+    const apartment = new THREE.Group();
+    roomScene.add(apartment);
+
+    const planks = canvasTexture(1024, 1024, (g, w, h) => {
+      const r = rng(3);
+      const cols = 8, cw = w / cols;
+      for (let i = 0; i < cols; i++) {
+        let y = -r() * 300;
+        while (y < h) {
+          const len = 280 + r() * 420;
+          const tone = 84 + r() * 26;
+          g.fillStyle = `rgb(${tone | 0}, ${(tone * 0.68) | 0}, ${(tone * 0.5) | 0})`;
+          g.fillRect(i * cw, y, cw, len);
+          for (let k = 0; k < 7; k++) {
+            g.fillStyle = `rgba(30,18,10,${0.08 + r() * 0.14})`;
+            g.fillRect(i * cw + r() * cw, y, 1 + r() * 2.5, len);
+          }
+          g.fillStyle = 'rgba(20,12,6,0.45)';
+          g.fillRect(i * cw, y, cw, 2);
+          y += len;
+        }
+        g.fillStyle = 'rgba(20,12,6,0.5)';
+        g.fillRect(i * cw, 0, 2, h);
+      }
+    });
+    planks.tex.wrapS = planks.tex.wrapT = THREE.RepeatWrapping;
+    planks.tex.repeat.set(2.2, 4.5);
+    const floor = add(apartment, new THREE.PlaneGeometry(2 * SIDE, FRONT - BACK), new THREE.MeshStandardMaterial({ map: planks.tex, roughness: 0.55 }), 0, FLOOR, (FRONT + BACK) / 2);
+    floor.rotation.x = -Math.PI / 2;
+
+    add(apartment, new THREE.PlaneGeometry(2 * SIDE, WALL_H), wallMat, 0, FLOOR + WALL_H / 2, BACK);
+    const leftWall = add(apartment, new THREE.PlaneGeometry(FRONT - BACK, WALL_H), sideWallMat, -SIDE, FLOOR + WALL_H / 2, (FRONT + BACK) / 2);
+    leftWall.rotation.y = Math.PI / 2;
+    const ceiling = add(apartment, new THREE.PlaneGeometry(2 * SIDE, FRONT - BACK), trimMat, 0, CEIL, (FRONT + BACK) / 2);
+    ceiling.rotation.x = Math.PI / 2;
+
+    // Right wall, built around the window opening
+    const WIN = { z0: -2.55, z1: -1.45, y0: FLOOR + 0.85, y1: FLOOR + 2.15 };
+    function rightWallPiece(z0, z1, y0, y1) {
+      const m = add(apartment, new THREE.PlaneGeometry(z1 - z0, y1 - y0), sideWallMat, SIDE, (y0 + y1) / 2, (z0 + z1) / 2);
+      m.rotation.y = -Math.PI / 2;
+    }
+    rightWallPiece(BACK, WIN.z0, FLOOR, CEIL);
+    rightWallPiece(WIN.z1, FRONT, FLOOR, CEIL);
+    rightWallPiece(WIN.z0, WIN.z1, FLOOR, WIN.y0);
+    rightWallPiece(WIN.z0, WIN.z1, WIN.y1, CEIL);
+
+    // Outside: a day and a night view, cross-faded with the lamp
+    const winW = WIN.z1 - WIN.z0, winH = WIN.y1 - WIN.y0, winZ = (WIN.z0 + WIN.z1) / 2, winY = (WIN.y0 + WIN.y1) / 2;
+    const skyDay = canvasTexture(256, 320, (g, w, h) => {
+      const grad = g.createLinearGradient(0, 0, 0, h);
+      grad.addColorStop(0, '#BCD2E6');
+      grad.addColorStop(0.7, '#EEE9DE');
+      grad.addColorStop(1, '#F6EEDF');
+      g.fillStyle = grad;
+      g.fillRect(0, 0, w, h);
+      g.fillStyle = 'rgba(140,165,135,0.75)';
+      [[40, 260, 60], [120, 280, 70], [210, 250, 64]].forEach(([x, y, r]) => { g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill(); });
+    });
+    const skyNight = canvasTexture(256, 320, (g, w, h) => {
+      const grad = g.createLinearGradient(0, 0, 0, h);
+      grad.addColorStop(0, '#0F1628');
+      grad.addColorStop(1, '#283454');
+      g.fillStyle = grad;
+      g.fillRect(0, 0, w, h);
+      g.fillStyle = '#0A0E1A';
+      g.fillRect(20, 190, 90, 130); g.fillRect(130, 160, 110, 160);
+      g.fillStyle = '#F5C779';
+      [[34, 210], [70, 240], [150, 180], [196, 214], [150, 250], [214, 270]].forEach(([x, y]) => g.fillRect(x, y, 10, 13));
+    });
+    const glassGeo = new THREE.PlaneGeometry(winW, winH);
+    const dayGlass = add(apartment, glassGeo, new THREE.MeshBasicMaterial({ map: skyDay.tex, toneMapped: false }), SIDE + 0.04, winY, winZ);
+    const nightGlassMat = new THREE.MeshBasicMaterial({ map: skyNight.tex, transparent: true, opacity: 0, toneMapped: false });
+    const nightGlass = add(apartment, glassGeo, nightGlassMat, SIDE + 0.035, winY, winZ);
+    dayGlass.rotation.y = nightGlass.rotation.y = -Math.PI / 2;
+    const T = 0.06, D = 0.1;
+    add(apartment, new THREE.BoxGeometry(D, T, winW + 2 * T), trimMat, SIDE - D / 2 + 0.02, WIN.y1 + T / 2, winZ);
+    add(apartment, new THREE.BoxGeometry(D, T, winW + 2 * T), trimMat, SIDE - D / 2 + 0.02, WIN.y0 - T / 2, winZ);
+    add(apartment, new THREE.BoxGeometry(D, winH, T), trimMat, SIDE - D / 2 + 0.02, winY, WIN.z0 - T / 2);
+    add(apartment, new THREE.BoxGeometry(D, winH, T), trimMat, SIDE - D / 2 + 0.02, winY, WIN.z1 + T / 2);
+    add(apartment, new THREE.BoxGeometry(0.04, winH, 0.035), trimMat, SIDE + 0.02, winY, winZ);
+    add(apartment, new THREE.BoxGeometry(0.04, 0.035, winW), trimMat, SIDE + 0.02, winY + 0.12, winZ);
+    add(apartment, new THREE.BoxGeometry(0.17, 0.035, winW + 0.2), trimMat, SIDE - 0.085, WIN.y0 - T - 0.0175, winZ);
+
+    // Daylight pool on the floor below the window
+    const pool = radialBlob([[0, 'rgba(255,246,226,0.9)'], [1, 'rgba(255,246,226,0)']]);
+    const poolMat = new THREE.MeshBasicMaterial({ map: pool.tex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.35 });
+    const poolMesh = add(apartment, new THREE.PlaneGeometry(1.8, 1.2), poolMat, SIDE - 0.8, FLOOR + 0.004, winZ + 0.2);
+    poolMesh.rotation.x = -Math.PI / 2;
+    poolMesh.rotation.z = 0.5;
+
+    // Baseboards
+    add(apartment, new THREE.BoxGeometry(2 * SIDE, 0.08, 0.015), trimMat, 0, FLOOR + 0.04, BACK + 0.0075);
+    add(apartment, new THREE.BoxGeometry(0.015, 0.08, FRONT - BACK), trimMat, -SIDE + 0.0075, FLOOR + 0.04, (FRONT + BACK) / 2);
+    add(apartment, new THREE.BoxGeometry(0.015, 0.08, FRONT - BACK), trimMat, SIDE - 0.0075, FLOOR + 0.04, (FRONT + BACK) / 2);
+
+    // Door (back wall, left)
+    const DOOR_X = -1.0;
+    const doorMat = new THREE.MeshStandardMaterial({ color: 0xd9d0c2, roughness: 0.6 });
+    const panelMat = new THREE.MeshStandardMaterial({ color: 0xcfc5b6, roughness: 0.6 });
+    add(apartment, new THREE.BoxGeometry(0.84, 2.0, 0.04), doorMat, DOOR_X, FLOOR + 1.0, BACK + 0.02);
+    add(apartment, new THREE.BoxGeometry(0.6, 0.62, 0.01), panelMat, DOOR_X, FLOOR + 1.52, BACK + 0.045);
+    add(apartment, new THREE.BoxGeometry(0.6, 0.8, 0.01), panelMat, DOOR_X, FLOOR + 0.6, BACK + 0.045);
+    add(apartment, new THREE.BoxGeometry(0.07, 2.04, 0.03), trimMat, DOOR_X - 0.455, FLOOR + 1.02, BACK + 0.015);
+    add(apartment, new THREE.BoxGeometry(0.07, 2.04, 0.03), trimMat, DOOR_X + 0.455, FLOOR + 1.02, BACK + 0.015);
+    add(apartment, new THREE.BoxGeometry(0.98, 0.07, 0.03), trimMat, DOOR_X, FLOOR + 2.035, BACK + 0.015);
+    add(apartment, new THREE.SphereGeometry(0.03, 16, 12), new THREE.MeshStandardMaterial({ color: 0xb8955a, metalness: 0.8, roughness: 0.3 }), DOOR_X + 0.32, FLOOR + 1.0, BACK + 0.08);
+
+    // Art on the left wall
+    const art = canvasTexture(256, 340, (g, w, h) => {
+      g.fillStyle = '#F6F1E9';
+      g.fillRect(0, 0, w, h);
+      g.fillStyle = '#7E9A84';
+      g.beginPath(); g.arc(110, 130, 62, 0, Math.PI * 2); g.fill();
+      g.fillStyle = '#C27A5A';
+      g.fillRect(70, 200, 130, 86);
+      g.fillStyle = '#683FCF';
+      g.fillRect(160, 70, 16, 16);
+    });
+    add(apartment, new THREE.BoxGeometry(0.03, 0.86, 0.66), new THREE.MeshStandardMaterial({ color: 0x3a3330, roughness: 0.6 }), -SIDE + 0.015, FLOOR + 1.45, -1.9);
+    const artPlane = add(apartment, new THREE.PlaneGeometry(0.58, 0.78), new THREE.MeshStandardMaterial({ map: art.tex, roughness: 0.9 }), -SIDE + 0.032, FLOOR + 1.45, -1.9);
+    artPlane.rotation.y = Math.PI / 2;
+
+    // Shelves (back wall, right) with books, a small sculpture and a plant
+    const walnut = new THREE.MeshStandardMaterial({ color: 0x7a5a40, roughness: 0.55 });
+    const SHELF_X = 0.8, SHELF_W = 1.1;
+    const BOOK_COLORS = [0x7e9a84, 0xc27a5a, 0xd9b25f, 0x5e6b7a, 0xe8e1d3, 0x3e4a43, 0x683fcf, 0xa58e74];
+    const bookRng = rng(21);
+    const bookMats = BOOK_COLORS.map((color) => new THREE.MeshStandardMaterial({ color, roughness: 0.8 }));
+    function fillShelf(y, from, to) {
+      let x = from;
+      while (x < to) {
+        const w = 0.025 + bookRng() * 0.025, h = 0.17 + bookRng() * 0.1;
+        const b = add(apartment, new THREE.BoxGeometry(w, h, 0.16 + bookRng() * 0.03), bookMats[(bookRng() * bookMats.length) | 0], x + w / 2, y + h / 2, BACK + 0.11);
+        if (bookRng() < 0.08) { b.rotation.z = -0.25; b.position.x += 0.03; x += 0.05; }
+        x += w + 0.002;
+      }
+    }
+    [FLOOR + 1.35, FLOOR + 1.75].forEach((y, i) => {
+      add(apartment, new THREE.BoxGeometry(SHELF_W, 0.03, 0.22), walnut, SHELF_X, y - 0.015, BACK + 0.11);
+      if (i === 0) {
+        fillShelf(y, SHELF_X - 0.5, SHELF_X - 0.18);
+        add(apartment, new THREE.SphereGeometry(0.06, 16, 12), new THREE.MeshStandardMaterial({ color: 0xc9c2b6, roughness: 0.5 }), SHELF_X - 0.06, y + 0.1, BACK + 0.11);
+        add(apartment, new THREE.CylinderGeometry(0.03, 0.04, 0.04, 16), new THREE.MeshStandardMaterial({ color: 0xb5ac9e, roughness: 0.5 }), SHELF_X - 0.06, y + 0.02, BACK + 0.11);
+        fillShelf(y, SHELF_X + 0.1, SHELF_X + 0.5);
+      } else {
+        fillShelf(y, SHELF_X - 0.52, SHELF_X + 0.15);
+        const shelfPlant = new THREE.Group();
+        shelfPlant.position.set(SHELF_X + 0.38, y, BACK + 0.11);
+        apartment.add(shelfPlant);
+        plantModel.then((model) => shelfPlant.add(fitModel(model.clone(), 0.24))).catch(() => {});
+      }
+    });
+
+    // Rug and the desk's contact shadows (the desk itself is in the other scene)
+    const rugTex = canvasTexture(512, 384, (g, w, h) => {
+      g.fillStyle = '#E2D8C8';
+      g.fillRect(0, 0, w, h);
+      g.strokeStyle = '#CDBDA5';
+      g.lineWidth = 6;
+      g.strokeRect(22, 22, w - 44, h - 44);
+      g.lineWidth = 2;
+      g.strokeRect(36, 36, w - 72, h - 72);
+    });
+    const rug = add(apartment, new THREE.PlaneGeometry(2.2, 1.6), new THREE.MeshStandardMaterial({ map: rugTex.tex, roughness: 1 }), 0, FLOOR + 0.002, 0);
+    rug.rotation.x = -Math.PI / 2;
+    const shadowTex = radialBlob([[0, 'rgba(0,0,0,0.55)'], [0.6, 'rgba(0,0,0,0.2)'], [1, 'rgba(0,0,0,0)']]);
+    const shadowMat = new THREE.MeshBasicMaterial({ map: shadowTex.tex, transparent: true, depthWrite: false, opacity: 0.4 });
+    const deskShadow = add(apartment, new THREE.PlaneGeometry(1.7, 1.0), shadowMat, 0, FLOOR + 0.004, 0);
+    deskShadow.rotation.x = -Math.PI / 2;
+    [[1, 1], [1, -1], [-1, 1], [-1, -1]].forEach(([sx, sz]) => {
+      const s = add(apartment, new THREE.PlaneGeometry(0.12, 0.12), shadowMat, sx * LEG_X, FLOOR + 0.005, sz * LEG_Z);
+      s.rotation.x = -Math.PI / 2;
+    });
+
+    // Cats — two black cats along the back wall: one strolls and pauses, one sits and swishes its tail.
+    const catMat = new THREE.MeshStandardMaterial({ color: 0x1c1b1e, roughness: 0.55 });
+    const eyeMat = new THREE.MeshStandardMaterial({ color: 0x2a2a1a, emissive: 0xd8e36a, emissiveIntensity: 0 });
+    const catPart = (geo, x, y, z, parent) => add(parent, geo, catMat, x, y, z);
+    function catHead(parent, x, y) {
+      const h = new THREE.Group();
+      h.position.set(x, y, 0);
+      parent.add(h);
+      catPart(new THREE.SphereGeometry(0.065, 16, 12), 0, 0, 0, h).scale.set(1, 0.9, 1.05);
+      catPart(new THREE.SphereGeometry(0.03, 10, 8), 0.05, -0.02, 0, h);
+      [-1, 1].forEach((s) => {
+        catPart(new THREE.ConeGeometry(0.024, 0.055, 4), -0.005, 0.062, s * 0.035, h).rotation.x = s * 0.25;
+        add(h, new THREE.SphereGeometry(0.009, 8, 6), eyeMat, 0.056, 0.012, s * 0.026);
+      });
+      return h;
+    }
+    function catTail(parent, x, y, z, n, len) {
+      const segs = [];
+      const geo = new THREE.CapsuleGeometry(0.013, len, 4, 8);
+      let p = parent;
+      for (let i = 0; i < n; i++) {
+        const s = new THREE.Group();
+        if (i === 0) s.position.set(x, y, z); else s.position.y = len;
+        p.add(s);
+        catPart(geo, 0, len / 2, 0, s);
+        segs.push(s);
+        p = s;
+      }
+      return segs;
+    }
+    const catShadow = (parent, sx, sz) => {
+      const s = add(parent, new THREE.PlaneGeometry(sx, sz), shadowMat, 0, 0.003, 0);
+      s.rotation.x = -Math.PI / 2;
+    };
+
+    const CAT_WALL_Z = -2.8, CAT_TURN_R = 0.14;
+    const walker = (() => {
+      const root = new THREE.Group();
+      root.position.set(-0.6, FLOOR, CAT_WALL_Z);
+      apartment.add(root);
+      catShadow(root, 0.5, 0.2);
+      const body = new THREE.Group();
+      root.add(body);
+      catPart(new THREE.CapsuleGeometry(0.07, 0.22, 6, 14), 0, 0.2, 0, body).rotation.z = Math.PI / 2;
+      const h = catHead(body, 0.2, 0.29);
+      const legs = [[0.11, 1, 0], [0.11, -1, Math.PI], [-0.11, 1, Math.PI], [-0.11, -1, 0]].map(([x, s, phase]) => {
+        const hip = new THREE.Group();
+        hip.position.set(x, 0.19, s * 0.04);
+        hip.userData.phase = phase;
+        body.add(hip);
+        catPart(new THREE.CapsuleGeometry(0.018, 0.13, 4, 8), 0, -0.09, 0, hip);
+        return hip;
+      });
+      const tail = catTail(body, -0.17, 0.22, 0, 7, 0.04);
+      tail[0].rotation.z = 0.7;
+      tail.slice(1).forEach((s) => { s.rotation.z = -0.18; });
+      return {
+        root, body, head: h, legs, tail, x: -0.6, z: CAT_WALL_Z, zs: { v: 0 }, dir: 1, target: 0.7, state: 'walk', timer: 0, turn: null,
+        phase: 0, heading: 0, turnRate: 0, stride: new Damp1(1), look: new Damp1(0),
+      };
+    })();
+
+    const sitter = (() => {
+      const root = new THREE.Group();
+      root.position.set(1.3, FLOOR, -2.55);
+      root.rotation.y = -Math.PI / 2 + 0.35;
+      apartment.add(root);
+      catShadow(root, 0.32, 0.3);
+      catPart(new THREE.SphereGeometry(0.09, 16, 12), -0.02, 0.085, 0, root).scale.set(1.1, 0.95, 1.1);
+      catPart(new THREE.CapsuleGeometry(0.065, 0.12, 6, 12), 0.03, 0.19, 0, root).rotation.z = -0.35;
+      const h = catHead(root, 0.07, 0.33);
+      [-1, 1].forEach((s) => catPart(new THREE.CapsuleGeometry(0.016, 0.15, 4, 8), 0.075, 0.085, s * 0.03, root));
+      const tail = catTail(root, -0.09, 0.016, 0.04, 8, 0.04);
+      tail[0].rotation.x = Math.PI / 2;
+      return { root, head: h, tail };
+    })();
+
+    function updateCats(t, dt) {
+      const w = walker;
+      const still = reduceMotion;
+      if (!still) {
+        if (w.state === 'walk') {
+          w.x += w.dir * 0.2 * dt;
+          w.z = smoothDamp(w.z, CAT_WALL_Z, w.zs, 1.6, dt);
+          w.phase += dt * 7.5;
+          if (w.dir > 0 ? w.x >= w.target : w.x <= w.target) { w.state = 'pause'; w.timer = 2.5 + Math.random() * 3.5; }
+        } else if (w.state === 'pause') {
+          w.timer -= dt;
+          if (w.timer <= 0) { w.state = 'turn'; w.turn = { a: 0, cx: w.x, z0: w.z, dir: w.dir }; }
+        } else {
+          // U-turn: a tight arc out from the wall toward the room, stepping the whole way round,
+          // then it drifts back to the wall line as it walks on.
+          const tr = w.turn;
+          tr.a = Math.min(Math.PI, tr.a + (0.16 / CAT_TURN_R) * dt);
+          w.x = tr.cx + CAT_TURN_R * Math.sin(tr.a) * tr.dir;
+          w.z = tr.z0 + CAT_TURN_R * (1 - Math.cos(tr.a));
+          w.phase += dt * 6.5;
+          if (tr.a >= Math.PI) {
+            w.dir = -tr.dir;
+            w.target = w.dir > 0 ? 0.5 + Math.random() * 0.35 : -1.35 + Math.random() * 0.5;
+            w.state = 'walk';
+          }
+        }
+      }
+      // Heading follows the path it actually travels, so the body swings round like an animal walking,
+      // not a model spinning on its centre.
+      const dx = w.x - w.root.position.x, dz = w.z - w.root.position.z;
+      if (dx * dx + dz * dz > 1e-10) {
+        let heading = Math.atan2(-dz, dx);
+        while (heading - w.heading > Math.PI) heading -= Math.PI * 2;
+        while (heading - w.heading < -Math.PI) heading += Math.PI * 2;
+        w.turnRate = (heading - w.heading) / Math.max(dt, 1e-4);
+        w.heading = heading;
+      } else {
+        w.turnRate = 0;
+      }
+      w.root.position.set(w.x, FLOOR, w.z);
+      w.root.rotation.y = w.heading;
+
+      const moving = w.state !== 'pause' && !still;
+      const stride = w.stride.step(moving ? 1 : 0, 0.2, dt);
+      w.legs.forEach((hip) => { hip.rotation.z = Math.sin(w.phase + hip.userData.phase) * 0.5 * stride; });
+      w.body.position.y = Math.abs(Math.sin(w.phase)) * 0.008 * stride;
+      // It glances toward the camera when it stops, and its head leads into the turn.
+      const lead = Math.max(-0.6, Math.min(0.6, w.turnRate * 0.3));
+      w.head.rotation.y = w.look.step(w.state === 'pause' ? (w.dir > 0 ? -0.8 : 0.8) : lead, 0.25, dt);
+      w.tail.forEach((s, i) => { s.rotation.x = still ? 0 : Math.sin(t * 2 + i * 0.5) * 0.12; });
+
+      sitter.head.rotation.y = still ? 0 : Math.sin(t * 0.23) * 0.35 + Math.sin(t * 0.61) * 0.1;
+      sitter.tail.forEach((s, i) => {
+        if (i === 0) return;
+        s.rotation.z = -0.28 + (still || i < 3 ? 0 : Math.sin(t * 1.6 - i * 0.6) * 0.12);
+      });
+    }
+
+    // Room lights
+    const roomHemi = new THREE.HemisphereLight(0xfff6ea, 0xcbb79c, 0.9);
+    roomScene.add(roomHemi);
+    const windowLight = new THREE.DirectionalLight(0xfff2e0, 1.4);
+    windowLight.position.set(4, 1.6, -1.8);
+    windowLight.target.position.set(0, FLOOR, -2.4);
+    roomScene.add(windowLight, windowLight.target);
+    const dayWindowColor = new THREE.Color(0xfff2e0), nightWindowColor = new THREE.Color(0x7d90c0);
+    const roomLamp = new THREE.PointLight(0xffc98a, 0, 0, 1);
+    roomScene.add(roomLamp);
+
+    // ---------------------------------------------------------------------------------------------
+    // Camera: the overview frames the desk's front edge at ~75% of the width, zoomed in 15% (room cropped as needed);
+    // focus poses frame one object.
+    // ---------------------------------------------------------------------------------------------
     let tanH = 0.5;
     const pose = { pos: new THREE.Vector3(), target: new THREE.Vector3() };
+    const ZOOM = 1.15;
     function overviewPose(out) {
       const portrait = camera.aspect < 0.9;
-      out.target.set(0, portrait ? 0.1 : 0.15, 0.02);
-      const fitW = portrait ? 1.0 : 1.5;
-      const dist = Math.max(portrait ? 2.2 : 1.75, (fitW / 2) / tanH);
-      out.pos.copy(out.target).addScaledVector(OVERVIEW_DIR, dist);
+      const frac = portrait ? 0.92 : 0.75;
+      const pitch = THREE.MathUtils.degToRad(portrait ? 13 : 15);
+      // The camera sits on a ray 5° steeper than its view, so the desk lands a little below the middle of the frame.
+      const elev = pitch + THREE.MathUtils.degToRad(5);
+      // View depth that fits the desk's front edge to `frac` of the width, then zoomed in.
+      const depth = (DESK_W / 2 / frac) / tanH / ZOOM;
+      const r = (depth + (DESK_D / 2) * Math.cos(pitch)) / Math.cos(elev - pitch);
+      out.pos.set(0, Math.sin(elev) * r, Math.cos(elev) * r);
+      out.target.set(0, out.pos.y - Math.sin(pitch) * 3, out.pos.z - Math.cos(pitch) * 3);
       return out;
     }
     const _dir = new THREE.Vector3();
@@ -1408,16 +1939,29 @@
       return out;
     }
 
+    let viewW = 1, viewH = 1;
     function resize() {
-      const w = stageEl.clientWidth || innerWidth, h = stageEl.clientHeight || innerHeight;
-      renderer.setSize(w, h, false);
-      camera.aspect = w / h;
-      camera.fov = camera.aspect < 0.9 ? 40 : 30;
+      viewW = stageEl.clientWidth || innerWidth;
+      viewH = stageEl.clientHeight || innerHeight;
+      renderer.setSize(viewW, viewH, false);
+      roomRenderer.setSize(viewW + 2 * BLEED, viewH + 2 * BLEED, false);
+      camera.aspect = viewW / viewH;
+      camera.fov = camera.aspect < 0.9 ? 50 : 42;
       camera.updateProjectionMatrix();
       tanH = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect;
     }
     resize();
     addEventListener('resize', resize);
+
+    // The room camera is the desk camera with a wider frustum that matches the bleed.
+    function syncRoomCamera() {
+      roomCamera.position.copy(camera.position);
+      roomCamera.quaternion.copy(camera.quaternion);
+      roomCamera.fov = camera.fov;
+      roomCamera.aspect = camera.aspect;
+      roomCamera.setViewOffset(viewW, viewH, -BLEED, -BLEED, viewW + 2 * BLEED, viewH + 2 * BLEED);
+      roomCamera.updateProjectionMatrix();
+    }
 
     overviewPose(pose);
     // Intro: start further out and higher, then dolly in on the same damping as every other move.
@@ -1489,10 +2033,13 @@
     // ---------------------------------------------------------------------------------------------
     const clock = new THREE.Clock();
     const night = new Damp1(ui.evening ? 1 : 0);
+    const blur = new Damp1(7);
+    let appliedBlur = -1;
     let elapsed = 0;
-    let screenClock = 0;
+    let screenClock = 1;
     const _proj = new THREE.Vector3();
     const _right = new THREE.Vector3(), _up = new THREE.Vector3();
+    const _drift = new THREE.Vector3();
 
     function frame() {
       const dt = Math.min(clock.getDelta(), 1 / 30);
@@ -1500,24 +2047,28 @@
       const t = elapsed;
       const still = reduceMotion;
 
-      // Ambient: the whole desk breathes (drei <Float>-style), very small amplitudes.
-      const amp = still ? 0 : 1;
-      rig.position.y = Math.sin(t * 0.5) * 0.004 * amp;
-      rig.rotation.y = Math.sin(t * 0.33) * 0.012 * amp;
-      rig.rotation.x = Math.sin(t * 0.27 + 1) * 0.005 * amp;
-
       // Evening
       const n = night.step(ui.evening ? 1 : 0, still ? 0.01 : 0.35, dt);
       const flicker = 1 + (still ? 0 : Math.sin(t * 13) * 0.006 + Math.sin(t * 31.7) * 0.004);
-      key.intensity = lerp(2.4, 0.16, n);
+      key.intensity = lerp(2.3, 0.16, n);
       key.color.lerpColors(dayKeyColor, nightKeyColor, n);
       hemi.intensity = lerp(0.7, 0.1, n);
-      scene.environmentIntensity = lerp(0.9, 0.1, n);
+      scene.environmentIntensity = lerp(0.75, 0.1, n);
       spot.intensity = lerp(0, 0.75, n) * flicker;
       glow.intensity = lerp(0, 0.12, n) * flicker;
       bulbMat.emissiveIntensity = lerp(0, 4, n);
-      blobMat.opacity = lerp(0.45, 0.75, n);
       renderer.toneMappingExposure = lerp(1, 1.12, n);
+
+      roomHemi.intensity = lerp(0.9, 0.05, n);
+      roomScene.environmentIntensity = lerp(0.35, 0.03, n);
+      windowLight.intensity = lerp(1.4, 0.12, n);
+      windowLight.color.lerpColors(dayWindowColor, nightWindowColor, n);
+      head.getWorldPosition(roomLamp.position);
+      roomLamp.intensity = lerp(0, 1.1, n) * flicker;
+      nightGlassMat.opacity = n;
+      poolMat.opacity = lerp(0.35, 0, n);
+      eyeMat.emissiveIntensity = lerp(0, 1.4, n);
+      roomRenderer.toneMappingExposure = lerp(1, 1.15, n);
 
       // Hover lift
       items.forEach((it) => {
@@ -1536,14 +2087,17 @@
       bookItem.proxy.position.x = bookOpen.value > 0.5 ? -BW / 2 : 0;
       updateSteam(t, n);
       updateNote(dt);
+      updateCats(t, dt);
 
+      const dark = screenDark.step(ui.evening ? 1 : 0, still ? 0.01 : 0.12, dt);
       screenClock += dt;
       if (screenClock > 1 / 20) {
         screenClock = 0;
-        screenTex.draw((g, w, h) => drawScreen(g, w, h, t));
+        screenTex.draw((g, w, h) => drawScreenFrame(g, w, h, t, dark));
       }
 
-      // Camera
+      // Camera: damped pose + a slow "breathing" drift + pointer parallax. The drift is what keeps the
+      // sharp desk sliding gently against the soft room even when nobody touches anything.
       if (focused) focusPose(focused, pose); else overviewPose(pose);
       const smooth = still ? 0.01 : 0.42;
       camPos.step(pose.pos, smooth, dt);
@@ -1551,12 +2105,25 @@
       const px = parallax.x.step(pointer.inside && !still ? pointer.x : 0, 0.6, dt);
       const py = parallax.y.step(pointer.inside && !still ? pointer.y : 0, 0.6, dt);
       const pAmp = focused ? 0.012 : 0.06;
+      const driftAmp = still ? 0 : focused ? 0.25 : 1;
+      _drift.set(Math.sin(t * 0.19) * 0.03, Math.sin(t * 0.23 + 1) * 0.012, 0).multiplyScalar(driftAmp);
       camera.position.copy(camPos.value);
       camera.lookAt(camTarget.value);
       _right.setFromMatrixColumn(camera.matrixWorld, 0);
       _up.setFromMatrixColumn(camera.matrixWorld, 1);
-      camera.position.addScaledVector(_right, px * pAmp).addScaledVector(_up, -py * pAmp * 0.5);
+      camera.position
+        .addScaledVector(_right, px * pAmp + _drift.x)
+        .addScaledVector(_up, -py * pAmp * 0.5 + _drift.y);
       camera.lookAt(camTarget.value);
+      camera.updateMatrixWorld();
+      syncRoomCamera();
+
+      // Depth of field: the room softens a little more while you look closely at something.
+      const b = blur.step(focused ? 12 : 7, still ? 0.01 : 0.5, dt);
+      if (Math.abs(b - appliedBlur) > 0.05) {
+        appliedBlur = b;
+        backdropEl.style.filter = `blur(${b.toFixed(2)}px)`;
+      }
 
       // Hover tag + cursor
       const showTag = hovered && hovered !== focused;
@@ -1566,11 +2133,12 @@
         const [title, hint] = hovered.label();
         const html = `${title} <span>· ${hint}</span>`;
         if (tagEl.innerHTML !== html) tagEl.innerHTML = html;
-        tagEl.style.left = `${(_proj.x * 0.5 + 0.5) * stageEl.clientWidth}px`;
-        tagEl.style.top = `${(-_proj.y * 0.5 + 0.5) * stageEl.clientHeight}px`;
+        tagEl.style.left = `${(_proj.x * 0.5 + 0.5) * viewW}px`;
+        tagEl.style.top = `${(-_proj.y * 0.5 + 0.5) * viewH}px`;
       }
       tagEl.classList.toggle('is-on', !!showTag);
 
+      roomRenderer.render(roomScene, roomCamera);
       renderer.render(scene, camera);
     }
 
@@ -1589,7 +2157,10 @@
     });
 
     syncLoop();
-    requestAnimationFrame(() => requestAnimationFrame(() => stageEl.classList.add('is-ready')));
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      stageEl.classList.add('is-ready');
+      backdropEl.classList.add('is-ready');
+    }));
   </script>
 </body>
 </html>
