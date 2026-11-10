@@ -70,5 +70,13 @@
     "description": "Explores intent-based AI Agent enablement with a skills-and-intents introduction, configurable intent coverage, inbox connection, and an expandable setup recap before activation.",
     "file": "intake-gorgias-trial-intent-enablement/index.html",
     "image": "intake-gorgias-trial-intent-enablement.svg"
+  },
+  {
+    "name": "Intent-based Enablement + Email Forwarding",
+    "author": "Mac",
+    "date": "2026-11-10",
+    "description": "Intent-based Enablement with an email forwarding branch: support email + display name, forwarding address and video, domain verification with a copyable DNS records table, then the expandable setup recap before activation.",
+    "file": "intent-enablement-email-forwarding/index.html",
+    "image": "intent-enablement-email-forwarding.svg"
   }
 ]
