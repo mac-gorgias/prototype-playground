@@ -1965,6 +1965,7 @@ function ChatInputBar({ value, onChange, onSend, onKeyDown, placeholder, sendDis
       opacity: thinking ? 0.6 : 1,
     }}>
       <input
+        data-chat-input="true"
         value={thinking ? "" : value}
         onChange={thinking ? undefined : onChange}
         onKeyDown={thinking ? undefined : onKeyDown}
@@ -4431,7 +4432,10 @@ function IntakePage() {
   const [shopifyConnectClicked, setShopifyConnectClicked] = useState(false);
   const PLATFORM_OPTIONS = [
     { key: "shopify", title: "Shopify", badge: "Recommended" },
-    { key: "other", title: "Other" },
+    { key: "woocommerce", title: "WooCommerce" },
+    { key: "bigcommerce", title: "BigCommerce" },
+    { key: "magento", title: "Magento" },
+    { key: "prestashop", title: "Prestashop" },
   ];
   const OTHER_PLATFORM_OPTIONS = [
     { key: "shopify", title: "Shopify" },
@@ -4522,7 +4526,7 @@ function IntakePage() {
   const CHANNEL_CONNECT_OPTIONS = [
     { key: "gmail", title: "Gmail" },
     { key: "microsoft", title: "Outlook" },
-    { key: "forwarding", title: "Another provider", desc: "Set up email forwarding" },
+    { key: "forwarding", title: "Email forwarding" },
   ];
 
   // Email forwarding + domain verification branch
@@ -5057,11 +5061,16 @@ function IntakePage() {
     }, 1100);
   };
 
-  // Prefill the composer so the forwarding questions are one click to answer.
+  // Put the cursor in the composer when Gaia asks for the support email / display name.
+  const forwardingAwaitingInput = channelConnectMethod === "forwarding" && (forwardingPhase === "ask-email" || forwardingPhase === "ask-name");
   useEffect(() => {
-    if (forwardingPhase === "ask-email") setChatInput(FORWARDING_SUPPORT_EMAIL);
-    if (forwardingPhase === "ask-name") setChatInput(FORWARDING_DISPLAY_NAME);
-  }, [forwardingPhase]);
+    if (!forwardingAwaitingInput) return;
+    const t = setTimeout(() => {
+      const input = document.querySelector("input[data-chat-input]");
+      if (input) input.focus();
+    }, 50);
+    return () => clearTimeout(t);
+  }, [forwardingAwaitingInput, forwardingPhase]);
   const handleChannelOAuthConfirm = () => {
     setChannelConnected(true);
     completeChecklistItem("channels");
@@ -6050,7 +6059,7 @@ function IntakePage() {
             || voiceRevisionPhase === "asking"
             || voiceRevisionPhase === "submitted"
             || voiceRevisionPhase === "updating";
-          const sendDisabled = narrating || !chatInput.trim();
+          const sendDisabled = (narrating && !forwardingAwaitingInput) || !chatInput.trim();
           return (
             <div onClick={(e) => e.stopPropagation()} style={{
               padding: "16px 24px 24px", position: "relative",
@@ -6074,7 +6083,9 @@ function IntakePage() {
                     options={PLATFORM_OPTIONS}
                     onSelect={handlePlatformSelect}
                     onClose={null}
-                    hideFreeform
+                    freeformValue={platformFreeformValue}
+                    onFreeformChange={setPlatformFreeformValue}
+                    onFreeformSubmit={() => { if (platformFreeformValue.trim()) { handlePlatformFreeform(platformFreeformValue.trim()); setPlatformFreeformValue(""); } }}
                   />
                 ) : platformPhase === "selecting-other" && !selectedPlatform ? (
                   <QuestionCard
@@ -6268,9 +6279,13 @@ function IntakePage() {
                     onChange={(e) => setChatInput(e.target.value)}
                     onSend={() => { if (!sendDisabled) handleSend(); }}
                     onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); if (!sendDisabled) handleSend(); } }}
-                    placeholder={activePanel === "edit" && activeSkillIdx !== null ? (SKILLS[activeSkillIdx].editPlaceholder || EDIT_PLACEHOLDER_DEFAULT) : "Send a message..."}
+                    placeholder={activePanel === "edit" && activeSkillIdx !== null
+                      ? (SKILLS[activeSkillIdx].editPlaceholder || EDIT_PLACEHOLDER_DEFAULT)
+                      : forwardingAwaitingInput
+                        ? (forwardingPhase === "ask-email" ? "e.g. " + FORWARDING_SUPPORT_EMAIL : "e.g. " + FORWARDING_DISPLAY_NAME)
+                        : "Send a message..."}
                     sendDisabled={sendDisabled}
-                    thinking={activePanel === "edit" ? false : narrating}
+                    thinking={activePanel === "edit" || forwardingAwaitingInput ? false : narrating}
                   />
                 )}
               </div>
