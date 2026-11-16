@@ -1,0 +1,647 @@
+function SignupScreen({ onSubmit }) {
+  const [email, setEmail] = useState("");
+  const [website, setWebsite] = useState("");
+
+  const inputStyle = {
+    width: "100%", padding: "10px 14px", fontSize: 14, fontFamily: "'Inter', sans-serif",
+    border: "1px solid #D8D8D8", borderRadius: 8, outline: "none",
+    color: "#1E242E", background: "#fff", boxSizing: "border-box",
+  };
+
+  return (
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 3000,
+      display: "flex", alignItems: "center", justifyContent: "center",
+      background: "#E8E8E8",
+    }}>
+      <div style={{ width: 440 }}>
+        {/* White card */}
+        <div style={{
+          background: "#fff", borderRadius: "16px 16px 0 0",
+          boxShadow: "0 8px 40px rgba(0,0,0,.08)",
+          padding: "44px 40px 32px", textAlign: "center",
+        }}>
+          {/* Gorgias logo */}
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
+            <svg width="160" height="42" viewBox="0 0 200 52" fill="none">
+              <path d="M43.1199 11.8026H35.4122V4.09496C35.4122 1.83265 33.5796 0 31.3173 0H4.09496C1.83265 0 0 1.83265 0 4.09496V43.1199C0 45.3822 1.83265 47.2149 4.09496 47.2149H39.345L43.1593 51.0292C43.6065 51.4764 44.2072 51.7263 44.8385 51.7263C46.1495 51.7263 47.2149 50.6653 47.2149 49.35V15.8976C47.2149 13.6353 45.3822 11.8026 43.1199 11.8026ZM43.2821 43.2777H3.93274V3.93274H31.4751V11.8026H15.8976C13.6353 11.8026 11.8026 13.6353 11.8026 15.8976V31.3173C11.8026 33.5796 13.6353 35.4122 15.8976 35.4122H31.3173C33.5796 35.4122 35.4122 33.5796 35.4122 31.3173V15.7397H43.2821V43.2821V43.2777ZM31.4795 15.7354V31.4751H15.7397V15.7354H31.4795Z" fill="#1A1E23"/>
+              <path d="M106.925 13.0302C105.338 12.0262 103.466 11.5176 101.366 11.5176C99.2656 11.5176 97.3935 12.0262 95.8064 13.0302C94.2193 14.0342 92.9697 15.4591 92.0841 17.2699C91.2028 19.0762 90.7556 21.2114 90.7556 23.6228C90.7556 26.0342 91.2028 28.1386 92.0841 29.9318C92.9697 31.7338 94.2236 33.1543 95.8064 34.1583C97.3935 35.1623 99.2656 35.6709 101.366 35.6709C103.466 35.6709 105.338 35.1623 106.925 34.1583C108.512 33.1543 109.762 31.7338 110.647 29.9318C111.529 28.1386 111.976 26.0166 111.976 23.6228C111.976 21.2289 111.529 19.0718 110.647 17.2699C109.762 15.4591 108.508 14.0342 106.925 13.0302ZM107.306 27.823C106.833 29.0944 106.096 30.1335 105.119 30.9139C104.145 31.6856 102.883 32.0801 101.366 32.0801C99.8487 32.0801 98.586 31.6899 97.6127 30.9139C96.6306 30.1335 95.8941 29.0944 95.4249 27.823C94.9471 26.5384 94.7059 25.1266 94.7059 23.6228C94.7059 22.1189 94.9471 20.7028 95.4249 19.4094C95.8984 18.1292 96.635 17.077 97.6171 16.2878C98.5904 15.5074 99.8531 15.1084 101.37 15.1084C102.887 15.1084 104.15 15.503 105.123 16.2878C106.105 17.077 106.842 18.1248 107.315 19.4094C107.793 20.7028 108.034 22.1233 108.034 23.6228C108.034 25.1222 107.793 26.5384 107.315 27.823H107.306Z" fill="#1A1E23"/>
+              <path d="M125.839 15.1172L125.813 11.6974C125.813 11.5702 125.708 11.4694 125.585 11.465C125.295 11.4606 125.045 11.4563 124.835 11.4563C123.423 11.4563 122.139 11.8245 121.012 12.5523C120.017 13.1924 119.284 14.0167 118.828 15.0032V12.0481C118.828 11.921 118.723 11.8158 118.596 11.8158H115.229C115.102 11.8158 114.997 11.921 114.997 12.0481V35.1009C114.997 35.2281 115.102 35.3333 115.229 35.3333H118.715C118.842 35.3333 118.947 35.2281 118.947 35.1009V20.4529C118.947 19.462 119.188 18.5676 119.67 17.7916C120.153 17.0156 120.819 16.3974 121.652 15.9546C122.489 15.5118 123.458 15.2838 124.533 15.2838C124.892 15.2838 125.243 15.3057 125.576 15.3452C125.716 15.3627 125.835 15.2575 125.835 15.1172H125.839Z" fill="#1A1E23"/>
+              <path d="M152.987 11.8202H156.472C156.6 11.8202 156.705 11.9254 156.705 12.0525V35.1974C156.705 35.3245 156.6 35.4298 156.472 35.4298H152.987C152.86 35.4298 152.754 35.3245 152.754 35.1974V12.0525C152.754 11.9254 152.86 11.8202 152.987 11.8202Z" fill="#1A1E23"/>
+              <path d="M154.758 3.20933C154.017 3.20933 153.373 3.46362 152.842 3.9722C152.307 4.48079 152.035 5.09898 152.035 5.81362C152.035 6.52827 152.307 7.14646 152.842 7.65504C153.373 8.15924 154.017 8.41791 154.758 8.41791C155.499 8.41791 156.144 8.16362 156.674 7.65504C157.209 7.14646 157.481 6.52827 157.481 5.81362C157.481 5.09898 157.209 4.48079 156.674 3.9722C156.144 3.46801 155.499 3.20933 154.758 3.20933Z" fill="#1A1E23"/>
+              <path d="M175.509 12.8768C174.588 12.3287 173.628 11.9605 172.642 11.7807C171.673 11.6053 170.805 11.5176 170.055 11.5176C168.889 11.5176 167.683 11.6799 166.482 11.9955C165.267 12.3156 164.136 12.8812 163.119 13.6791C162.15 14.4376 161.357 15.4855 160.76 16.7964C160.703 16.9191 160.765 17.0682 160.892 17.112L164.198 18.3221C164.307 18.3616 164.426 18.3133 164.483 18.2081C164.868 17.4716 165.491 16.7657 166.346 16.108C167.258 15.4022 168.547 15.047 170.178 15.047C171.809 15.047 172.909 15.4372 173.663 16.2089C174.422 16.9805 174.803 18.0854 174.803 19.4971V19.6155C174.803 20.1065 174.641 20.4354 174.303 20.6283C173.926 20.8431 173.313 20.9966 172.475 21.0886C171.607 21.1807 170.463 21.321 169.073 21.5008C168.008 21.6411 166.933 21.8296 165.881 22.0663C164.816 22.3031 163.829 22.667 162.948 23.1405C162.054 23.6228 161.326 24.298 160.791 25.1485C160.252 25.9991 159.98 27.1171 159.98 28.4675C159.98 29.9976 160.344 31.3217 161.063 32.4046C161.777 33.4831 162.759 34.3205 163.974 34.8861C165.184 35.4517 166.543 35.7367 168.025 35.7367C169.384 35.7367 170.55 35.5306 171.502 35.1229C172.449 34.7151 173.22 34.2109 173.795 33.6278C174.22 33.1938 174.558 32.7773 174.808 32.3783V35.1316C174.808 35.25 174.904 35.3421 175.018 35.3421H178.547C178.666 35.3421 178.758 35.2456 178.758 35.1316V19.8654C178.758 18.0152 178.447 16.5114 177.837 15.3978C177.223 14.2841 176.439 13.438 175.509 12.8812V12.8768ZM174.808 26.6699C174.808 27.5862 174.566 28.4675 174.097 29.3005C173.624 30.1291 172.918 30.8175 171.993 31.3436C171.068 31.8697 169.915 32.1371 168.564 32.1371C167.214 32.1371 166.083 31.8346 165.21 31.2384C164.351 30.6509 163.934 29.8047 163.934 28.6428C163.934 27.8054 164.158 27.139 164.601 26.6567C165.057 26.1613 165.671 25.7842 166.425 25.5343C167.201 25.2757 168.047 25.0871 168.95 24.9688C169.327 24.9205 169.823 24.8548 170.436 24.7802C171.05 24.7057 171.69 24.6136 172.344 24.5084C173.001 24.4032 173.593 24.276 174.102 24.127C174.391 24.0437 174.623 23.956 174.808 23.8595V26.6699Z" fill="#1A1E23"/>
+              <path d="M198.417 24.4996C197.387 23.4562 195.809 22.667 193.73 22.1628L190.324 21.3254C189.004 20.9966 188.026 20.58 187.417 20.0934C186.829 19.6243 186.54 18.9973 186.54 18.1818C186.54 17.2611 186.965 16.5202 187.847 15.9151C188.737 15.3013 189.877 14.99 191.231 14.99C192.218 14.99 193.038 15.1479 193.66 15.4591C194.287 15.7704 194.787 16.1694 195.147 16.6473C195.467 17.0682 195.725 17.5066 195.914 17.9494C195.962 18.0591 196.076 18.1161 196.19 18.0854L199.32 17.1734C199.448 17.134 199.522 16.9937 199.478 16.8665C198.908 15.3057 197.983 14.0255 196.716 13.0565C195.383 12.035 193.537 11.5176 191.231 11.5176C189.596 11.5176 188.11 11.8114 186.821 12.3901C185.523 12.9688 184.484 13.7843 183.734 14.8059C182.98 15.8362 182.594 17.0331 182.594 18.3703C182.594 20.0013 183.107 21.3824 184.124 22.4653C185.128 23.5439 186.72 24.3462 188.855 24.8504L192.683 25.7492C193.796 26.0078 194.625 26.3981 195.151 26.911C195.673 27.4152 195.923 28.0246 195.923 28.77C195.923 29.6907 195.475 30.4623 194.555 31.1287C193.625 31.7995 192.349 32.1415 190.758 32.1415C189.364 32.1415 188.228 31.8434 187.373 31.2515C186.58 30.7035 186.018 29.8836 185.703 28.8094C185.668 28.6911 185.545 28.6165 185.426 28.6472L182.108 29.4715C181.985 29.5022 181.906 29.6293 181.932 29.7521C182.379 31.6417 183.37 33.1105 184.887 34.1101C186.448 35.1448 188.443 35.6709 190.819 35.6709C192.626 35.6709 194.23 35.364 195.598 34.7546C196.97 34.1452 198.058 33.2946 198.829 32.2336C199.605 31.1638 200 29.9362 200 28.5814C200 26.9286 199.469 25.5519 198.43 24.4953L198.417 24.4996Z" fill="#1A1E23"/>
+              <path d="M74.3714 30.4755C72.4028 30.4755 71.6268 29.9713 71.6268 28.7261C71.6268 27.2135 73.5997 26.4682 73.5997 26.4682C74.9063 26.9636 76.4452 27.2092 78.1068 27.2092C83.7056 27.2092 87.6954 24.2541 87.6954 19.5366C87.6954 18.5194 87.3578 16.7876 85.9767 15.1084H90.2207C90.3479 15.1084 90.4531 15.0032 90.4531 14.876V12.0481C90.4531 11.921 90.3479 11.8158 90.2207 11.8158H78.1068C72.5607 11.8158 68.6235 14.7708 68.6235 19.5366C68.6235 22.0225 69.7109 24.0437 71.5786 25.394C69.5574 26.2753 68.1588 27.6739 68.1588 29.6425C68.1588 31.1945 68.9261 32.5756 70.6228 33.3253C69.8862 33.5138 66.5015 34.6669 66.5015 38.3015C66.5015 42.5017 71.5786 44.4176 77.6947 44.4176C84.4334 44.4176 90.7556 42.2386 90.7556 36.5916C90.7556 33.0666 88.1645 30.4755 83.2409 30.4755H74.3714ZM78.1244 15.1128C81.5792 15.1128 83.7012 16.6868 83.7012 19.5629C83.7012 22.439 81.5836 23.9165 78.1244 23.9165C74.6651 23.9165 72.6045 22.3425 72.6045 19.5629C72.6045 16.7832 74.7221 15.1128 78.1244 15.1128ZM77.6991 41.0812C73.4332 41.0812 70.4825 39.9106 70.4825 37.2273C70.4825 34.9343 72.5387 34.2022 74.9063 34.2022H82.3333C85.0209 34.2022 86.7571 34.8861 86.7571 36.8371C86.7571 39.9106 82.9647 41.0812 77.6991 41.0812Z" fill="#1A1E23"/>
+              <path d="M133.279 30.4755C131.311 30.4755 130.535 29.9713 130.535 28.7261C130.535 27.2135 132.508 26.4682 132.508 26.4682C133.814 26.9636 135.353 27.2092 137.015 27.2092C142.613 27.2092 146.603 24.2541 146.603 19.5366C146.603 18.5194 146.266 16.7876 144.885 15.1084H149.129C149.256 15.1084 149.361 15.0032 149.361 14.876V12.0481C149.361 11.921 149.256 11.8158 149.129 11.8158H137.015C131.469 11.8158 127.531 14.7708 127.531 19.5366C127.531 22.0225 128.619 24.0437 130.486 25.394C128.465 26.2753 127.067 27.6739 127.067 29.6425C127.067 31.1945 127.834 32.5756 129.531 33.3253C128.794 33.5138 125.409 34.6669 125.409 38.3015C125.409 42.5017 130.486 44.4176 136.603 44.4176C143.341 44.4176 149.663 42.2386 149.663 36.5916C149.663 33.0666 147.072 30.4755 142.149 30.4755H133.279ZM137.032 15.1128C140.487 15.1128 142.609 16.6868 142.609 19.5629C142.609 22.439 140.491 23.9165 137.032 23.9165C133.573 23.9165 131.512 22.3425 131.512 19.5629C131.512 16.7832 133.63 15.1128 137.032 15.1128ZM136.607 41.0812C132.341 41.0812 129.39 39.9106 129.39 37.2273C129.39 34.9343 131.447 34.2022 133.814 34.2022H141.241C143.929 34.2022 145.665 34.8861 145.665 36.8371C145.665 39.9106 141.873 41.0812 136.607 41.0812Z" fill="#1A1E23"/>
+            </svg>
+          </div>
+
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: "#1E242E", margin: "0 0 8px", fontFamily: "'Inter', sans-serif" }}>
+            Get started for free
+          </h2>
+          <p style={{ fontSize: 13, color: "#8992A0", margin: "0 0 28px", fontFamily: "'Inter', sans-serif" }}>
+            7-day trial | All features unlocked | No credit card required
+          </p>
+
+          {/* Email field */}
+          <div style={{ textAlign: "left", marginBottom: 16 }}>
+            <label style={{ fontSize: 13, fontWeight: 600, color: "#1E242E", fontFamily: "'Inter', sans-serif", display: "block", marginBottom: 6 }}>
+              Email <span style={{ color: "#C44D56" }}>*</span>
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="jane@mystore.com"
+              style={inputStyle}
+            />
+          </div>
+
+          {/* Website URL field */}
+          <div style={{ textAlign: "left", marginBottom: 24 }}>
+            <label style={{ fontSize: 13, fontWeight: 600, color: "#1E242E", fontFamily: "'Inter', sans-serif", display: "block", marginBottom: 6 }}>
+              Website URL <span style={{ color: "#C44D56" }}>*</span>
+            </label>
+            <input
+              type="text"
+              value={website}
+              onChange={(e) => setWebsite(e.target.value)}
+              placeholder="mystore.com"
+              style={inputStyle}
+            />
+          </div>
+
+          {/* Create my account */}
+          <button
+            onClick={onSubmit}
+            style={{
+              width: "100%", padding: "12px 0", fontSize: 14, fontWeight: 600,
+              color: "#fff", background: "#1E242E", border: "none", borderRadius: 8,
+              cursor: "pointer", fontFamily: "'Inter', sans-serif",
+              marginBottom: 16,
+            }}
+          >Create my account</button>
+
+          {/* OR divider */}
+          <div style={{
+            display: "flex", alignItems: "center", gap: 12, marginBottom: 16,
+          }}>
+            <div style={{ flex: 1, height: 1, background: "#E5E5E5" }} />
+            <span style={{ fontSize: 12, color: "#8992A0", fontFamily: "'Inter', sans-serif", textTransform: "uppercase" }}>or</span>
+            <div style={{ flex: 1, height: 1, background: "#E5E5E5" }} />
+          </div>
+
+          {/* Sign up with Google */}
+          <button
+            onClick={onSubmit}
+            style={{
+              width: "100%", padding: "11px 0", fontSize: 14, fontWeight: 600,
+              color: "#1E242E", background: "#fff", border: "1px solid #D8D8D8", borderRadius: 8,
+              cursor: "pointer", fontFamily: "'Inter', sans-serif",
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+              marginBottom: 20,
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18">
+              <path d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92a8.78 8.78 0 0 0 2.68-6.62z" fill="#4285F4" />
+              <path d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.83.86-3.04.86-2.34 0-4.33-1.58-5.04-3.71H.96v2.33A9 9 0 0 0 9 18z" fill="#34A853" />
+              <path d="M3.96 10.71A5.41 5.41 0 0 1 3.68 9c0-.6.1-1.17.28-1.71V4.96H.96A9 9 0 0 0 0 9c0 1.45.35 2.82.96 4.04l3-2.33z" fill="#FBBC05" />
+              <path d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.59A9 9 0 0 0 9 0 9 9 0 0 0 .96 4.96l3 2.33C4.67 5.16 6.66 3.58 9 3.58z" fill="#EA4335" />
+            </svg>
+            Sign up with Google
+          </button>
+
+          {/* Terms */}
+          <p style={{ fontSize: 12, color: "#8992A0", margin: 0, fontFamily: "'Inter', sans-serif" }}>
+            By creating an account, you agree to our{" "}
+            <span style={{ color: "#1E242E", textDecoration: "underline", cursor: "pointer" }}>Terms of Service</span>
+          </p>
+        </div>
+
+        {/* Footer — flush with card */}
+        <div style={{
+          padding: "14px 0",
+          background: "#F3F0FF", borderRadius: "0 0 16px 16px",
+          textAlign: "center",
+        }}>
+          <span style={{ fontSize: 13, color: "#8992A0", fontFamily: "'Inter', sans-serif" }}>
+            Already have a Gorgias account?{" "}
+            <span style={{ color: "#1E242E", textDecoration: "underline", cursor: "pointer", fontWeight: 500 }}>Log in</span>
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const AURORA_PATH_A = "M421,318 C467,253 525,210 595,213 C682,217 738,287 736,366 C734,449 670,500 595,510 C504,522 401,477 380,395 C366,340 386,360 421,318 Z";
+
+const AURORA_PATH_B = "M398,290 C462,232 552,206 622,242 C700,283 729,377 700,449 C672,518 588,541 510,520 C420,496 351,438 348,365 C346,310 354,330 398,290 Z";
+
+const AURORA_PATH_C = "M440,340 C480,260 540,200 615,225 C700,253 745,330 730,410 C715,490 640,535 555,520 C470,505 395,460 385,390 C378,335 415,395 440,340 Z";
+
+function AuroraBlob({ opacity, scale }) {
+  return (
+    <div
+      style={{
+        position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
+        pointerEvents: "none", opacity,
+        transition: "opacity 600ms cubic-bezier(0.22, 1, 0.36, 1)",
+      }}
+    >
+      <svg
+        viewBox="0 0 1000 700"
+        style={{
+          height: "140vh", width: "140vh", maxWidth: "none",
+          filter: "blur(40px)",
+          transform: `scale(${scale})`,
+          transition: "transform 900ms cubic-bezier(0.22, 1, 0.36, 1)",
+        }}
+      >
+        <defs>
+          <radialGradient id="aurora-mint"  cx="30%" cy="40%" r="40%"><stop offset="0%" stopColor="#F1ECFF" stopOpacity="0.95" /><stop offset="100%" stopColor="#F1ECFF" stopOpacity="0" /></radialGradient>
+          <radialGradient id="aurora-pink"  cx="70%" cy="35%" r="40%"><stop offset="0%" stopColor="#FEE1F9" stopOpacity="0.95" /><stop offset="100%" stopColor="#FEE1F9" stopOpacity="0" /></radialGradient>
+          <radialGradient id="aurora-lav"   cx="60%" cy="70%" r="45%"><stop offset="0%" stopColor="#E8F5F8" stopOpacity="0.9"  /><stop offset="100%" stopColor="#E8F5F8" stopOpacity="0" /></radialGradient>
+          <radialGradient id="aurora-peach" cx="35%" cy="65%" r="40%"><stop offset="0%" stopColor="#FDF1CD" stopOpacity="0.9"  /><stop offset="100%" stopColor="#FDF1CD" stopOpacity="0" /></radialGradient>
+        </defs>
+        <path fill="url(#aurora-mint)"  d={AURORA_PATH_A}><animate attributeName="d" values={`${AURORA_PATH_A};${AURORA_PATH_B};${AURORA_PATH_C};${AURORA_PATH_A}`} dur="8s"  repeatCount="indefinite" /></path>
+        <path fill="url(#aurora-pink)"  d={AURORA_PATH_B}><animate attributeName="d" values={`${AURORA_PATH_B};${AURORA_PATH_C};${AURORA_PATH_A};${AURORA_PATH_B}`} dur="9s"  repeatCount="indefinite" /></path>
+        <path fill="url(#aurora-lav)"   d={AURORA_PATH_C}><animate attributeName="d" values={`${AURORA_PATH_C};${AURORA_PATH_A};${AURORA_PATH_B};${AURORA_PATH_C}`} dur="10s" repeatCount="indefinite" /></path>
+        <path fill="url(#aurora-peach)" d={AURORA_PATH_A}><animate attributeName="d" values={`${AURORA_PATH_A};${AURORA_PATH_C};${AURORA_PATH_B};${AURORA_PATH_A}`} dur="11s" repeatCount="indefinite" /></path>
+      </svg>
+    </div>
+  );
+}
+
+function WelcomeIntro({ onStartSetup, closing }) {
+  return (
+    <div style={{
+      position: "absolute", inset: 0, zIndex: 5, overflow: "hidden",
+      background: "#ffffff", borderRadius: 16,
+      animation: closing ? "fadeOut .5s ease forwards" : "none",
+      pointerEvents: closing ? "none" : "auto",
+      display: "flex", flexDirection: "row", gap: 64,
+      alignItems: "center", justifyContent: "center",
+      padding: 32,
+    }}>
+      {/* Left column */}
+      <div style={{
+        flex: 1, display: "flex", flexDirection: "column", justifyContent: "center",
+        alignItems: "center", minWidth: 0,
+      }}>
+        <div style={{ width: 480, display: "flex", flexDirection: "column", gap: 24 }}>
+          <svg width="120" height="32" viewBox="0 0 200 52" fill="none" style={{ display: "block" }}>
+            <path d="M43.1199 11.8026H35.4122V4.09496C35.4122 1.83265 33.5796 0 31.3173 0H4.09496C1.83265 0 0 1.83265 0 4.09496V43.1199C0 45.3822 1.83265 47.2149 4.09496 47.2149H39.345L43.1593 51.0292C43.6065 51.4764 44.2072 51.7263 44.8385 51.7263C46.1495 51.7263 47.2149 50.6653 47.2149 49.35V15.8976C47.2149 13.6353 45.3822 11.8026 43.1199 11.8026ZM43.2821 43.2777H3.93274V3.93274H31.4751V11.8026H15.8976C13.6353 11.8026 11.8026 13.6353 11.8026 15.8976V31.3173C11.8026 33.5796 13.6353 35.4122 15.8976 35.4122H31.3173C33.5796 35.4122 35.4122 33.5796 35.4122 31.3173V15.7397H43.2821V43.2821V43.2777ZM31.4795 15.7354V31.4751H15.7397V15.7354H31.4795Z" fill="#1A1E23"/>
+            <path d="M74.3714 30.4755C72.4028 30.4755 71.6268 29.9713 71.6268 28.7261C71.6268 27.2135 73.5997 26.4682 73.5997 26.4682C74.9063 26.9636 76.4452 27.2092 78.1068 27.2092C83.7056 27.2092 87.6954 24.2541 87.6954 19.5366C87.6954 18.5194 87.3578 16.7876 85.9767 15.1084H90.2207C90.3479 15.1084 90.4531 15.0032 90.4531 14.876V12.0481C90.4531 11.921 90.3479 11.8158 90.2207 11.8158H78.1068C72.5607 11.8158 68.6235 14.7708 68.6235 19.5366C68.6235 22.0225 69.7109 24.0437 71.5786 25.394C69.5574 26.2753 68.1588 27.6739 68.1588 29.6425C68.1588 31.1945 68.9261 32.5756 70.6228 33.3253C69.8862 33.5138 66.5015 34.6669 66.5015 38.3015C66.5015 42.5017 71.5786 44.4176 77.6947 44.4176C84.4334 44.4176 90.7556 42.2386 90.7556 36.5916C90.7556 33.0666 88.1645 30.4755 83.2409 30.4755H74.3714ZM78.1244 15.1128C81.5792 15.1128 83.7012 16.6868 83.7012 19.5629C83.7012 22.439 81.5836 23.9165 78.1244 23.9165C74.6651 23.9165 72.6045 22.3425 72.6045 19.5629C72.6045 16.7832 74.7221 15.1128 78.1244 15.1128ZM77.6991 41.0812C73.4332 41.0812 70.4825 39.9106 70.4825 37.2273C70.4825 34.9343 72.5387 34.2022 74.9063 34.2022H82.3333C85.0209 34.2022 86.7571 34.8861 86.7571 36.8371C86.7571 39.9106 82.9647 41.0812 77.6991 41.0812Z" fill="#1A1E23"/>
+            <path d="M106.925 13.0302C105.338 12.0262 103.466 11.5176 101.366 11.5176C99.2656 11.5176 97.3935 12.0262 95.8064 13.0302C94.2193 14.0342 92.9697 15.4591 92.0841 17.2699C91.2028 19.0762 90.7556 21.2114 90.7556 23.6228C90.7556 26.0342 91.2028 28.1386 92.0841 29.9318C92.9697 31.7338 94.2236 33.1543 95.8064 34.1583C97.3935 35.1623 99.2656 35.6709 101.366 35.6709C103.466 35.6709 105.338 35.1623 106.925 34.1583C108.512 33.1543 109.762 31.7338 110.647 29.9318C111.529 28.1386 111.976 26.0166 111.976 23.6228C111.976 21.2289 111.529 19.0718 110.647 17.2699C109.762 15.4591 108.508 14.0342 106.925 13.0302ZM107.306 27.823C106.833 29.0944 106.096 30.1335 105.119 30.9139C104.145 31.6856 102.883 32.0801 101.366 32.0801C99.8487 32.0801 98.586 31.6899 97.6127 30.9139C96.6306 30.1335 95.8941 29.0944 95.4249 27.823C94.9471 26.5384 94.7059 25.1266 94.7059 23.6228C94.7059 22.1189 94.9471 20.7028 95.4249 19.4094C95.8984 18.1292 96.635 17.077 97.6171 16.2878C98.5904 15.5074 99.8531 15.1084 101.37 15.1084C102.887 15.1084 104.15 15.503 105.123 16.2878C106.105 17.077 106.842 18.1248 107.315 19.4094C107.793 20.7028 108.034 22.1233 108.034 23.6228C108.034 25.1222 107.793 26.5384 107.315 27.823H107.306Z" fill="#1A1E23"/>
+            <path d="M125.839 15.1172L125.813 11.6974C125.813 11.5702 125.708 11.4694 125.585 11.465C125.295 11.4606 125.045 11.4563 124.835 11.4563C123.423 11.4563 122.139 11.8245 121.012 12.5523C120.017 13.1924 119.284 14.0167 118.828 15.0032V12.0481C118.828 11.921 118.723 11.8158 118.596 11.8158H115.229C115.102 11.8158 114.997 11.921 114.997 12.0481V35.1009C114.997 35.2281 115.102 35.3333 115.229 35.3333H118.715C118.842 35.3333 118.947 35.2281 118.947 35.1009V20.4529C118.947 19.462 119.188 18.5676 119.67 17.7916C120.153 17.0156 120.819 16.3974 121.652 15.9546C122.489 15.5118 123.458 15.2838 124.533 15.2838C124.892 15.2838 125.243 15.3057 125.576 15.3452C125.716 15.3627 125.835 15.2575 125.835 15.1172H125.839Z" fill="#1A1E23"/>
+            <path d="M133.279 30.4755C131.311 30.4755 130.535 29.9713 130.535 28.7261C130.535 27.2135 132.508 26.4682 132.508 26.4682C133.814 26.9636 135.353 27.2092 137.015 27.2092C142.613 27.2092 146.603 24.2541 146.603 19.5366C146.603 18.5194 146.266 16.7876 144.885 15.1084H149.129C149.256 15.1084 149.361 15.0032 149.361 14.876V12.0481C149.361 11.921 149.256 11.8158 149.129 11.8158H137.015C131.469 11.8158 127.531 14.7708 127.531 19.5366C127.531 22.0225 128.619 24.0437 130.486 25.394C128.465 26.2753 127.067 27.6739 127.067 29.6425C127.067 31.1945 127.834 32.5756 129.531 33.3253C128.794 33.5138 125.409 34.6669 125.409 38.3015C125.409 42.5017 130.486 44.4176 136.603 44.4176C143.341 44.4176 149.663 42.2386 149.663 36.5916C149.663 33.0666 147.072 30.4755 142.149 30.4755H133.279ZM137.032 15.1128C140.487 15.1128 142.609 16.6868 142.609 19.5629C142.609 22.439 140.491 23.9165 137.032 23.9165C133.573 23.9165 131.512 22.3425 131.512 19.5629C131.512 16.7832 133.63 15.1128 137.032 15.1128ZM136.607 41.0812C132.341 41.0812 129.39 39.9106 129.39 37.2273C129.39 34.9343 131.447 34.2022 133.814 34.2022H141.241C143.929 34.2022 145.665 34.8861 145.665 36.8371C145.665 39.9106 141.873 41.0812 136.607 41.0812Z" fill="#1A1E23"/>
+            <path d="M152.987 11.8202H156.472C156.6 11.8202 156.705 11.9254 156.705 12.0525V35.1974C156.705 35.3245 156.6 35.4298 156.472 35.4298H152.987C152.86 35.4298 152.754 35.3245 152.754 35.1974V12.0525C152.754 11.9254 152.86 11.8202 152.987 11.8202Z" fill="#1A1E23"/>
+            <path d="M154.758 3.20933C154.017 3.20933 153.373 3.46362 152.842 3.9722C152.307 4.48079 152.035 5.09898 152.035 5.81362C152.035 6.52827 152.307 7.14646 152.842 7.65504C153.373 8.15924 154.017 8.41791 154.758 8.41791C155.499 8.41791 156.144 8.16362 156.674 7.65504C157.209 7.14646 157.481 6.52827 157.481 5.81362C157.481 5.09898 157.209 4.48079 156.674 3.9722C156.144 3.46801 155.499 3.20933 154.758 3.20933Z" fill="#1A1E23"/>
+            <path d="M175.509 12.8768C174.588 12.3287 173.628 11.9605 172.642 11.7807C171.673 11.6053 170.805 11.5176 170.055 11.5176C168.889 11.5176 167.683 11.6799 166.482 11.9955C165.267 12.3156 164.136 12.8812 163.119 13.6791C162.15 14.4376 161.357 15.4855 160.76 16.7964C160.703 16.9191 160.765 17.0682 160.892 17.112L164.198 18.3221C164.307 18.3616 164.426 18.3133 164.483 18.2081C164.868 17.4716 165.491 16.7657 166.346 16.108C167.258 15.4022 168.547 15.047 170.178 15.047C171.809 15.047 172.909 15.4372 173.663 16.2089C174.422 16.9805 174.803 18.0854 174.803 19.4971V19.6155C174.803 20.1065 174.641 20.4354 174.303 20.6283C173.926 20.8431 173.313 20.9966 172.475 21.0886C171.607 21.1807 170.463 21.321 169.073 21.5008C168.008 21.6411 166.933 21.8296 165.881 22.0663C164.816 22.3031 163.829 22.667 162.948 23.1405C162.054 23.6228 161.326 24.298 160.791 25.1485C160.252 25.9991 159.98 27.1171 159.98 28.4675C159.98 29.9976 160.344 31.3217 161.063 32.4046C161.777 33.4831 162.759 34.3205 163.974 34.8861C165.184 35.4517 166.543 35.7367 168.025 35.7367C169.384 35.7367 170.55 35.5306 171.502 35.1229C172.449 34.7151 173.22 34.2109 173.795 33.6278C174.22 33.1938 174.558 32.7773 174.808 32.3783V35.1316C174.808 35.25 174.904 35.3421 175.018 35.3421H178.547C178.666 35.3421 178.758 35.2456 178.758 35.1316V19.8654C178.758 18.0152 178.447 16.5114 177.837 15.3978C177.223 14.2841 176.439 13.438 175.509 12.8812V12.8768ZM174.808 26.6699C174.808 27.5862 174.566 28.4675 174.097 29.3005C173.624 30.1291 172.918 30.8175 171.993 31.3436C171.068 31.8697 169.915 32.1371 168.564 32.1371C167.214 32.1371 166.083 31.8346 165.21 31.2384C164.351 30.6509 163.934 29.8047 163.934 28.6428C163.934 27.8054 164.158 27.139 164.601 26.6567C165.057 26.1613 165.671 25.7842 166.425 25.5343C167.201 25.2757 168.047 25.0871 168.95 24.9688C169.327 24.9205 169.823 24.8548 170.436 24.7802C171.05 24.7057 171.69 24.6136 172.344 24.5084C173.001 24.4032 173.593 24.276 174.102 24.127C174.391 24.0437 174.623 23.956 174.808 23.8595V26.6699Z" fill="#1A1E23"/>
+            <path d="M198.417 24.4996C197.387 23.4562 195.809 22.667 193.73 22.1628L190.324 21.3254C189.004 20.9966 188.026 20.58 187.417 20.0934C186.829 19.6243 186.54 18.9973 186.54 18.1818C186.54 17.2611 186.965 16.5202 187.847 15.9151C188.737 15.3013 189.877 14.99 191.231 14.99C192.218 14.99 193.038 15.1479 193.66 15.4591C194.287 15.7704 194.787 16.1694 195.147 16.6473C195.467 17.0682 195.725 17.5066 195.914 17.9494C195.962 18.0591 196.076 18.1161 196.19 18.0854L199.32 17.1734C199.448 17.134 199.522 16.9937 199.478 16.8665C198.908 15.3057 197.983 14.0255 196.716 13.0565C195.383 12.035 193.537 11.5176 191.231 11.5176C189.596 11.5176 188.11 11.8114 186.821 12.3901C185.523 12.9688 184.484 13.7843 183.734 14.8059C182.98 15.8362 182.594 17.0331 182.594 18.3703C182.594 20.0013 183.107 21.3824 184.124 22.4653C185.128 23.5439 186.72 24.3462 188.855 24.8504L192.683 25.7492C193.796 26.0078 194.625 26.3981 195.151 26.911C195.673 27.4152 195.923 28.0246 195.923 28.77C195.923 29.6907 195.475 30.4623 194.555 31.1287C193.625 31.7995 192.349 32.1415 190.758 32.1415C189.364 32.1415 188.228 31.8434 187.373 31.2515C186.58 30.7035 186.018 29.8836 185.703 28.8094C185.668 28.6911 185.545 28.6165 185.426 28.6472L182.108 29.4715C181.985 29.5022 181.906 29.6293 181.932 29.7521C182.379 31.6417 183.37 33.1105 184.887 34.1101C186.448 35.1448 188.443 35.6709 190.819 35.6709C192.626 35.6709 194.23 35.364 195.598 34.7546C196.97 34.1452 198.058 33.2946 198.829 32.2336C199.605 31.1638 200 29.9362 200 28.5814C200 26.9286 199.469 25.5519 198.43 24.4953L198.417 24.4996Z" fill="#1A1E23"/>
+          </svg>
+          <h1 style={{
+            fontFamily: "'Feature Deck', sans-serif",
+            fontSize: 42, fontWeight: 400, color: "#252423",
+            lineHeight: "110%", letterSpacing: "-0.01em", margin: 0,
+          }}>
+            Set up your Helpdesk and AI Agent in minutes
+          </h1>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {[
+              "Bring every conversation into one inbox",
+              "Connect your store to pull in orders and shopper context",
+              "Configure AI Agent to handle repetitive tickets automatically",
+            ].map((item, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+                  <path d="M3 8.5l3 3 7-7" stroke="#1F8A4C" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, fontWeight: 400, color: "#252423", lineHeight: "20px" }}>{item}</span>
+              </div>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={onStartSetup}
+            style={{ ...BTN_PRIMARY, alignSelf: "flex-start" }}
+            onMouseEnter={(e) => { Object.assign(e.currentTarget.style, BTN_PRIMARY_HOVER); }}
+            onMouseLeave={(e) => { Object.assign(e.currentTarget.style, BTN_PRIMARY_LEAVE); }}
+          >
+            Start setup
+          </button>
+        </div>
+      </div>
+      {/* Right column — coral panel with hero image */}
+      <div style={{
+        flex: "0 0 600px", alignSelf: "stretch",
+        overflow: "hidden", borderRadius: 32,
+        background: "#F0EBE4", position: "relative",
+      }}>
+        <img
+          src={asset("welcome-hero.png")}
+          alt=""
+          draggable={false}
+          style={{
+            position: "absolute", inset: 0,
+            width: "100%", height: "100%",
+            objectFit: "cover",
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function ClosingScreen({ onAction1, onAction2, isNonShopify, enabledSkillCount }) {
+  const wordIn = (delay) => ({
+    display: "inline-block",
+    opacity: 0,
+    animation: "cinematicWordIn .8s cubic-bezier(.16,1,.3,1) " + delay + "s forwards",
+  });
+
+  const headline = "Great work!";
+
+  const ICON_COLOR = "#8B6F52";
+  const ICON_BG = "#F3EDE7";
+  const completeBullets = [
+    { icon: (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 12V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5" stroke={ICON_COLOR} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M3 12l3 6h12l3-6" stroke={ICON_COLOR} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M3 12h5l1.5 2h5L16 12h5" stroke={ICON_COLOR} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>), text: "Tickets come in; AI Agent handles the common ones" },
+    { icon: (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M21 12l-4-4v3H7V8l-4 4 4 4v-3h10v3l4-4z" stroke={ICON_COLOR} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M3 21V17M7 21V15M11 21V17M15 21V13M19 21V11" stroke={ICON_COLOR} strokeWidth="1.5" strokeLinecap="round" /></svg>), text: "You’ll see what’s automated and what needs a human" },
+    { icon: (<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" stroke={ICON_COLOR} strokeWidth="1.5" /><path d="M12 6v6l4 2" stroke={ICON_COLOR} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M8 2h8" stroke={ICON_COLOR} strokeWidth="1.5" strokeLinecap="round" /></svg>), text: "Add more skills, channels, or teammates anytime" },
+  ];
+  const bodyLines = ["Your Helpdesk is live, with AI Agent ready to handle incoming tickets."];
+  const bullets = completeBullets;
+
+  return (
+    <div style={{
+      position: "absolute", inset: 0, zIndex: 2000,
+      background: "#ffffff",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      padding: "48px 32px",
+      animation: "overlayBackdropIn .6s ease forwards",
+      overflow: "hidden",
+    }}>
+      <img src={asset("closing-screen-bg.png")} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 0, opacity: 0, animation: "fadeIn 1.2s ease 0.3s forwards", pointerEvents: "none" }} />
+      <div style={{ width: 480, display: "flex", flexDirection: "column", gap: 24, position: "relative", zIndex: 1 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <h1 style={{
+            fontFamily: "'Feature Deck', serif",
+            fontSize: 42, fontWeight: 400, letterSpacing: "-0.42px",
+            color: "#1E242E", lineHeight: 1.1, margin: 0,
+          }}>
+            <span style={wordIn(.65)}>{headline}</span>
+          </h1>
+          <div style={Object.assign({}, wordIn(.95), {
+            fontFamily: "'Inter', sans-serif",
+            fontSize: 14, fontWeight: 400, lineHeight: "20px",
+            color: "#1E242E",
+          })}>
+            {bodyLines.map((line, i) => (
+              <p key={i} style={{ margin: i < bodyLines.length - 1 ? "0 0 8px 0" : "0" }}>{line}</p>
+            ))}
+          </div>
+        </div>
+
+        {bullets && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div style={{
+              fontFamily: "'Inter', sans-serif",
+              fontSize: 14, fontWeight: 600, color: "#1E242E", lineHeight: "20px",
+              opacity: 0,
+              animation: "cinematicSlideUp .55s cubic-bezier(.16,1,.3,1) 1.5s forwards",
+            }}>Here’s what happens next:</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {bullets.map((b, i) => (
+                <div key={i} style={{
+                  display: "flex", alignItems: "center", gap: 8,
+                  fontFamily: "'Inter', sans-serif", fontSize: 14, color: "#1E242E", lineHeight: "20px",
+                  opacity: 0,
+                  animation: "cinematicSlideUp .55s cubic-bezier(.16,1,.3,1) " + (1.7 + i * 0.18) + "s forwards",
+                }}>
+                  <div style={{ width: 28, height: 28, borderRadius: 14, background: ICON_BG, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{b.icon}</div>
+                  {b.text}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div style={{
+          display: "flex", gap: 8,
+          opacity: 0,
+          animation: "cinematicSlideUp .55s cubic-bezier(.16,1,.3,1) 2.4s forwards",
+          }}>
+          <button onClick={onAction1}
+            style={BTN_PRIMARY}
+            onMouseEnter={(e) => { Object.assign(e.currentTarget.style, BTN_PRIMARY_HOVER); }}
+            onMouseLeave={(e) => { Object.assign(e.currentTarget.style, BTN_PRIMARY_LEAVE); }}
+          >
+            See AI Agent in action
+          </button>
+          <button onClick={onAction2}
+            style={BTN_SECONDARY}
+            onMouseEnter={(e) => { Object.assign(e.currentTarget.style, BTN_SECONDARY_HOVER); }}
+            onMouseLeave={(e) => { Object.assign(e.currentTarget.style, BTN_SECONDARY_LEAVE); }}
+          >Invite a teammate</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function HomePage({ onContinueSetup, onNotShopify, hideSetupBanner }) {
+  const sidebarNavItems = [
+    { key: "home", label: "Home", active: true, icon: (c) => (
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+        <path d="M3 10L10 3l7 7" stroke={c} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M5 8.5V16a1 1 0 001 1h3v-4h2v4h3a1 1 0 001-1V8.5" stroke={c} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    )},
+    { key: "inbox", label: "Inbox", icon: (c) => (
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+        <rect x="3" y="4" width="14" height="12" rx="2" stroke={c} strokeWidth="1.5" />
+        <path d="M3 8l7 4 7-4" stroke={c} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    )},
+    { key: "ai-agent", label: "AI Agent", icon: (c) => (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <path d="M12 3l2 6 6 2-6 2-2 6-2-6-6-2 6-2z" stroke={c} strokeWidth="1.5" strokeLinejoin="round" />
+      </svg>
+    )},
+    { key: "ai-journey", label: "AI Journey", icon: (c) => (
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+        <path d="M3 17c3-6 5-14 14-14" stroke={c} strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M14 3h3v3" stroke={c} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    )},
+    { key: "convert", label: "Convert", icon: (c) => (
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+        <path d="M6 10h8M14 10l-3 3M14 10l-3-3" stroke={c} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="10" cy="10" r="7" stroke={c} strokeWidth="1.5" />
+      </svg>
+    )},
+    { key: "analytics", label: "Analytics", icon: (c) => (
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+        <path d="M3 16l5-6 4 3 5-7" stroke={c} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    )},
+    { key: "workflows", label: "Workflows", icon: (c) => (
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+        <rect x="3" y="3" width="5" height="5" rx="1" stroke={c} strokeWidth="1.5" />
+        <rect x="12" y="3" width="5" height="5" rx="1" stroke={c} strokeWidth="1.5" />
+        <rect x="7.5" y="12" width="5" height="5" rx="1" stroke={c} strokeWidth="1.5" />
+        <path d="M5.5 8v2a2 2 0 002 2h5a2 2 0 002-2V8" stroke={c} strokeWidth="1.5" />
+        <path d="M10 12v0" stroke={c} strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+    )},
+    { key: "customers", label: "Customers", icon: (c) => (
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+        <circle cx="10" cy="7" r="3.5" stroke={c} strokeWidth="1.5" />
+        <path d="M3 17.5c0-3 3.1-5.5 7-5.5s7 2.5 7 5.5" stroke={c} strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+    )},
+    { key: "settings", label: "Settings", icon: (c) => (
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+        <path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" stroke={c} strokeWidth="1.3" />
+        <path d="M16.2 12.2l-.8-.4a6.3 6.3 0 000-3.6l.8-.4a.8.8 0 00.3-1.1l-.6-1a.8.8 0 00-1.1-.3l-.8.4a5.7 5.7 0 00-3.2-1.8V3.2a.8.8 0 00-.8-.8h-1a.8.8 0 00-.8.8v.8A5.7 5.7 0 005 5.8l-.8-.4a.8.8 0 00-1.1.3l-.6 1a.8.8 0 00.3 1.1l.8.4a6.3 6.3 0 000 3.6l-.8.4a.8.8 0 00-.3 1.1l.6 1a.8.8 0 001.1.3l.8-.4a5.7 5.7 0 003.2 1.8v.8c0 .4.3.8.8.8h1c.4 0 .8-.3.8-.8v-.8a5.7 5.7 0 003.2-1.8l.8.4a.8.8 0 001.1-.3l.6-1a.8.8 0 00-.3-1.1z" stroke={c} strokeWidth="1.1" />
+      </svg>
+    )},
+  ];
+
+  const resourceCards = [
+    {
+      image: asset("community.png"),
+      title: "Join the Gorgias Community",
+      description: "Connect with peers, share best practices, and get answers from experts.",
+      link: "Join the community",
+    },
+    {
+      image: asset("academy.png"),
+      title: "Learn with Gorgias Academy",
+      description: "Build your expertise with guided learning paths, certifications, and lessons.",
+      link: "Start learning",
+    },
+    {
+      image: asset("helpcenter.png"),
+      title: "Visit the Gorgias Help Center",
+      description: "Find clear answers, setup guides, and troubleshooting resources.",
+      link: "Save a seat",
+    },
+  ];
+
+  return (
+    <div style={{ width: "100vw", height: "100vh", display: "flex", background: "#fafafa", overflow: "hidden" }}>
+      {/* Gorgias App Sidebar */}
+      <div style={{
+        width: 210, minWidth: 210, background: "#fafafa",
+        display: "flex", flexDirection: "column", flexShrink: 0,
+        fontFamily: "'Inter', sans-serif",
+      }}>
+        {/* Top header */}
+        <div style={{ padding: "14px 12px 10px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+              <path d="M3 10L10 3l7 7" stroke="#1a1a1a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M5 8.5V16a1 1 0 001 1h3v-4h2v4h3a1 1 0 001-1V8.5" stroke="#1a1a1a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span style={{ fontSize: 15, fontWeight: 600, color: "#1a1a1a" }}>Home</span>
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+              <path d="M4 6l4 4 4-4" stroke="#1a1a1a" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <div style={{ width: 28, height: 28, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+              <svg width="17" height="17" viewBox="0 0 20 20" fill="none">
+                <path d="M10 3a5 5 0 0 0-5 5v3l-1.5 2h13L15 11V8a5 5 0 0 0-5-5z" stroke="#1a1a1a" strokeWidth="1.4" strokeLinejoin="round" />
+                <path d="M8 15a2 2 0 0 0 4 0" stroke="#1a1a1a" strokeWidth="1.4" strokeLinecap="round" />
+              </svg>
+            </div>
+            <div style={{ width: 28, height: 28, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+              <svg width="17" height="17" viewBox="0 0 20 20" fill="none">
+                <circle cx="9" cy="9" r="6" stroke="#1a1a1a" strokeWidth="1.6" />
+                <path d="M13.5 13.5L17 17" stroke="#1a1a1a" strokeWidth="1.6" strokeLinecap="round" />
+              </svg>
+            </div>
+            <div style={{ width: 28, height: 28, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+              <svg width="17" height="17" viewBox="0 0 20 20" fill="none">
+                <rect x="3" y="3" width="6" height="6" rx="1.5" stroke="#1a1a1a" strokeWidth="1.4" />
+                <rect x="11" y="3" width="6" height="6" rx="1.5" stroke="#1a1a1a" strokeWidth="1.4" />
+                <rect x="3" y="11" width="6" height="6" rx="1.5" stroke="#1a1a1a" strokeWidth="1.4" />
+                <rect x="11" y="11" width="6" height="6" rx="1.5" stroke="#1a1a1a" strokeWidth="1.4" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        {/* Nav items */}
+        <div style={{ padding: "4px 8px", display: "flex", flexDirection: "column", gap: 1 }}>
+          {sidebarNavItems.map((item) => (
+            <div key={item.key} style={{
+              display: "flex", alignItems: "center", gap: 10,
+              padding: "7px 10px", borderRadius: 8,
+              fontSize: 14, fontWeight: item.active ? 600 : 450,
+              color: "#1a1a1a",
+              background: item.active ? "#EBEBEB" : "transparent",
+              cursor: "pointer", transition: "background .15s",
+            }}
+              onMouseEnter={(e) => { if (!item.active) e.currentTarget.style.background = "#F0F0F0"; }}
+              onMouseLeave={(e) => { if (!item.active) e.currentTarget.style.background = item.active ? "#EBEBEB" : "transparent"; }}
+            >
+              <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {item.icon("#1a1a1a")}
+              </div>
+              <span>{item.label}</span>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ flex: 1 }} />
+
+        {/* Bottom bar */}
+        <div style={{
+          padding: "10px 12px 14px",
+          borderTop: "1px solid #E5E5E5",
+          display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
+        }}>
+          <div style={{
+            width: 32, height: 32, borderRadius: "50%", background: "#D8D8D8",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 11, fontWeight: 600, color: "#1a1a1a", flexShrink: 0, position: "relative",
+          }}>
+            JN
+            <div style={{
+              position: "absolute", bottom: -1, right: -1,
+              width: 10, height: 10, borderRadius: "50%",
+              background: "#34c759", border: "2px solid #fafafa",
+            }} />
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <div style={{ width: 30, height: 30, borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "background .15s" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#EBEBEB"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+            >
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                <path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" stroke="#1a1a1a" strokeWidth="1.3" />
+                <path d="M16.2 12.2l-.8-.4a6.3 6.3 0 000-3.6l.8-.4a.8.8 0 00.3-1.1l-.6-1a.8.8 0 00-1.1-.3l-.8.4a5.7 5.7 0 00-3.2-1.8V3.2a.8.8 0 00-.8-.8h-1a.8.8 0 00-.8.8v.8A5.7 5.7 0 005 5.8l-.8-.4a.8.8 0 00-1.1.3l-.6 1a.8.8 0 00.3 1.1l.8.4a6.3 6.3 0 000 3.6l-.8.4a.8.8 0 00-.3 1.1l.6 1a.8.8 0 001.1.3l.8-.4a5.7 5.7 0 003.2 1.8v.8c0 .4.3.8.8.8h1c.4 0 .8-.3.8-.8v-.8a5.7 5.7 0 003.2-1.8l.8.4a.8.8 0 001.1-.3l.6-1a.8.8 0 00-.3-1.1z" stroke="#1a1a1a" strokeWidth="1.1" />
+              </svg>
+            </div>
+            <div style={{ width: 30, height: 30, borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "background .15s" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#EBEBEB"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+            >
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                <circle cx="10" cy="10" r="7.5" stroke="#1a1a1a" strokeWidth="1.4" />
+                <path d="M8 7.8a2.2 2.2 0 014 1.2c0 1.5-2 1.5-2 3" stroke="#1a1a1a" strokeWidth="1.3" strokeLinecap="round" />
+                <circle cx="10" cy="14" r=".8" fill="#1a1a1a" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main content */}
+      <div style={{
+        flex: 1, display: "flex", flexDirection: "column", overflow: "auto",
+        background: "#ffffff", borderRadius: 16,
+        margin: 16,
+        border: "1px solid #EBECEF",
+        padding: "32px 40px",
+        fontFamily: "'Inter', sans-serif",
+      }}>
+        <h1 style={{
+          fontSize: 20, fontWeight: 600, color: "#1a1a1a", margin: "0 0 24px 0",
+          fontFamily: "'Inter', sans-serif",
+        }}>Home</h1>
+
+        {/* Setup banner */}
+        {!hideSetupBanner && (<div style={{
+          background: "#F4F5F7", borderRadius: 12, padding: "32px 36px",
+          display: "flex", alignItems: "center", gap: 32,
+          marginBottom: 32,
+        }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h2 style={{
+              fontSize: 18, fontWeight: 600, color: "#1a1a1a", margin: "0 0 12px 0",
+              fontFamily: "'Inter', sans-serif",
+            }}>Your setup is almost complete</h2>
+            <p style={{
+              fontSize: 14, lineHeight: "22px", color: "#1a1a1a", margin: "0 0 20px 0",
+              fontFamily: "'Inter', sans-serif", fontWeight: 400,
+            }}>
+              Allow Gaia, your Gorgias AI assistant, to guide you through your remaining setup steps to get the most out of Gorgias. It will help you connect your first channel, integrate with your ecommerce platform, and start automating support.
+            </p>
+            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+              <button
+                onClick={onContinueSetup}
+                style={{
+                  ...BTN_PRIMARY,
+                  height: 36, fontSize: 14, padding: "0 16px",
+                }}
+                onMouseEnter={(e) => { Object.assign(e.currentTarget.style, BTN_PRIMARY_HOVER); }}
+                onMouseLeave={(e) => { Object.assign(e.currentTarget.style, BTN_PRIMARY_LEAVE); }}
+              >Continue setup</button>
+              <span
+                onClick={onNotShopify}
+                style={{
+                  fontSize: 14, color: "#1a1a1a", cursor: "pointer",
+                  fontFamily: "'Inter', sans-serif", fontWeight: 400,
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.textDecoration = "underline"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.textDecoration = "none"; }}
+              >I&apos;m not on Shopify</span>
+            </div>
+          </div>
+          <img src={asset("home-illustration.png")} alt="" style={{
+            width: 180, height: "auto", flexShrink: 0, objectFit: "contain",
+          }} />
+        </div>)}
+
+        {/* Resources section */}
+        <h2 style={{
+          fontSize: 16, fontWeight: 600, color: "#1a1a1a", margin: "0 0 16px 0",
+          fontFamily: "'Inter', sans-serif",
+        }}>Make the most of Gorgias</h2>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
+          {resourceCards.map((card) => (
+            <div key={card.title} style={{
+              background: "#ffffff", borderRadius: 12,
+              border: "1px solid rgba(0,0,0,0.08)",
+              boxShadow: "0px 2px 20px 0px rgba(0,0,0,0.04)",
+              overflow: "hidden", cursor: "pointer",
+              transition: "box-shadow .15s",
+            }}
+              onMouseEnter={(e) => { e.currentTarget.style.boxShadow = "0px 4px 24px 0px rgba(0,0,0,0.08)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "0px 2px 20px 0px rgba(0,0,0,0.04)"; }}
+            >
+              <div style={{
+                height: 180, overflow: "hidden",
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <img src={card.image} alt="" style={{
+                  width: "100%", height: "100%", objectFit: "cover",
+                }} />
+              </div>
+              <div style={{ padding: "16px 20px 20px" }}>
+                <h3 style={{
+                  fontSize: 14, fontWeight: 600, color: "#1a1a1a",
+                  margin: "0 0 6px 0", fontFamily: "'Inter', sans-serif",
+                }}>{card.title}</h3>
+                <p style={{
+                  fontSize: 13, lineHeight: "18px", color: "#5C6370",
+                  margin: "0 0 12px 0", fontFamily: "'Inter', sans-serif", fontWeight: 400,
+                }}>{card.description}</p>
+                <span style={{
+                  fontSize: 13, color: "#1a1a1a", fontWeight: 400,
+                  fontFamily: "'Inter', sans-serif",
+                  textDecoration: "underline", cursor: "pointer",
+                }}>{card.link}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}

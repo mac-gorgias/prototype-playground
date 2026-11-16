@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>__TITLE__</title>
+<!-- Gaia Story — modular onboarding prototype.
+     Placeholders: __TITLE__, __KIT__ (../../gaia-kit in the playground repo, ./gaia-kit elsewhere),
+     __USE_CASE_IDS__ (goal-question options, in priority order), __START_AT__ (use case, "use-case/module", or delete). -->
+<script type="application/json" id="gaia-story-meta">
+{
+  "mode": "new-use-case | new-module | change",
+  "useCases": ["__USE_CASE_ID__"],
+  "modules": ["__MODULE_ID__"],
+  "startAt": "__START_AT__",
+  "scenario": "new",
+  "kitVersion": "v1",
+  "brand": "urbanstems",
+  "forkedFrom": null,
+  "notes": "__ONE_LINE_PURPOSE__"
+}
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+<script src="__KIT__/v1/gaia-kit.core.js"></script>
+<script src="__KIT__/v1/gaia-kit.screens.js"></script>
+<script src="__KIT__/v1/gaia-kit.panels.js"></script>
+<script src="__KIT__/v1/gaia-kit.onboarding-cards.js"></script>
+<script src="__KIT__/v1/brands/urbanstems.js"></script>
+<!-- Modules: every module the use cases list AND their requirements (pin versions by filename). -->
+<script src="__KIT__/modules/__MODULE_ID__.v1.js"></script>
+<!-- Use cases -->
+<script src="__KIT__/use-cases/__USE_CASE_ID__.v1.js"></script>
+<script src="__KIT__/stories/modular-onboarding.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script>
+  GaiaKit.mount({
+    brand: GaiaBrands.urbanstems,
+    story: GaiaStories.modularOnboarding({ useCases: [__USE_CASE_IDS__], title: "__TITLE__" }),
+    startAt: "__START_AT__", // delete to play from signup; "goal" starts at the goal question
+  });
+</script>
+</body>
+</html>

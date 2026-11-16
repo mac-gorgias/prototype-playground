@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Example — Returns mini-story embedded in onboarding</title>
+<script type="application/json" id="gaia-story-meta">
+{
+  "mode": "new-embedded",
+  "story": "returns-window",
+  "kitVersion": "v1",
+  "brand": "urbanstems",
+  "anchor": { "after": "skills" },
+  "startAt": "returns",
+  "modules": ["core", "screens", "panels", "onboarding-cards"],
+  "forkedFrom": null,
+  "notes": "Example: a use case from gaia-kit/stories spliced into the onboarding after the skills chapter. Starts at the insertion point; earlier chapters are pre-filled."
+}
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+<script src="../../v1/gaia-kit.core.js"></script>
+<script src="../../v1/gaia-kit.screens.js"></script>
+<script src="../../v1/gaia-kit.panels.js"></script>
+<script src="../../v1/gaia-kit.onboarding-cards.js"></script>
+<script src="../../v1/brands/urbanstems.js"></script>
+<script src="../../v1/stories/onboarding.js"></script>
+<script src="../../stories/returns-window.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script>
+  const returns = GaiaStories["returns-window"];
+  GaiaKit.mount({
+    brand: GaiaBrands.urbanstems,
+    story: { ...GaiaKit.compose(GaiaStories.onboarding, [{ after: "skills", steps: returns.steps }]), title: "Onboarding + Returns skill" },
+    startAt: "returns", // remove to play the full onboarding from the top
+  });
+</script>
+</body>
+</html>
