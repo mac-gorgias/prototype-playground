@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>__TITLE__</title>
+<!-- Gaia Story — standalone use case. Placeholders: __TITLE__, __KIT__ (../../gaia-kit in the playground repo, ./gaia-kit elsewhere). -->
+<script type="application/json" id="gaia-story-meta">
+{
+  "mode": "new-standalone",
+  "story": "inline",
+  "kitVersion": "v1",
+  "brand": "urbanstems",
+  "anchor": null,
+  "startAt": null,
+  "modules": ["core"],
+  "forkedFrom": null,
+  "notes": "__ONE_LINE_PURPOSE__"
+}
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+<!-- Only if the story has a `custom` JSX step (then also change the story script to type="text/babel"): -->
+<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script> -->
+<script src="__KIT__/v1/gaia-kit.core.js"></script>
+<!-- Optional modules — keep only what the intake asked for: -->
+<!-- <script src="__KIT__/v1/gaia-kit.screens.js"></script>          signup / intro / closing / home -->
+<!-- <script src="__KIT__/v1/gaia-kit.panels.js"></script>           Preview / Edit skill panels -->
+<!-- <script src="__KIT__/v1/gaia-kit.onboarding-cards.js"></script> ToV, skill list, recap, forwarding/DNS cards -->
+<script src="__KIT__/v1/brands/urbanstems.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script>
+  const story = {
+    title: "__TITLE__",
+    // checklist: [{ key: "step1", label: "First thing" }],
+    steps: [
+      { chapter: "start", title: "Start" },
+      { type: "ai", delay: 500, text: "First Gaia line for {{brand.name}}." },
+      {
+        type: "choice", id: "firstChoice",
+        title: "Your first question?",
+        options: [
+          { key: "a", title: "Option A", badge: "Recommended" },
+          { key: "b", title: "Option B", then: [{ type: "ai", text: "Only when B is picked." }] },
+        ],
+      },
+      { type: "confirm", label: "Done: {{answers.firstChoiceText}}" },
+      { type: "end" },
+    ],
+  };
+  GaiaKit.mount({ story, brand: GaiaBrands.urbanstems });
+</script>
+</body>
+</html>

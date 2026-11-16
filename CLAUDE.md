@@ -3,7 +3,7 @@
 A static HTML prototype gallery for the Gorgias Design team, hosted on GitHub Pages. No build step, no backend — just files, a JSON manifest, and git.
 
 **Live dashboard:** https://mac-gorgias.github.io/prototype-playground
-**Local repo:** `/Users/mac/Dev/prototype-playground`
+**Local repo:** your own clone — `git rev-parse --show-toplevel` (Mac's is `/Users/mac/Dev/prototype-playground`)
 **GitHub repo:** https://github.com/mac-gorgias/prototype-playground
 
 ---
@@ -73,7 +73,7 @@ The `index.html` dashboard uses these CSS variables — keep any dashboard edits
 ## Git workflow
 
 ```bash
-cd /Users/mac/Dev/prototype-playground
+cd "$(git rev-parse --show-toplevel)"
 git pull --rebase
 git add -A
 git commit -m "add: Prototype Name"   # or "update: ..." / "fix: ..."
@@ -91,6 +91,19 @@ GitHub Pages deploys automatically from the `main` branch root. Takes ~1–2 min
 | Voice Onboarding | `voice-onboarding` | TTS-guided onboarding |
 | Conversational Intake | `conversational-intake` | Cinematic multi-step intake |
 | Intake — AI Agent Trial | `intake-ai-agent-trial` | Scoped to AI Agent trial users, uses UrbanStems brand |
+
+## Gaia Story Kit (new conversational prototypes)
+
+New Gaia conversation prototypes are built with the shared kit in `gaia-kit/` and the `gaia-story` skill (`.claude/skills/gaia-story/`). Don't copy the 7,000-line intake files anymore.
+
+- `gaia-kit/v1/` is the engine + UI, extracted from `intent-enablement-email-forwarding`. It keeps the 740px thread, 8ms typing, stick-to-bottom scroll, Axiom cards and 500px panels. **Never edit it by hand**: change `gaia-kit/src/`, run `gaia-kit/build.sh`, and put breaking changes in `v2/`.
+- `gaia-kit/v1/stories/onboarding.js` holds the base onboarding as chapters: signup, intro, welcome, platform, research, tone, skills, channels, forwarding, domain, recap, closing.
+- `gaia-kit/stories/` holds shared stories (including `modular-onboarding.js`, the goal-question root). Add new files there and never modify existing ones.
+- **Modular onboarding** (Notion: *Make onboarding modular*): modules live in `gaia-kit/modules/<id>.v<N>.js` and use cases in `gaia-kit/use-cases/`. A planner builds the path from the goal question. `prototypes/gaia-modular-onboarding/` is milestone 1 (Automate support + Consolidate channels). Modules can switch Gaia to a sidebar with a product placeholder in the middle. Reference: `.claude/skills/gaia-story/reference/modules.md`.
+- Every kit prototype has a `<script id="gaia-story-meta">` block with its mode, anchor, start point and modules. The skill reads it when making the next version.
+- `prototypes/gaia-onboarding-kit/` is the full onboarding running on the kit, kept for parity checks.
+- `?chapter=<name>` on any kit prototype starts at that chapter.
+- `gaia-kit/export-skill.sh` builds a zip of the skill and kit for people who don't use this repo.
 
 ## Password-protecting a prototype
 

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Gaia onboarding — modular (M1)</title>
+<script type="application/json" id="gaia-story-meta">
+{
+  "mode": "modular",
+  "story": "modular-onboarding",
+  "useCases": ["automate-support", "consolidate-channels"],
+  "kitVersion": "v1",
+  "brand": "urbanstems",
+  "startAt": null,
+  "modules": ["core", "screens", "panels", "onboarding-cards"],
+  "forkedFrom": "prototypes/gaia-onboarding-kit",
+  "notes": "Milestone 1: goal question → Automate support or Consolidate channels, planned from modules, with the path to AI Agent offered at the end. Consolidate channels modules are skeletons pending module specs."
+}
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+<script src="../../gaia-kit/v1/gaia-kit.core.js"></script>
+<script src="../../gaia-kit/v1/gaia-kit.screens.js"></script>
+<script src="../../gaia-kit/v1/gaia-kit.panels.js"></script>
+<script src="../../gaia-kit/v1/gaia-kit.onboarding-cards.js"></script>
+<script src="../../gaia-kit/v1/brands/urbanstems.js"></script>
+<!-- Modules (pin versions by filename) -->
+<script src="../../gaia-kit/modules/connect-ecommerce-platform.v1.js"></script>
+<script src="../../gaia-kit/modules/generate-tone-of-voice.v1.js"></script>
+<script src="../../gaia-kit/modules/connect-email.v1.js"></script>
+<script src="../../gaia-kit/modules/configure-ai-agent-support.v1.js"></script>
+<script src="../../gaia-kit/modules/connect-social.v1.js"></script>
+<script src="../../gaia-kit/modules/install-chat.v1.js"></script>
+<script src="../../gaia-kit/modules/configure-assignment.v1.js"></script>
+<script src="../../gaia-kit/modules/configure-assignment-notification.v1.js"></script>
+<script src="../../gaia-kit/modules/configure-auto-closing.v1.js"></script>
+<script src="../../gaia-kit/modules/inbox-tour.v1.js"></script>
+<script src="../../gaia-kit/modules/ticket-tour.v1.js"></script>
+<!-- Use cases -->
+<script src="../../gaia-kit/use-cases/automate-support.v1.js"></script>
+<script src="../../gaia-kit/use-cases/consolidate-channels.v1.js"></script>
+<script src="../../gaia-kit/stories/modular-onboarding.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script>
+  GaiaKit.mount({ story: GaiaStories["modular-onboarding"], brand: GaiaBrands.urbanstems });
+</script>
+</body>
+</html>

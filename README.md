@@ -85,6 +85,10 @@ If other designers want to publish too:
 
 ---
 
+## Building a Gaia conversation prototype
+
+Use the **Gaia Story Kit** (`gaia-kit/`) with the `gaia-story` Claude Code skill. Ask Claude something like *"create a Gaia use case for returns, embedded after the skills chapter"*. The skill asks where the use case goes, then scaffolds `prototypes/<slug>/` with the same UI and timing as the onboarding. See [`gaia-kit/README.md`](gaia-kit/README.md).
+
 ## Troubleshooting
 
 **Merge conflicts on prototypes.json**

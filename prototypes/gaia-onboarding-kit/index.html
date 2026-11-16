@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Gaia onboarding (Story Kit)</title>
+<script type="application/json" id="gaia-story-meta">
+{
+  "mode": "base",
+  "story": "onboarding",
+  "kitVersion": "v1",
+  "brand": "urbanstems",
+  "anchor": null,
+  "startAt": null,
+  "modules": ["core", "screens", "panels", "onboarding-cards"],
+  "forkedFrom": "prototypes/intent-enablement-email-forwarding (2026-11-10)",
+  "notes": "Reference build: the full onboarding re-run through gaia-kit. Use it to check parity with the source prototype."
+}
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+<script src="../../gaia-kit/v1/gaia-kit.core.js"></script>
+<script src="../../gaia-kit/v1/gaia-kit.screens.js"></script>
+<script src="../../gaia-kit/v1/gaia-kit.panels.js"></script>
+<script src="../../gaia-kit/v1/gaia-kit.onboarding-cards.js"></script>
+<script src="../../gaia-kit/v1/brands/urbanstems.js"></script>
+<script src="../../gaia-kit/v1/stories/onboarding.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script>
+  GaiaKit.mount({ story: GaiaStories.onboarding, brand: GaiaBrands.urbanstems });
+</script>
+</body>
+</html>

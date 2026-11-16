@@ -4,7 +4,7 @@ You are helping a designer publish an HTML prototype to the Prototype Playground
 
 ## What the user will provide
 
-1. **The HTML file path** — where the prototype file is on their computer
+1. **The HTML file path** — where the prototype file is on their computer, or a folder that already lives in `prototypes/<slug>/` (e.g. one scaffolded by the `gaia-story` skill)
 2. **The prototype name** — a short, descriptive name
 3. **A screenshot** (optional) — a preview image for the dashboard card
 
@@ -24,26 +24,36 @@ If the user says something like "use the latest screenshot" or "grab my screensh
 
 ## Playground location
 
-- Repo: `/Users/mac/Dev/prototype-playground`
-- Prototypes folder: `/Users/mac/Dev/prototype-playground/prototypes/`
-- Images folder: `/Users/mac/Dev/prototype-playground/images/`
-- Manifest: `/Users/mac/Dev/prototype-playground/prototypes.json`
+Work from the user's own clone of the repo — never assume a fixed path. Find the root with:
+
+```bash
+REPO="$(git rev-parse --show-toplevel)"   # run from inside the clone
+```
+
+- Prototypes folder: `$REPO/prototypes/`
+- Images folder: `$REPO/images/`
+- Manifest: `$REPO/prototypes.json`
 - Live dashboard: `https://mac-gorgias.github.io/prototype-playground`
+
+If the current directory isn't inside a clone of `mac-gorgias/prototype-playground`, ask where their clone is.
+Publishing pushes to the GitHub repo, so the user needs push access (ask Mac to add them as a collaborator).
 
 ## Steps to publish
 
 1. **Generate a folder slug** from the prototype name (lowercase, hyphens, no special characters).
    Example: "AI Agent Onboarding V2" → `ai-agent-onboarding-v2`
 
-2. **Create the prototype folder and copy the HTML file**:
+2. **Create the prototype folder and copy the HTML file** (skip if it's already `$REPO/prototypes/<slug>/index.html`):
 ```bash
-   mkdir -p /Users/mac/Dev/prototype-playground/prototypes/<slug>
-   cp "<SOURCE_FILE>" /Users/mac/Dev/prototype-playground/prototypes/<slug>/index.html
+   mkdir -p "$REPO/prototypes/<slug>"
+   cp "<SOURCE_FILE>" "$REPO/prototypes/<slug>/index.html"
 ```
+   Gaia Story Kit prototypes load shared files from `gaia-kit/` — make sure any new files they reference
+   (`gaia-kit/modules/*`, `gaia-kit/use-cases/*`, `gaia-kit/stories/*`) are committed too.
 
 3. **If a screenshot is provided or found**, copy it to the images folder:
 ```bash
-   cp "<SCREENSHOT_PATH>" /Users/mac/Dev/prototype-playground/images/<slug>.png
+   cp "<SCREENSHOT_PATH>" "$REPO/images/<slug>.png"
 ```
    If the source image is .jpg, .jpeg, or .webp, keep that extension instead.
 
@@ -51,7 +61,7 @@ If the user says something like "use the latest screenshot" or "grab my screensh
 ```json
    {
      "name": "<PROTOTYPE_NAME>",
-     "author": "Mac",
+     "author": "<AUTHOR — first name from `git config user.name`>",
      "date": "<TODAY YYYY-MM-DD>",
      "description": "<DESCRIPTION>",
      "file": "<slug>/index.html",
@@ -61,14 +71,16 @@ If the user says something like "use the latest screenshot" or "grab my screensh
    Only include `"image"` if a screenshot was provided.
    Write the updated array back to prototypes.json with proper formatting.
 
-5. **Push to GitHub**:
+5. **Push to GitHub** (GitHub Pages deploys from `main`):
 ```bash
-   cd /Users/mac/Dev/prototype-playground
+   cd "$REPO"
    git pull --rebase
    git add -A
    git commit -m "add: <PROTOTYPE_NAME>"
    git push
 ```
+   If the user is on a feature branch (e.g. a Conductor workspace), push the branch and open a PR to
+   `main` instead — the prototype goes live when it's merged.
 
 6. **Share the links**:
    - Prototype: `https://mac-gorgias.github.io/prototype-playground/viewer.html?file=<slug>/index.html`

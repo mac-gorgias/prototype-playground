@@ -1,2 +1,5 @@
-.claude/
+.claude/*
+!.claude/skills/
+!.claude/commands/
 .DS_Store
+gaia-kit/dist/

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Example — Standalone Gaia story</title>
+<script type="application/json" id="gaia-story-meta">
+{
+  "mode": "new-standalone",
+  "story": "inline",
+  "kitVersion": "v1",
+  "brand": "urbanstems",
+  "anchor": null,
+  "startAt": null,
+  "modules": ["core"],
+  "forkedFrom": null,
+  "notes": "Example: lightest possible story — core + brand only, plus one custom JSX step (needs Babel)."
+}
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+<!-- Babel is only needed because this story has a `custom` step written in JSX. Drop it if you don't. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<script src="../../v1/gaia-kit.core.js"></script>
+<script src="../../v1/brands/urbanstems.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+  const { AxButton, THREAD_TEXT_STYLE } = GaiaKit;
+
+  const story = {
+    title: "Holiday hours",
+    checklist: [
+      { key: "hours", label: "Set holiday hours" },
+      { key: "message", label: "Choose the away message" },
+    ],
+    steps: [
+      { chapter: "intro", title: "Intro" },
+      { type: "ai", delay: 500, text: "Black Friday is three weeks out. Let's make sure AI Agent knows your holiday hours before the rush." },
+      { type: "research", sources: [
+        { favicon: "urbanstems.com", title: "Checking urbanstems.com for holiday notices" },
+        { favicon: "shopify.com", title: "Reviewing last year's ticket volume" },
+      ], summary: "Reviewed 2 sources for {{brand.name}}" },
+
+      { chapter: "hours", title: "Hours" },
+      { type: "ai", text: "Last year, tickets tripled on the Monday after Thanksgiving. Most came in after your team logged off." },
+      {
+        type: "choice", id: "coverage", title: "When should AI Agent cover alone?",
+        options: [
+          { key: "after-hours", title: "Outside business hours", badge: "Recommended" },
+          { key: "always", title: "All day, with handover when unsure" },
+          { key: "closed-days", title: "Only on days you're closed" },
+        ],
+      },
+      { type: "checklist", complete: "hours" },
+
+      { chapter: "message", title: "Away message" },
+      { type: "ai", text: "Here's the note customers will see when your team is away. Approve it or ask for a change." },
+      {
+        type: "custom", id: "awayMessage", await: true,
+        render: ({ resolve, resolved }) => (
+          <div style={{ border: "1px solid rgba(0,0,0,0.08)", borderRadius: 8, padding: "12px 16px", marginBottom: 16, boxShadow: "0px 2px 20px 0px rgba(0,0,0,0.04)" }}>
+            <div style={{ ...THREAD_TEXT_STYLE, marginBottom: 12 }}>
+              "Thanks for reaching out! Our team is off for the holiday, but I can help with orders, tracking, and returns right now."
+            </div>
+            {!resolved && (
+              <div style={{ display: "flex", gap: 8 }}>
+                <AxButton onClick={() => resolve("approve")}>Looks good</AxButton>
+                <AxButton variant="secondary" onClick={() => resolve("edit")}>Change it</AxButton>
+              </div>
+            )}
+          </div>
+        ),
+        on: {
+          approve: [{ type: "user", text: "Looks good" }],
+          edit: [
+            { type: "user", text: "Change it" },
+            { type: "input", id: "awayEdit", placeholder: "What should it say instead?" },
+            { type: "ai", text: "Updated. I'll use your version." },
+          ],
+        },
+      },
+      { type: "checklist", complete: "message" },
+      { type: "confirm", label: "Holiday hours ready" },
+      { type: "ai", text: "You're set. AI Agent will cover {{answers.coverageText}} from Nov 27 to Dec 1." },
+      { type: "end" },
+    ],
+  };
+
+  GaiaKit.mount({ story, brand: GaiaBrands.urbanstems });
+</script>
+</body>
+</html>
