@@ -246,7 +246,7 @@
     typeMs: 8,
     // GaiaTypedLine default (newest refinement)
     legacyTypeMs: 10,
-    // original onboarding narration speed (welcome, skills, channels, recap)
+    // unused: narration always types at typeMs (step.speed is ignored)
     panelClose: 180,
     // side panel slide-out before unmount
     introClose: 500,
@@ -255,7 +255,9 @@
     researchTransitionMs: 300,
     researchSettleMs: 400,
     freeChatReplyMs: 1e3,
-    editChatReplyMs: 800
+    editChatReplyMs: 800,
+    afterUserMs: 650
+    // min gap between a user bubble and the next thing Gaia shows (bubble floats in over .35s)
   };
   const brand = () => GaiaKit.brand || {};
   const asset = (name) => ASSET_BASE + name;
@@ -1186,6 +1188,7 @@
       this.target = null;
       this.seq = 0;
       this.epoch = (this.epoch || 0) + 1;
+      this.userAt = 0;
       const sc = this.scenario || {};
       this.done = new Set(sc.done || []);
       Object.assign(this.answers, sc.answers || {});
@@ -1254,6 +1257,7 @@
     push(item) {
       item.id = this.epoch + ":" + ++this.seq;
       if (item.instant === void 0) item.instant = this.instant;
+      if (item.kind === "user" && !this.instant) this.userAt = Date.now();
       this.items.push(item);
       return item;
     }
@@ -1336,7 +1340,8 @@
             this.frameAdvance();
             continue;
           }
-          const delay = step.delay ? resolveValue(step.delay, ctx) : 0;
+          let delay = step.delay ? resolveValue(step.delay, ctx) : 0;
+          if (this.userAt && SHOWS_AFTER_USER.has(step.type)) delay = Math.max(delay, TIMING.afterUserMs - (Date.now() - this.userAt));
           if (delay && !this.instant && !this.delayPassed) {
             this.waiting = { kind: "timer" };
             this.later(() => {
@@ -1489,9 +1494,9 @@
       this.push({ kind: "user", text });
       this.emit();
       this.later(() => {
-        this.push({ kind: "ai", text: reply, instant: true });
+        this.push({ kind: "ai", text: reply, speed: TIMING.typeMs, instant: false });
         this.emit();
-      }, ms);
+      }, Math.max(ms || 0, TIMING.afterUserMs));
     }
     /* Dev menu: rebuild the story instantly up to `target`, then continue live. */
     jump(target) {
@@ -1504,15 +1509,16 @@
       this.run();
     }
   }
+  const SHOWS_AFTER_USER = /* @__PURE__ */ new Set(["ai", "confirm", "verify", "research", "await", "choice", "multi", "input", "card", "custom", "connect", "panel", "screen", "end"]);
   registerStep("marker", () => NEXT);
   registerStep("label", () => NEXT);
   registerStep("ai", (step, m, ctx) => {
     if (step.lines) {
       const lines = resolveValue(step.lines, ctx);
-      m.enter(lines.map((text) => ({ type: "ai", text, speed: step.speed, tag: step.tag })));
+      m.enter(lines.map((text) => ({ type: "ai", text, tag: step.tag })));
       return JUMPED;
     }
-    const item = m.push({ kind: "ai", text: resolveValue(step.text, ctx), speed: step.speed || TIMING.typeMs, tag: step.tag });
+    const item = m.push({ kind: "ai", text: resolveValue(step.text, ctx), speed: TIMING.typeMs, tag: step.tag });
     if (m.instant || step.typed === false) {
       item.instant = true;
       return NEXT;
@@ -2275,20 +2281,7 @@
         "Finish later"
       ),
       /* @__PURE__ */ React.createElement("div", { style: { flex: 1, position: "relative", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", bottom: 0, left: 0, right: 0, height: LAYOUT.fadeHeight, background: "linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.72) 100%)", zIndex: 2, pointerEvents: "none" } }), /* @__PURE__ */ React.createElement("div", { ...scroll.scrollerProps, style: { height: "100%", overflowY: "auto", overflowAnchor: "none", padding: LAYOUT.threadPadding } }, /* @__PURE__ */ React.createElement("div", { ref: scroll.contentRef, style: { maxWidth: LAYOUT.threadMaxWidth, margin: "0 auto", padding: "0 " + LAYOUT.columnPadX + "px" } }, m.items.map((item) => /* @__PURE__ */ React.createElement(ThreadItem, { key: item.id, item, m, seenTerms }))))),
-      !closingShown && /* @__PURE__ */ React.createElement("div", { onClick: (e) => e.stopPropagation(), style: { padding: LAYOUT.composerPadding, position: "relative", background: "#ffffff" } }, /* @__PURE__ */ React.createElement("div", { style: { maxWidth: LAYOUT.threadMaxWidth, margin: "0 auto" } }, m.canSkip() && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "flex-end", marginBottom: 8 } }, /* @__PURE__ */ React.createElement(
-        "span",
-        {
-          onClick: () => m.skipModule(),
-          style: { fontSize: 13, color: TEXT_MUTED, cursor: "pointer", fontFamily: "'Inter', sans-serif" },
-          onMouseEnter: (e) => {
-            e.currentTarget.style.color = "#1E242E";
-          },
-          onMouseLeave: (e) => {
-            e.currentTarget.style.color = TEXT_MUTED;
-          }
-        },
-        "Skip for now"
-      )), /* @__PURE__ */ React.createElement(Composer, { m, story }))),
+      !closingShown && /* @__PURE__ */ React.createElement("div", { onClick: (e) => e.stopPropagation(), style: { padding: LAYOUT.composerPadding, position: "relative", background: "#ffffff" } }, /* @__PURE__ */ React.createElement("div", { style: { maxWidth: LAYOUT.threadMaxWidth, margin: "0 auto" } }, /* @__PURE__ */ React.createElement(Composer, { m, story }))),
       closingShown && GaiaKit.ClosingScreen && /* @__PURE__ */ React.createElement(ClosingScreenSlot, { props: m.overlay.props })
     ), showChecklist && /* @__PURE__ */ React.createElement(FloatingChecklist, { key: m.plan ? m.plan.key : "story", items: checklistItems, checklist: checklistState, title: m.plan && m.plan.useCase && m.plan.useCase.title || story.checklistTitle }), panel && PanelComponent && /* @__PURE__ */ React.createElement(
       PanelComponent,
@@ -2388,7 +2381,7 @@
   const MODULES = {};
   const USE_CASES = {};
   function defineModule(def) {
-    const mod = { version: 1, ui: "full", skippable: true, requires: [], unlocks: [], steps: [], ...def };
+    const mod = { version: 1, ui: "full", requires: [], unlocks: [], steps: [], ...def };
     if (!mod.id) throw new Error("[gaia-kit] defineModule needs an id");
     MODULES[mod.id + "@" + mod.version] = mod;
     return mod;
@@ -2505,8 +2498,7 @@
       key: plan.key,
       useCase: plan.useCase,
       modules: plan.visible.map((x) => x.id),
-      silent: plan.silent.map((x) => x.id),
-      skipped: []
+      silent: plan.silent.map((x) => x.id)
     };
     m.log("plan", plan.key, plan.visible.map((x) => x.name).join(" \u2192 ") + (plan.silent.length ? "  (silent: " + plan.silent.map((x) => x.name).join(", ") + ")" : ""));
     m.enter(planSteps(plan, step, m));
@@ -2554,6 +2546,17 @@
     const sources = resolveValue(step.sources, ctx) || m.brand.researchSources || [];
     const summary = resolveValue(step.summary, ctx) || "Reviewed " + sources.length + " sources for " + (m.brand.name || "your store");
     if (step.show === false && done) return NEXT;
+    if (done && step.replay && !m.instant) {
+      const replay = m.push({ kind: "research", sources, summary, tag: step.tag });
+      let replayed = false;
+      replay.onDone = () => {
+        if (replayed) return;
+        replayed = true;
+        m.advance();
+      };
+      m.waiting = { kind: "research" };
+      return WAIT;
+    }
     const item = m.push({ kind: "research", sources, summary, controlled: true, done, tag: step.tag });
     if (done || m.instant) {
       item.instant = true;
@@ -2593,21 +2596,9 @@
   registerStep("next-action", (step, m, ctx) => {
     m.module = null;
     m.ui = { mode: "full", surface: null };
-    const plan = m.plan || { modules: [], skipped: [] };
+    const plan = m.plan || { modules: [] };
     const steps = [];
-    const skipped = step.skipResume ? [] : plan.skipped.filter((id) => !m.done.has(id));
-    if (skipped.length) {
-      const mod = getModule(skipped[0]);
-      steps.push({
-        type: "choice",
-        freeform: false,
-        title: "Want to finish \u201C" + mod.name + "\u201D now?",
-        options: [
-          { key: "yes", title: "Yes, let's do it", then: [{ type: "plan", modules: [mod.id] }] },
-          { key: "no", title: "Not now", then: [{ type: "next-action", skipResume: true }] }
-        ]
-      });
-    } else if (plan.useCase && plan.useCase.next) {
+    if (plan.useCase && plan.useCase.next) {
       steps.push(...resolveValue(plan.useCase.next, ctx));
     } else {
       const offer = plan.modules.filter((id) => m.done.has(id)).flatMap((id) => getModule(id).unlocks || []).map(getModule).find((mod) => mod && !m.done.has(mod.id) && mod.offer && !plan.modules.includes(mod.id) && (mod.offerable ? mod.offerable(m.makeCtx()) : !mod.available || mod.available(m.makeCtx())));
@@ -2662,23 +2653,6 @@
         if (!mod || this.bg[id] || this.done.has(id)) return;
         if ((mod.requires || []).every((r) => this.done.has((getModule(r) || {}).id || r))) this.startBackground(mod);
       });
-    },
-    canSkip() {
-      if (!this.module || this.story.allowSkip === false) return false;
-      const mod = getModule(this.module);
-      const w = this.waiting || {};
-      return !!mod && mod.skippable !== false && ["choice", "multi", "input", "card"].includes(w.kind) && !w.hold;
-    },
-    skipModule() {
-      const id = this.module;
-      if (!id) return;
-      if (this.plan && !this.plan.skipped.includes(id)) this.plan.skipped.push(id);
-      this.log("skip", id, (getModule(id) || {}).name);
-      this.interrupt([
-        { type: "user", text: "Skip for now" },
-        { type: "ai", text: "No problem, we can come back to it later." },
-        { type: "goto", to: "__end:" + id }
-      ]);
     },
     setScenario(scenario) {
       this.scenario = scenario || null;
@@ -2737,7 +2711,7 @@
       animation: "fadeInUp .35s ease-out both"
     } }, "Highlighted: ", s.highlight)));
   }
-  Object.assign(GaiaKit, { ACCENT, ACCENT_LIGHT, BG, CARD_BG, BORDER, TEXT, TEXT_MUTED, SURFACE, BTN_BASE, BTN_MD, BTN_SM, BTN_PRIMARY, BTN_PRIMARY_HOVER, BTN_PRIMARY_LEAVE, BTN_SECONDARY, BTN_SECONDARY_HOVER, BTN_SECONDARY_LEAVE, BTN_TERTIARY, BTN_TERTIARY_HOVER, BTN_TERTIARY_LEAVE, BTN_SECONDARY_SM, BTN_TERTIARY_SM, THREAD_TEXT_STYLE, MONO_FONT, LAYOUT, TIMING, brand, asset, AxButton, AxTag, GLOSSARY_TERMS_BASE, GlossaryTip, renderThreadText, copyToClipboard, useCopied, CopyGlyph, CheckGlyph, UserBubble, CopyChip, VideoPlaceholder, SupportLine, ChatInputBar, QuestionCard, SkillPickerCard, ConfirmationRow, ConnectCard, CONNECT_PILL_ICON_SHOPIFY, CONNECT_PILL_ICON_EMAIL, GaiaTypedLine, GaiaTypedSequence, ResearchRow, YesNoCard, ConnectStepCard, getPath, resolveValue, childLists, stepsContain, listChapters, registerStep, StoryMachine, devPick, cloneSteps, findChapters, compose, chaptersOf, useStickToBottom, DevMenu, FloatingChecklist, resolveComponent, CardItem, ThreadItem, waitKey, Composer, GaiaApp, EventsPanel, WelcomeIntroGate, ClosingScreenSlot, GaiaErrorBoundary, mount, defineModule, getModule, defineUseCase, getUseCase, moduleKey, goalQuestion, computePlan, moduleSteps, planSteps, PlanCard, SurfacePlaceholder });
+  Object.assign(GaiaKit, { ACCENT, ACCENT_LIGHT, BG, CARD_BG, BORDER, TEXT, TEXT_MUTED, SURFACE, BTN_BASE, BTN_MD, BTN_SM, BTN_PRIMARY, BTN_PRIMARY_HOVER, BTN_PRIMARY_LEAVE, BTN_SECONDARY, BTN_SECONDARY_HOVER, BTN_SECONDARY_LEAVE, BTN_TERTIARY, BTN_TERTIARY_HOVER, BTN_TERTIARY_LEAVE, BTN_SECONDARY_SM, BTN_TERTIARY_SM, THREAD_TEXT_STYLE, MONO_FONT, LAYOUT, TIMING, brand, asset, AxButton, AxTag, GLOSSARY_TERMS_BASE, GlossaryTip, renderThreadText, copyToClipboard, useCopied, CopyGlyph, CheckGlyph, UserBubble, CopyChip, VideoPlaceholder, SupportLine, ChatInputBar, QuestionCard, SkillPickerCard, ConfirmationRow, ConnectCard, CONNECT_PILL_ICON_SHOPIFY, CONNECT_PILL_ICON_EMAIL, GaiaTypedLine, GaiaTypedSequence, ResearchRow, YesNoCard, ConnectStepCard, getPath, resolveValue, childLists, stepsContain, listChapters, registerStep, StoryMachine, SHOWS_AFTER_USER, devPick, cloneSteps, findChapters, compose, chaptersOf, useStickToBottom, DevMenu, FloatingChecklist, resolveComponent, CardItem, ThreadItem, waitKey, Composer, GaiaApp, EventsPanel, WelcomeIntroGate, ClosingScreenSlot, GaiaErrorBoundary, mount, defineModule, getModule, defineUseCase, getUseCase, moduleKey, goalQuestion, computePlan, moduleSteps, planSteps, PlanCard, SurfacePlaceholder });
   GaiaKit.version = "1.0.0";
   GaiaKit.modules = (GaiaKit.modules || []).concat("core");
 })();

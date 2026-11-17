@@ -68,7 +68,7 @@ const LAYOUT = {
 /* ─── Timing tokens ─── */
 const TIMING = {
   typeMs: 8,            // GaiaTypedLine default (newest refinement)
-  legacyTypeMs: 10,     // original onboarding narration speed (welcome, skills, channels, recap)
+  legacyTypeMs: 10,     // unused: narration always types at typeMs (step.speed is ignored)
   panelClose: 180,      // side panel slide-out before unmount
   introClose: 500,      // WelcomeIntro fade-out before the thread starts
   researchSourceMs: 1800,
@@ -76,6 +76,7 @@ const TIMING = {
   researchSettleMs: 400,
   freeChatReplyMs: 1000,
   editChatReplyMs: 800,
+  afterUserMs: 650,     // min gap between a user bubble and the next thing Gaia shows (bubble floats in over .35s)
 };
 
 /* ─── Brand + asset helpers ─── */

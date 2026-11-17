@@ -11,7 +11,7 @@ const MODULES = {};   // "id@version" → module
 const USE_CASES = {};
 
 function defineModule(def) {
-  const mod = { version: 1, ui: "full", skippable: true, requires: [], unlocks: [], steps: [], ...def };
+  const mod = { version: 1, ui: "full", requires: [], unlocks: [], steps: [], ...def };
   if (!mod.id) throw new Error("[gaia-kit] defineModule needs an id");
   MODULES[mod.id + "@" + mod.version] = mod;
   return mod;
@@ -130,7 +130,6 @@ registerStep("plan", (step, m, ctx) => {
     useCase: plan.useCase,
     modules: plan.visible.map((x) => x.id),
     silent: plan.silent.map((x) => x.id),
-    skipped: [],
   };
   m.log("plan", plan.key, plan.visible.map((x) => x.name).join(" → ") + (plan.silent.length ? "  (silent: " + plan.silent.map((x) => x.name).join(", ") + ")" : ""));
   m.enter(planSteps(plan, step, m));
@@ -170,7 +169,8 @@ registerStep("exit-module", (step, m) => {
   return m.goto("__end:" + id) ? JUMPED : NEXT;
 });
 
-/* Wait for a silent module's result at the point of use. Shows the rotating-sources row while it runs. */
+/* Wait for a silent module's result at the point of use. Shows the rotating-sources row while it runs.
+ * replay: true → if the module already finished, still play one pass of the sources before moving on. */
 registerStep("await", (step, m, ctx) => {
   const mod = getModule(step.module);
   if (!mod) { console.warn("[gaia-kit] await: module not loaded:", step.module); return NEXT; }
@@ -179,6 +179,13 @@ registerStep("await", (step, m, ctx) => {
   const sources = resolveValue(step.sources, ctx) || m.brand.researchSources || [];
   const summary = resolveValue(step.summary, ctx) || ("Reviewed " + sources.length + " sources for " + (m.brand.name || "your store"));
   if (step.show === false && done) return NEXT;
+  if (done && step.replay && !m.instant) {
+    const replay = m.push({ kind: "research", sources, summary, tag: step.tag });
+    let replayed = false;
+    replay.onDone = () => { if (replayed) return; replayed = true; m.advance(); };
+    m.waiting = { kind: "research" };
+    return WAIT;
+  }
   const item = m.push({ kind: "research", sources, summary, controlled: true, done, tag: step.tag });
   if (done || m.instant) { item.instant = true; item.done = true; return NEXT; }
   let finished = false;
@@ -212,24 +219,15 @@ registerStep("surface", (step, m, ctx) => {
 });
 
 /* Best next action — one plan-level rule after the last win (Notion: "Best next action").
- * 1. A module the merchant skipped resurfaces.  2. The use case's own `next` steps, if any.
- * 3. The first module unlocked by what was just done (path to AI Agent).  4. Otherwise end on Home. */
+ * 1. The use case's own `next` steps, if any.
+ * 2. The first module unlocked by what was just done (path to AI Agent).  3. Otherwise end on Home.
+ * (Leaving mid-flow is "Finish later" in the top bar; there's no per-module skip.) */
 registerStep("next-action", (step, m, ctx) => {
   m.module = null;
   m.ui = { mode: "full", surface: null };
-  const plan = m.plan || { modules: [], skipped: [] };
+  const plan = m.plan || { modules: [] };
   const steps = [];
-  const skipped = step.skipResume ? [] : plan.skipped.filter((id) => !m.done.has(id));
-  if (skipped.length) {
-    const mod = getModule(skipped[0]);
-    steps.push({
-      type: "choice", freeform: false, title: "Want to finish “" + mod.name + "” now?",
-      options: [
-        { key: "yes", title: "Yes, let's do it", then: [{ type: "plan", modules: [mod.id] }] },
-        { key: "no", title: "Not now", then: [{ type: "next-action", skipResume: true }] },
-      ],
-    });
-  } else if (plan.useCase && plan.useCase.next) {
+  if (plan.useCase && plan.useCase.next) {
     steps.push(...resolveValue(plan.useCase.next, ctx));
   } else {
     const offer = plan.modules
@@ -290,25 +288,6 @@ Object.assign(StoryMachine.prototype, {
       if (!mod || this.bg[id] || this.done.has(id)) return;
       if ((mod.requires || []).every((r) => this.done.has((getModule(r) || {}).id || r))) this.startBackground(mod);
     });
-  },
-
-  canSkip() {
-    if (!this.module || this.story.allowSkip === false) return false;
-    const mod = getModule(this.module);
-    const w = this.waiting || {};
-    return !!mod && mod.skippable !== false && ["choice", "multi", "input", "card"].includes(w.kind) && !w.hold;
-  },
-
-  skipModule() {
-    const id = this.module;
-    if (!id) return;
-    if (this.plan && !this.plan.skipped.includes(id)) this.plan.skipped.push(id);
-    this.log("skip", id, (getModule(id) || {}).name);
-    this.interrupt([
-      { type: "user", text: "Skip for now" },
-      { type: "ai", text: "No problem, we can come back to it later." },
-      { type: "goto", to: "__end:" + id },
-    ]);
   },
 
   setScenario(scenario) {

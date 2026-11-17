@@ -4,7 +4,7 @@ The conversation engine and UI from the Gaia onboarding prototype (*Intent-based
 Forwarding*, 2026-11-10), extracted so new flows are written as **stories** (data) instead of
 copying a 7,000-line file.
 
-You get the same thread width (740px), typing speed (8ms/char; 10ms for the original narration),
+You get the same thread width (740px), typing speed (8ms/char for every line),
 stick-to-bottom autoscroll, Axiom cards, composer cards, 500px side panels, floating checklist, and
 dev "Jump to" menu.
 

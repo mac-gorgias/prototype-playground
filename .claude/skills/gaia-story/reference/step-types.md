@@ -26,7 +26,7 @@ plain object. Any value marked *(ctx)* can be a function `(ctx) => value` or a s
 
 ```js
 { type: "ai", text: "Hi {{brand.name}} team." }            // typed at 8ms/char, then glossary tooltips
-{ type: "ai", text: (ctx) => "…", speed: 10, delay: 500 }  // 10ms = original onboarding narration speed
+{ type: "ai", text: (ctx) => "…", delay: 500 }  // every line types at 8ms/char; `speed` is ignored
 { type: "ai", lines: ["First line.", "Second line."] }     // typed one after another, no gap
 { type: "ai", text: "…", typed: false }                    // appears instantly
 ```
@@ -140,7 +140,7 @@ GaiaKit.mount({ story, brand: GaiaBrands.urbanstems, startAt: "returns" });
 
 ## Timing defaults (from the source prototype)
 
-- New lines type at **8ms/char**; the original onboarding narration used **10ms** (`speed: 10`).
+- Every narration line types at **8ms/char** (`TIMING.typeMs`), so longer lines take proportionally longer. Per-step `speed` is ignored.
 - Typical gaps: 300ms before a reply line, 500–600ms between narration beats, 800ms before a new
   question after narration, 900ms after a confirmation before the next chapter.
 - Side panels close in 180ms; the intro fades out in 500ms; research shows each source for 1.8s.

@@ -95,6 +95,7 @@ class StoryMachine {
     this.target = null;
     this.seq = 0;
     this.epoch = (this.epoch || 0) + 1; // bumps on every reset/jump so React remounts thread items
+    this.userAt = 0;    // when the last user bubble was pushed (keeps Gaia from talking over it)
     // Modular onboarding state (see 09-modular.js)
     const sc = this.scenario || {};
     this.done = new Set(sc.done || []);   // modules done on the account
@@ -141,6 +142,7 @@ class StoryMachine {
   push(item) {
     item.id = this.epoch + ":" + (++this.seq);
     if (item.instant === undefined) item.instant = this.instant;
+    if (item.kind === "user" && !this.instant) this.userAt = Date.now();
     this.items.push(item);
     return item;
   }
@@ -213,7 +215,9 @@ class StoryMachine {
         const ctx = this.makeCtx();
         if (this.target && (step.chapter === this.target || step.label === this.target)) this.stopInstant();
         if (step.only && !step.only(ctx)) { this.frameAdvance(); continue; }
-        const delay = step.delay ? resolveValue(step.delay, ctx) : 0;
+        let delay = step.delay ? resolveValue(step.delay, ctx) : 0;
+        // Sequence after the user's bubble: nothing visible starts until it has floated in.
+        if (this.userAt && SHOWS_AFTER_USER.has(step.type)) delay = Math.max(delay, TIMING.afterUserMs - (Date.now() - this.userAt));
         if (delay && !this.instant && !this.delayPassed) {
           this.waiting = { kind: "timer" };
           this.later(() => { this.delayPassed = true; this.run(); }, delay);
@@ -342,7 +346,8 @@ class StoryMachine {
   freeChat(text, reply, ms) {
     this.push({ kind: "user", text });
     this.emit();
-    this.later(() => { this.push({ kind: "ai", text: reply, instant: true }); this.emit(); }, ms);
+    // Typed like every other narration line; waits at least until the user's bubble has landed.
+    this.later(() => { this.push({ kind: "ai", text: reply, speed: TIMING.typeMs, instant: false }); this.emit(); }, Math.max(ms || 0, TIMING.afterUserMs));
   }
 
   /* Dev menu: rebuild the story instantly up to `target`, then continue live. */
@@ -354,6 +359,9 @@ class StoryMachine {
   }
 }
 
+/* Step types that put something on screen; they wait for TIMING.afterUserMs after a user bubble. */
+const SHOWS_AFTER_USER = new Set(["ai", "confirm", "verify", "research", "await", "choice", "multi", "input", "card", "custom", "connect", "panel", "screen", "end"]);
+
 /* ── Built-in step types ── */
 registerStep("marker", () => NEXT);
 registerStep("label", () => NEXT);
@@ -361,10 +369,11 @@ registerStep("label", () => NEXT);
 registerStep("ai", (step, m, ctx) => {
   if (step.lines) {
     const lines = resolveValue(step.lines, ctx);
-    m.enter(lines.map((text) => ({ type: "ai", text, speed: step.speed, tag: step.tag })));
+    m.enter(lines.map((text) => ({ type: "ai", text, tag: step.tag })));
     return JUMPED;
   }
-  const item = m.push({ kind: "ai", text: resolveValue(step.text, ctx), speed: step.speed || TIMING.typeMs, tag: step.tag });
+  // One typing rate for every narration line (step.speed is ignored), so longer lines simply take longer.
+  const item = m.push({ kind: "ai", text: resolveValue(step.text, ctx), speed: TIMING.typeMs, tag: step.tag });
   if (m.instant || step.typed === false) { item.instant = true; return NEXT; }
   let done = false;
   item.onDone = () => { if (done) return; done = true; m.advance(); };
