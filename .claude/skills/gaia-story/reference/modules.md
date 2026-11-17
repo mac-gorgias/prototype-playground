@@ -29,7 +29,6 @@ GaiaKit.defineModule({
   offerable: (ctx) => …,                     // may the next-action rule offer it? (default: available)
   offer: { line, title, yes, no, intro },    // copy when offered as the best next action
   silent: true, duration: 7600,              // silent modules: no steps, run in the background
-  skippable: true,                           // shows "Skip for now" above the composer (default true)
   notion: "https://app.notion.com/p/…",
   steps: [ … ],                              // normal story steps (see step-types.md)
 });
@@ -41,7 +40,7 @@ Module-only steps:
 |---|---|
 | `{ type: "win" }` | Log the win now (use before an `end` that would stop the story) |
 | `{ type: "exit-module", reason }` | Leave the module without a win (e.g. "I'll do it later") |
-| `{ type: "await", module: "generate-tone-of-voice", timeout, fallback }` | Wait for a silent module at the point of use; shows the rotating-sources row while it runs |
+| `{ type: "await", module: "generate-tone-of-voice", replay, timeout, fallback }` | Wait for a silent module at the point of use; shows the rotating-sources row while it runs. `replay: true` plays one pass of the sources even if the module already finished |
 | `{ type: "ui", mode: "sidebar" \| "full", surface }` | Switch layout mid-module |
 | `{ type: "surface", highlight: "Reply box" }` | Highlight part of the product placeholder (tours) |
 
@@ -72,7 +71,7 @@ GaiaKit.defineUseCase({
 2. Add each module's `requires` before it; drop modules already done on the account.
 3. Silent modules leave the sequence and start in the background as soon as their requirements are done.
 4. Run the intro, plan card, each module (start → steps → win), `complete`, then the **best next action**:
-   a skipped module resurfaces → the use case's `next` → the first module unlocked by what was done
+   the use case's `next` → the first module unlocked by what was done
    (not already attempted, still offerable) → otherwise Home.
 
 ## Dev menu
@@ -80,4 +79,4 @@ GaiaKit.defineUseCase({
 - Jump to any use case or `use-case/module` (e.g. `consolidate-channels/install-chat`); `?chapter=` works too.
 - **Account state** scenarios (story `scenarios`): e.g. "Shopify already connected" drops that module from plans. `?scenario=shopify`.
 - **Plan display** toggle (card vs line) — the doc's open question "whole plan upfront or next module only".
-- **Module events** panel: plan, start, win, skip, exit, locked, silent start, fallback, next action.
+- **Module events** panel: plan, start, win, exit, locked, silent start, fallback, next action.

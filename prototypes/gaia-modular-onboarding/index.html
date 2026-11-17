@@ -14,7 +14,7 @@
   "startAt": null,
   "modules": ["core", "screens", "panels", "onboarding-cards"],
   "forkedFrom": "prototypes/gaia-onboarding-kit",
-  "notes": "Milestone 1: goal question → Automate support or Consolidate channels, planned from modules, with the path to AI Agent offered at the end. Consolidate channels modules are skeletons pending module specs."
+  "notes": "Milestone 1: goal question → Automate support, planned from modules. Consolidate channels is a coming-soon stub defined inline in this file (the real use case lives in gaia-kit/use-cases/consolidate-channels.v1.js and isn't loaded here yet)."
 }
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
@@ -29,22 +29,33 @@
 <script src="../../gaia-kit/modules/generate-tone-of-voice.v1.js"></script>
 <script src="../../gaia-kit/modules/connect-email.v1.js"></script>
 <script src="../../gaia-kit/modules/configure-ai-agent-support.v1.js"></script>
-<script src="../../gaia-kit/modules/connect-social.v1.js"></script>
-<script src="../../gaia-kit/modules/install-chat.v1.js"></script>
-<script src="../../gaia-kit/modules/configure-assignment.v1.js"></script>
-<script src="../../gaia-kit/modules/configure-assignment-notification.v1.js"></script>
-<script src="../../gaia-kit/modules/configure-auto-closing.v1.js"></script>
-<script src="../../gaia-kit/modules/inbox-tour.v1.js"></script>
-<script src="../../gaia-kit/modules/ticket-tour.v1.js"></script>
 <!-- Use cases -->
 <script src="../../gaia-kit/use-cases/automate-support.v1.js"></script>
-<script src="../../gaia-kit/use-cases/consolidate-channels.v1.js"></script>
+<script>
+  /* Consolidate channels: coming-soon stub while the real flow is worked on separately.
+   * To restore, swap this block for consolidate-channels.v1.js and its module scripts
+   * (connect-social, install-chat, configure-assignment, configure-assignment-notification,
+   * configure-auto-closing, inbox-tour, ticket-tour). */
+  GaiaKit.defineUseCase({
+    id: "consolidate-channels",
+    title: "Consolidate channels",
+    pitch: "Bring email, social and chat into one inbox.",
+    modules: [],
+    ask: [
+      { type: "ai", delay: 400, text: "Consolidating channels is coming soon. For now, choose Automate support to see the full setup." },
+      { type: "goto", to: "goal" },
+    ],
+  });
+</script>
 <script src="../../gaia-kit/stories/modular-onboarding.js"></script>
 </head>
 <body>
 <div id="root"></div>
 <script>
-  GaiaKit.mount({ story: GaiaStories["modular-onboarding"], brand: GaiaBrands.urbanstems });
+  // planDisplay "line": no plan card; the floating checklist (bottom left) already lists the steps.
+  // devAnswer: dev-menu jumps take Automate support (the stub would loop back to the goal question).
+  const story = GaiaStories.modularOnboarding({ title: "Gaia onboarding — modular (M1)", devAnswer: "automate-support" });
+  GaiaKit.mount({ story: { ...story, planDisplay: "line" }, brand: GaiaBrands.urbanstems });
 </script>
 </body>
 </html>

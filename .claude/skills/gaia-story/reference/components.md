@@ -15,7 +15,7 @@ Everything is on `window.GaiaKit`. Use components by name in `card` steps
 | `MONO_FONT` | Red Hat Mono stack |
 | `BTN_PRIMARY`, `BTN_SECONDARY`, `BTN_TERTIARY` (+ `_HOVER`/`_LEAVE`), `BTN_MD`, `BTN_SM`, `BTN_SECONDARY_SM`, `BTN_TERTIARY_SM` | Axiom button styles |
 | `LAYOUT` | `threadMaxWidth 740`, `panelWidth 500`, `contentRightMarginOpen 532`, `composerPadding`, … |
-| `TIMING` | `typeMs 8`, `legacyTypeMs 10`, `panelClose 180`, `researchSourceMs 1800`, … |
+| `TIMING` | `typeMs 8` (all narration), `panelClose 180`, `researchSourceMs 1800`, … |
 | `brand()` / `asset(name)` | current brand data / URL of a kit asset |
 
 Axiom card style for anything new: border `1px solid rgba(0,0,0,0.08)`, radius `8px`, padding

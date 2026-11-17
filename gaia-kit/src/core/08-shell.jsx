@@ -461,16 +461,6 @@ function GaiaApp({ story, brand: brandData, startAt, scenario }) {
         {!closingShown && (
           <div onClick={(e) => e.stopPropagation()} style={{ padding: LAYOUT.composerPadding, position: "relative", background: "#ffffff" }}>
             <div style={{ maxWidth: LAYOUT.threadMaxWidth, margin: "0 auto" }}>
-              {m.canSkip() && (
-                <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
-                  <span
-                    onClick={() => m.skipModule()}
-                    style={{ fontSize: 13, color: TEXT_MUTED, cursor: "pointer", fontFamily: "'Inter', sans-serif" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.color = "#1E242E"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.color = TEXT_MUTED; }}
-                  >Skip for now</span>
-                </div>
-              )}
               <Composer m={m} story={story} />
             </div>
           </div>
