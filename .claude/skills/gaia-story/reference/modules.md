@@ -7,7 +7,7 @@ The planner builds each merchant's path from the goal they pick.
 gaia-kit/modules/<id>.v<N>.js     one module per file, versioned by filename (never edit a published version — add v2)
 gaia-kit/use-cases/<id>.v<N>.js   ordered module lists + intro + clarifying questions (versioned like modules)
 gaia-kit/stories/modular-onboarding.js   signup → intro → welcome → goal question
-prototypes/gaia-modular-onboarding/      milestone 1 prototype (Automate support + Consolidate channels)
+prototypes/gaia-modular-onboarding-automate-support/   milestone 1 prototype (Automate support; Consolidate channels stubbed)
 ```
 
 ## Module

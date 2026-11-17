@@ -24,7 +24,7 @@ gaia-kit/
   modules/<id>.v<N>.js   ← one module per file, versioned by filename
   use-cases/<id>.v<N>.js ← ordered module lists + intro + clarifying questions
   stories/modular-onboarding.js ← signup → intro → welcome → goal question (GaiaStories.modularOnboarding)
-prototypes/gaia-modular-onboarding/  ← milestone 1 reference prototype
+prototypes/gaia-modular-onboarding-automate-support/  ← milestone 1 reference prototype
 ```
 
 Read `reference/modules.md` before writing anything. Then `reference/step-types.md`,

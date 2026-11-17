@@ -62,7 +62,7 @@ Mirrors the Notion model (use case → module → step → Gaia tool). Modules a
 cases; a small deterministic planner adds requirements, drops what's already done, starts silent modules in
 the background, and ends with the best next action (e.g. the path to AI Agent after Consolidate channels).
 Modules can switch Gaia into a **sidebar** with a product placeholder in the middle. See
-`.claude/skills/gaia-story/reference/modules.md` and `prototypes/gaia-modular-onboarding/`.
+`.claude/skills/gaia-story/reference/modules.md` and `prototypes/gaia-modular-onboarding-automate-support/`.
 
 The Consolidate channels modules (social, chat, assignment, notification, auto-close, tours) are skeletons
 written from the spec's user stories and catalog wins — refine them from each module's Notion page.
